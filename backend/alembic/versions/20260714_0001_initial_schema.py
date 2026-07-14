@@ -78,7 +78,7 @@ def upgrade() -> None:
         sa.Column("email_draft", sa.Text(), nullable=True),
         sa.Column("linkedin_draft", sa.Text(), nullable=True),
         sa.Column("status", sa.String(50), nullable=False, server_default="pending"),
-        sa.Column("is_bidirectional", sa.Boolean(), nullable=False, server_default=sa.text("0")),
+        sa.Column("is_bidirectional", sa.Boolean(), nullable=False, server_default=sa.text("false")),
         sa.Column("created_at", sa.DateTime(), nullable=False, server_default=sa.text("(CURRENT_TIMESTAMP)")),
         sa.ForeignKeyConstraint(["event_id"], ["events.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["participant_a_id"], ["participants.id"], ondelete="CASCADE"),

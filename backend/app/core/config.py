@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     # Supabase / database
     SUPABASE_URL: str = ""
     SUPABASE_KEY: str = ""
-    DATABASE_URL: str = "sqlite:///./qbcals.db"
+    DATABASE_URL: str = "postgresql://postgres:postgres@localhost:5432/qbcals"
 
     # Celery / Redis
     REDIS_URL: str = "redis://localhost:6379/0"
