@@ -15,7 +15,7 @@ Frontend and admin panel are handled separately. This plan covers backend only.
 | 1 | **FastAPI project structure** | Scaffold the full folder layout: `app/models`, `app/routers`, `app/services`, `app/workers`, `app/core`. Create `main.py` entry point and `requirements.txt` with all dependencies (fastapi, uvicorn, sqlalchemy, alembic, celery, redis, openai, playwright, beautifulsoup4, openpyxl, tavily-python, pgvector, supabase, python-dotenv). | `done` |
 | 2 | **Environment config (.env.example)** | Document every required environment variable with descriptions: `OPENAI_API_KEY`, `OPENAI_BASE_URL`, `OPENAI_MODEL`, `OPENAI_EMBEDDING_MODEL`, `TAVILY_API_KEY`, `CRUNCHBASE_API_KEY`, `SUPABASE_URL`, `SUPABASE_KEY`, `DATABASE_URL`, `REDIS_URL`, `CELERY_BROKER_URL`, `CELERY_RESULT_BACKEND`. | `done` |
 | 3 | **SQLAlchemy models** | Define four core models. `Event`: id, name, date, description, status. `Participant`: id, event_id, name, email, company, designation, sector, company_size, membership_tier, looking_for, offerings, linkedin_url, website, enrichment_status, structured_profile (JSON). `Match`: id, event_id, participant_a_id, participant_b_id, rank, reasoning (JSON array), email_draft, linkedin_draft, status (pending/approved/rejected), is_bidirectional. `EnrichmentJob`: id, participant_id, source, status, raw_data (JSON), error_message, created_at. | `done` |
-| 4 | **Alembic migrations + local SQLite** | Initialize Alembic, generate the initial migration from models, configure dual-database support: SQLite for local dev and PostgreSQL (Supabase) in production via `DATABASE_URL`. Include pgvector extension enablement (`CREATE EXTENSION IF NOT EXISTS vector`) in the migration. | `pending` |
+| 4 | **Alembic migrations + local SQLite** | Initialize Alembic, generate the initial migration from models, configure dual-database support: SQLite for local dev and PostgreSQL (Supabase) in production via `DATABASE_URL`. Include pgvector extension enablement (`CREATE EXTENSION IF NOT EXISTS vector`) in the migration. | `done` |
 | 5 | **Celery + Redis worker** | Set up Celery app in `app/workers/celery_app.py` with Redis as broker and result backend. Create two separate queues: `enrichment` and `matching` so they can be scaled independently. Create worker entrypoint script. | `pending` |
 | 6 | **pgvector schema** | Create `participant_embeddings` table: id, participant_id, event_id, embedding (vector 1536 dimensions for text-embedding-3-small), structured_profile_snapshot (JSON), created_at. Add HNSW index on the embedding column for fast ANN search. Add a separate index on event_id for filtered queries. | `pending` |
 
@@ -109,7 +109,7 @@ Task status: `pending` → `done` as each task is completed.
 
 | Phase | Tasks | Scope | Progress |
 |---|---|---|---|
-| 1 — Foundation | 1–6 | FastAPI scaffold, models, Alembic, Celery + Redis, pgvector schema | 3 / 6 |
+| 1 — Foundation | 1–6 | FastAPI scaffold, models, Alembic, Celery + Redis, pgvector schema | 4 / 6 |
 | 2 — Data Ingestion | 7–11 | Excel/CSV parse, header mapping, validation, tier normalization, upload API | 0 / 5 |
 | 3 — Enrichment Pipeline | 12–21 | 5 enrichment sources, dedup cache, merger, LLM normalization, async Celery jobs | 0 / 10 |
 | 4 — Embedding & Vector Storage | 22–25 | Embedding generation, pgvector upsert, event-scoped similarity search | 0 / 4 |
