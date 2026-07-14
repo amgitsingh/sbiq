@@ -20,6 +20,7 @@ build/
 venv/
 env/
 ENV/
+myenv/
 
 # pytest / coverage
 .pytest_cache/
