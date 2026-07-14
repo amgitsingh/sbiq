@@ -7,6 +7,7 @@ from app.models.participant import (
     Participant,
     ParticipantStatus,
 )
+from app.models.participant_embedding import ParticipantEmbedding
 
 __all__ = [
     "Event",
@@ -20,4 +21,5 @@ __all__ = [
     "EnrichmentJob",
     "EnrichmentSource",
     "JobStatus",
+    "ParticipantEmbedding",
 ]
