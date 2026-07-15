@@ -144,7 +144,38 @@ Frontend and admin panel are handled separately. This plan covers backend only.
 
 | | | |  |
 |---|---|---|---|
-| 17 | **Company enrichment deduplication cache** | Before running company-level enrichment (website, Tavily, news, Crunchbase), check a Redis cache keyed by `normalized_company_name:event_id`. If a cached result exists, return it immediately without making any external calls. If not cached, run enrichment and store the result with a 24-hour TTL. Person-level fields (designation, looking_for, offerings) are always taken from the participant record directly and are never cached. | `pending` |
+| 17 | **Company enrichment deduplication cache** | Before running company-level enrichment (website, Tavily, news, Crunchbase), check a Redis cache keyed by `normalized_company_name:event_id`. If a cached result exists, return it immediately without making any external calls. If not cached, run enrichment and store the result with a 24-hour TTL. Person-level fields (designation, looking_for, offerings) are always taken from the participant record directly and are never cached. | `done` |
+
+> Built as two files: `app/services/enrichment/cache.py` (a thin, generic Redis
+> get/set wrapper — `redis.Redis.from_url(...)` never opens a socket at
+> construction time, so only the actual GET/SET calls need try/except; a Redis
+> outage logs a warning and degrades to "no cache" rather than blocking
+> enrichment, consistent with every other source's never-block guarantee) and
+> `app/services/enrichment/company_enrichment.py` (the orchestrator: normalizes
+> the company name, builds the `company_enrichment:{event_id}:{normalized_name}`
+> key, and on a miss calls all 4 company-level sources and stores the combined
+> dict with a 24h TTL via `setex`).
+>
+> **Design resolution:** Tavily web search (Task 13) takes both a person name
+> and company name, which doesn't cleanly fit "company-level, cached across
+> participants" — caching a result keyed only by company would otherwise bake
+> one participant's name into every colleague's cached snippet. Resolved by
+> always calling `search_person_and_company(None, company_name)` from this
+> cache path (company name only). This is also a straight improvement over
+> Task 13's original behavior: it removes the person-name collision risk
+> already flagged there (the "David Bezemer" → unrelated "Bezemer Group B.V."
+> mismatch), since the query no longer contains a person's name at all.
+>
+> Verified live against a real Redis instance (Docker container on
+> `localhost:6379`): cache miss runs all 4 sources and stores the result;
+> cache hit returns the identical dict without re-invoking any source; blank/
+> missing company name skips caching entirely and always runs sources
+> directly (can't build a meaningful cache key); Redis made unreachable
+> (bad URL) logs a warning on both GET and SETEX and falls through to running
+> sources directly, confirming the cache is fully optional infrastructure.
+
+| | | |  |
+|---|---|---|---|
 | 18 | **Raw enrichment data merger** | Combine outputs from all 5 enrichment sources into a single structured context string. Prefix each section clearly (e.g., `=== WEBSITE ===`, `=== TAVILY ===`, `=== NEWS ===`, `=== CRUNCHBASE ===`, `=== LINKEDIN ===`). Prepend the original Excel fields (name, designation, looking_for, offerings) verbatim at the top. This merged block is the input to the LLM normalization step. | `pending` |
 | 19 | **LLM normalization → structured JSON profile** | Send the merged enrichment context to the LLM with JSON mode enforced. The prompt instructs the LLM to: fill all profile schema fields from available context, infer missing fields where reasonable (e.g., funding stage mentioned in a news article), write `company.summary` as a synthesis of all sources, and **never modify `person.looking_for` or `person.offerings`** — copy them verbatim from the Excel section of the context. Validate the LLM response against the profile schema and retry once on validation failure. | `pending` |
 | 20 | **Celery enrichment tasks** | `enrich_participant_task(participant_id)`: run all 5 enrichment sources in order → merge → LLM normalize → store the resulting structured JSON on the participant record → update each `EnrichmentJob` row with status and error if any. `batch_enrich_event_task(event_id)`: fan out `enrich_participant_task` for all participants in the event, checking the company deduplication cache before dispatching company-level calls. | `pending` |
@@ -226,7 +257,7 @@ Task status: `pending` → `done` as each task is completed.
 |---|---|---|---|
 | 1 — Foundation | 1–6 | FastAPI scaffold, models, Alembic, Celery + Redis, pgvector schema | 6 / 6 |
 | 2 — Data Ingestion | 7–11 | Excel/CSV parse, header mapping, validation, tier normalization, upload API | 5 / 5 |
-| 3 — Enrichment Pipeline | 12–21 | 5 enrichment sources, dedup cache, merger, LLM normalization, async Celery jobs | 4 / 10 |
+| 3 — Enrichment Pipeline | 12–21 | 5 enrichment sources, dedup cache, merger, LLM normalization, async Celery jobs | 6 / 10 |
 | 4 — Embedding & Vector Storage | 22–25 | Embedding generation, pgvector upsert, event-scoped similarity search | 0 / 4 |
 | 5 — Matching Engine | 26–33 | Scorers, rule engine, LLM reasoning (JSON mode), bidirectional enforcement, cost estimate | 0 / 8 |
 | 6 — Export | 34–35 | Excel/CSV download with matches + reasoning bullets | 0 / 2 |
