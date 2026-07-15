@@ -123,7 +123,27 @@ Frontend and admin panel are handled separately. This plan covers backend only.
 
 | | | |  |
 |---|---|---|---|
-| 16 | **LinkedIn best-effort scraper** | Given a LinkedIn profile URL from the Excel, attempt a Playwright scrape of the public profile page. Extract: name, current title, company, and about section text. If blocked — login wall, HTTP 999, CAPTCHA, or any exception — catch it, log the reason, and return `None`. Never retry the same participant within one enrichment run. This source is entirely optional; its absence must not block the pipeline. | `pending` |
+| 16 | **LinkedIn best-effort scraper** | Given a LinkedIn profile URL from the Excel, attempt a Playwright scrape of the public profile page. Extract: name, current title, company, and about section text. If blocked — login wall, HTTP 999, CAPTCHA, or any exception — catch it, log the reason, and return `None`. Never retry the same participant within one enrichment run. This source is entirely optional; its absence must not block the pipeline. | `done` |
+
+> Built at `app/services/enrichment/linkedin_scraper.py`, decorated
+> `@toggleable("ENABLE_LINKEDIN_SCRAPER", empty_value=None)` per the Task 12–15
+> pattern. Returns `dict[str, str] | None` (keys: `name`, `title`, `company`,
+> `about` — whichever were extractable) rather than a flat string, since a
+> LinkedIn profile has genuinely distinct fields worth keeping separate for the
+> Task 18 merger, unlike the single free-text blobs the other sources return.
+> Blocked-access detection checks both the post-navigation URL (login/checkpoint/
+> authwall redirects) and page title (`"Join LinkedIn"`, `"Security verification"`),
+> in addition to the generic `status >= 400` check that already catches LinkedIn's
+> distinctive HTTP 999 anti-scraping response. Verified live: a real public profile
+> URL (`linkedin.com/in/satyanadella/`) returned HTTP 999 and was caught cleanly by
+> the generic status check, confirming no special-casing was needed for that code.
+> Also verified: blank URL, disabled-via-toggle, and unreachable/DNS-failure URL all
+> return `None` without raising; no orphaned `chrome.exe`/headless processes remained
+> after repeated calls (`browser.close()` in `finally` confirmed working, consistent
+> with Task 12).
+
+| | | |  |
+|---|---|---|---|
 | 17 | **Company enrichment deduplication cache** | Before running company-level enrichment (website, Tavily, news, Crunchbase), check a Redis cache keyed by `normalized_company_name:event_id`. If a cached result exists, return it immediately without making any external calls. If not cached, run enrichment and store the result with a 24-hour TTL. Person-level fields (designation, looking_for, offerings) are always taken from the participant record directly and are never cached. | `pending` |
 | 18 | **Raw enrichment data merger** | Combine outputs from all 5 enrichment sources into a single structured context string. Prefix each section clearly (e.g., `=== WEBSITE ===`, `=== TAVILY ===`, `=== NEWS ===`, `=== CRUNCHBASE ===`, `=== LINKEDIN ===`). Prepend the original Excel fields (name, designation, looking_for, offerings) verbatim at the top. This merged block is the input to the LLM normalization step. | `pending` |
 | 19 | **LLM normalization → structured JSON profile** | Send the merged enrichment context to the LLM with JSON mode enforced. The prompt instructs the LLM to: fill all profile schema fields from available context, infer missing fields where reasonable (e.g., funding stage mentioned in a news article), write `company.summary` as a synthesis of all sources, and **never modify `person.looking_for` or `person.offerings`** — copy them verbatim from the Excel section of the context. Validate the LLM response against the profile schema and retry once on validation failure. | `pending` |
