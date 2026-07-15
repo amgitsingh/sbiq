@@ -75,7 +75,26 @@ Frontend and admin panel are handled separately. This plan covers backend only.
 > (LLM normalization): the merged context must keep verbatim Excel fields (name,
 > company) prominent so the LLM can recognize and discount name-collision noise from
 > Tavily rather than treating it as ground truth.
-| 14 | **Tavily news search client** | Given company name, call Tavily in news search mode and return the top 5 recent news snippets. Query format: `"{company name} news funding partnership product launch"`. Cap output at 3,000 characters. Return an empty list on failure — never block the pipeline. | `pending` |
+
+| | | |  |
+|---|---|---|---|
+| 14 | **Tavily news search client** | Given company name, call Tavily in news search mode and return the top 5 recent news snippets. Query format: `"{company name} news funding partnership product launch"`. Cap output at 3,000 characters. Return an empty list on failure — never block the pipeline. | `done` |
+
+> **Findings from live testing:** (1) Tavily's default `days=3` news window is too
+> narrow for company enrichment — funding/partnership news doesn't land daily even for
+> well-covered companies — widened to `days=90`. (2) A live test on `"Pensioenvisie"`
+> confirmed a more severe version of Task 13's noise problem: **0 of 5** "news" results
+> actually mentioned the company at any `days` window tested (3/30/90) — pure
+> keyword-template noise, not even a name-collision like Task 13's. Added a relevance
+> filter (keep only results whose title/content mentions the company name) — verified
+> it correctly empties out for `Pensioenvisie` while still returning 5/5 genuine hits
+> for a newsworthy company (`Microsoft`). Known limitation, left as-is: the filter is a
+> substring check, so a company name appearing only in an end-of-article tag cloud
+> (observed once, for `Microsoft`, low real-world impact given specific company names
+> are far less likely to appear as generic tags) still counts as a "hit."
+
+| | | |  |
+|---|---|---|---|
 | 15 | **Crunchbase API client** | Given company name, query the Crunchbase API for: employee count, headquarters, funding stage, funding rounds, investor names, founding year, and categories. Map the API response fields to the structured profile schema. Handle 404 (company not found) and rate limits by returning a partial dict with only the fields successfully retrieved. | `pending` |
 | 16 | **LinkedIn best-effort scraper** | Given a LinkedIn profile URL from the Excel, attempt a Playwright scrape of the public profile page. Extract: name, current title, company, and about section text. If blocked — login wall, HTTP 999, CAPTCHA, or any exception — catch it, log the reason, and return `None`. Never retry the same participant within one enrichment run. This source is entirely optional; its absence must not block the pipeline. | `pending` |
 | 17 | **Company enrichment deduplication cache** | Before running company-level enrichment (website, Tavily, news, Crunchbase), check a Redis cache keyed by `normalized_company_name:event_id`. If a cached result exists, return it immediately without making any external calls. If not cached, run enrichment and store the result with a 24-hour TTL. Person-level fields (designation, looking_for, offerings) are always taken from the participant record directly and are never cached. | `pending` |
@@ -94,6 +113,9 @@ Frontend and admin panel are handled separately. This plan covers backend only.
 > adds a real orchestration step not in any task's current spec. Deferred: 100% of
 > participants in the real sample data have a blank `website`, so this doesn't block
 > progress; revisit if enrichment output quality on Tavily-only companies proves weak.
+
+| | | |  |
+|---|---|---|---|
 | 21 | **Enrichment status API endpoint** | `GET /events/{id}/enrichment-status` — return per-participant enrichment status (pending / enriching / done / failed) with a per-source breakdown for each participant. Include aggregate counts: total participants, enriched, failed, and pending. Used by the frontend to poll enrichment progress in real time. | `pending` |
 
 ---
@@ -157,7 +179,7 @@ Task status: `pending` → `done` as each task is completed.
 |---|---|---|---|
 | 1 — Foundation | 1–6 | FastAPI scaffold, models, Alembic, Celery + Redis, pgvector schema | 6 / 6 |
 | 2 — Data Ingestion | 7–11 | Excel/CSV parse, header mapping, validation, tier normalization, upload API | 5 / 5 |
-| 3 — Enrichment Pipeline | 12–21 | 5 enrichment sources, dedup cache, merger, LLM normalization, async Celery jobs | 2 / 10 |
+| 3 — Enrichment Pipeline | 12–21 | 5 enrichment sources, dedup cache, merger, LLM normalization, async Celery jobs | 3 / 10 |
 | 4 — Embedding & Vector Storage | 22–25 | Embedding generation, pgvector upsert, event-scoped similarity search | 0 / 4 |
 | 5 — Matching Engine | 26–33 | Scorers, rule engine, LLM reasoning (JSON mode), bidirectional enforcement, cost estimate | 0 / 8 |
 | 6 — Export | 34–35 | Excel/CSV download with matches + reasoning bullets | 0 / 2 |
