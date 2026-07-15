@@ -61,6 +61,17 @@ Frontend and admin panel are handled separately. This plan covers backend only.
 ## Phase 3 — Enrichment Pipeline
 > For each participant, fetch public data from 5 sources, merge it, and use an LLM to produce a clean structured JSON profile.
 
+> **Cross-cutting: pluggable sources (added 2026-07-15, retrofitted onto Tasks 12–14).**
+> Each of the 5 enrichment sources can now be switched on/off purely via config —
+> `ENABLE_WEBSITE_SCRAPER`, `ENABLE_TAVILY_WEB_SEARCH`, `ENABLE_TAVILY_NEWS_SEARCH`,
+> `ENABLE_CRUNCHBASE`, `ENABLE_LINKEDIN_SCRAPER` (all default `true` except
+> `ENABLE_CRUNCHBASE=false`). Implemented as a shared `@toggleable(...)` decorator
+> (`app/services/enrichment/source_toggle.py`) applied to every source function — a
+> disabled source returns its empty value (`None`/`[]`/`{}`) immediately, is never
+> called, and no call site needs to change. Motivation: Crunchbase requires a paid API
+> key that isn't available yet; this lets that source be built and merged now, "plugged
+> out" until purchased, without blocking or restructuring the rest of the pipeline.
+
 | # | Task | Description | Status |
 |---|---|---|---|
 | 12 | **Company website scraper** | Given a company website URL, launch a headless Playwright browser and fetch the homepage and `/about` page. Parse rendered HTML with BeautifulSoup, stripping nav, footer, and boilerplate. Return clean text capped at 5,000 characters. Handle timeouts (10s limit), 404s, and JS-heavy sites gracefully. Return `None` on any failure — never raise. | `done` |
@@ -95,7 +106,23 @@ Frontend and admin panel are handled separately. This plan covers backend only.
 
 | | | |  |
 |---|---|---|---|
-| 15 | **Crunchbase API client** | Given company name, query the Crunchbase API for: employee count, headquarters, funding stage, funding rounds, investor names, founding year, and categories. Map the API response fields to the structured profile schema. Handle 404 (company not found) and rate limits by returning a partial dict with only the fields successfully retrieved. | `pending` |
+| 15 | **Crunchbase API client** | Given company name, query the Crunchbase API for: employee count, headquarters, funding stage, funding rounds, investor names, founding year, and categories. Map the API response fields to the structured profile schema. Handle 404 (company not found) and rate limits by returning a partial dict with only the fields successfully retrieved. | `done` |
+
+> **Built but disabled by default** (`ENABLE_CRUNCHBASE=false`, no `CRUNCHBASE_API_KEY`
+> configured) — client code, error handling (404/429/network/malformed JSON), and
+> field-mapping logic are complete and unit-tested against a synthetic response
+> matching Crunchbase's documented v4 API shape, but **not verified against a live
+> account** — no key was available to test against. Also worth reconsidering before
+> purchasing: Crunchbase's coverage skews toward VC-funded startups, while the real
+> sample data (`data/data.xlsx`) is almost entirely small Dutch businesses and
+> self-employed consultants — a class of company Crunchbase likely has little to no
+> data on, similar to the near-total miss Tavily news search hit on the same data (see
+> Task 14's note). Before flipping `ENABLE_CRUNCHBASE=true`: (a) verify `FIELD_IDS` in
+> `crunchbase_client.py` against Crunchbase's current API reference, and (b) confirm
+> with the client whether the target audience justifies the cost.
+
+| | | |  |
+|---|---|---|---|
 | 16 | **LinkedIn best-effort scraper** | Given a LinkedIn profile URL from the Excel, attempt a Playwright scrape of the public profile page. Extract: name, current title, company, and about section text. If blocked — login wall, HTTP 999, CAPTCHA, or any exception — catch it, log the reason, and return `None`. Never retry the same participant within one enrichment run. This source is entirely optional; its absence must not block the pipeline. | `pending` |
 | 17 | **Company enrichment deduplication cache** | Before running company-level enrichment (website, Tavily, news, Crunchbase), check a Redis cache keyed by `normalized_company_name:event_id`. If a cached result exists, return it immediately without making any external calls. If not cached, run enrichment and store the result with a 24-hour TTL. Person-level fields (designation, looking_for, offerings) are always taken from the participant record directly and are never cached. | `pending` |
 | 18 | **Raw enrichment data merger** | Combine outputs from all 5 enrichment sources into a single structured context string. Prefix each section clearly (e.g., `=== WEBSITE ===`, `=== TAVILY ===`, `=== NEWS ===`, `=== CRUNCHBASE ===`, `=== LINKEDIN ===`). Prepend the original Excel fields (name, designation, looking_for, offerings) verbatim at the top. This merged block is the input to the LLM normalization step. | `pending` |
@@ -179,7 +206,7 @@ Task status: `pending` → `done` as each task is completed.
 |---|---|---|---|
 | 1 — Foundation | 1–6 | FastAPI scaffold, models, Alembic, Celery + Redis, pgvector schema | 6 / 6 |
 | 2 — Data Ingestion | 7–11 | Excel/CSV parse, header mapping, validation, tier normalization, upload API | 5 / 5 |
-| 3 — Enrichment Pipeline | 12–21 | 5 enrichment sources, dedup cache, merger, LLM normalization, async Celery jobs | 3 / 10 |
+| 3 — Enrichment Pipeline | 12–21 | 5 enrichment sources, dedup cache, merger, LLM normalization, async Celery jobs | 4 / 10 |
 | 4 — Embedding & Vector Storage | 22–25 | Embedding generation, pgvector upsert, event-scoped similarity search | 0 / 4 |
 | 5 — Matching Engine | 26–33 | Scorers, rule engine, LLM reasoning (JSON mode), bidirectional enforcement, cost estimate | 0 / 8 |
 | 6 — Export | 34–35 | Excel/CSV download with matches + reasoning bullets | 0 / 2 |

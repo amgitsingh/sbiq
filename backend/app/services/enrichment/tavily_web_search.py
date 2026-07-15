@@ -5,6 +5,7 @@ import logging
 from tavily import TavilyClient
 
 from app.core.config import settings
+from app.services.enrichment.source_toggle import toggleable
 
 logger = logging.getLogger(__name__)
 
@@ -12,6 +13,7 @@ MAX_CHARS = 3_000
 MAX_RESULTS = 5
 
 
+@toggleable("ENABLE_TAVILY_WEB_SEARCH", empty_value=None)
 def search_person_and_company(person_name: str | None, company_name: str | None) -> str | None:
     """Tavily general web search on a person + company name, for enrichment context.
 

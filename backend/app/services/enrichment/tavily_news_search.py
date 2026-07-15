@@ -5,6 +5,7 @@ import logging
 from tavily import TavilyClient
 
 from app.core.config import settings
+from app.services.enrichment.source_toggle import toggleable
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +17,7 @@ MAX_RESULTS = 5
 NEWS_DAYS = 90
 
 
+@toggleable("ENABLE_TAVILY_NEWS_SEARCH", empty_value=[])
 def search_company_news(company_name: str | None) -> list[str]:
     """Tavily news-topic search for a company. Never raises — returns an
     empty list on missing config, API errors, quota exhaustion, or network

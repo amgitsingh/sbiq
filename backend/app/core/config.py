@@ -15,6 +15,14 @@ class Settings(BaseSettings):
     TAVILY_API_KEY: str = ""
     CRUNCHBASE_API_KEY: str = ""
 
+    # Enrichment source toggles — plug individual sources in/out without code
+    # changes (e.g. Crunchbase off until a paid API key is purchased).
+    ENABLE_WEBSITE_SCRAPER: bool = True
+    ENABLE_TAVILY_WEB_SEARCH: bool = True
+    ENABLE_TAVILY_NEWS_SEARCH: bool = True
+    ENABLE_CRUNCHBASE: bool = False
+    ENABLE_LINKEDIN_SCRAPER: bool = True
+
     # Supabase / database
     SUPABASE_URL: str = ""
     SUPABASE_KEY: str = ""

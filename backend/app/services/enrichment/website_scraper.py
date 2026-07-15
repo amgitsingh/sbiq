@@ -9,6 +9,8 @@ from playwright.sync_api import Error as PlaywrightError
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 from playwright.sync_api import sync_playwright
 
+from app.services.enrichment.source_toggle import toggleable
+
 logger = logging.getLogger(__name__)
 
 TIMEOUT_MS = 10_000
@@ -17,6 +19,7 @@ ABOUT_PATH = "/about"
 _STRIP_TAGS = ("script", "style", "nav", "footer", "header", "noscript", "iframe", "svg", "form")
 
 
+@toggleable("ENABLE_WEBSITE_SCRAPER", empty_value=None)
 def scrape_company_website(url: str) -> str | None:
     """Fetch a company's homepage + /about page and return cleaned text.
 
