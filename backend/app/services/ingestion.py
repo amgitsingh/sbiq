@@ -80,7 +80,9 @@ def _parse_xlsx(file_bytes: bytes) -> tuple[list[dict], list[dict]]:
             continue
 
         try:
-            valid_rows.append(_build_row_dict(headers, row))
+            row_dict = _build_row_dict(headers, row)
+            row_dict["__row_number"] = row_number
+            valid_rows.append(row_dict)
         except Exception as e:
             logger.warning(f"Skipping row {row_number}: {e}")
             skipped_rows.append({"row_number": row_number, "reason": str(e)})
@@ -121,7 +123,9 @@ def _parse_csv(file_bytes: bytes) -> tuple[list[dict], list[dict]]:
             continue
 
         try:
-            valid_rows.append(_build_row_dict(headers, row))
+            row_dict = _build_row_dict(headers, row)
+            row_dict["__row_number"] = row_number
+            valid_rows.append(row_dict)
         except Exception as e:
             logger.warning(f"Skipping row {row_number}: {e}")
             skipped_rows.append({"row_number": row_number, "reason": str(e)})

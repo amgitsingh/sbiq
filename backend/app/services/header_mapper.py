@@ -108,10 +108,18 @@ def map_headers(headers: list[str]) -> tuple[dict[str, str], list[str]]:
 
 
 def map_row(row: dict, header_map: dict[str, str]) -> dict:
-    """Rekey a raw row dict (original header -> value) to (canonical field -> value)."""
+    """Rekey a raw row dict (original header -> value) to (canonical field -> value).
+
+    Keys prefixed with '__' are pipeline metadata (e.g. '__row_number'), not
+    spreadsheet columns, and pass through unchanged.
+    """
     mapped: dict = {}
 
     for original_header, value in row.items():
+        if original_header.startswith("__"):
+            mapped[original_header] = value
+            continue
+
         canonical_key = header_map.get(original_header)
         if not canonical_key:
             continue
