@@ -64,7 +64,17 @@ Frontend and admin panel are handled separately. This plan covers backend only.
 | # | Task | Description | Status |
 |---|---|---|---|
 | 12 | **Company website scraper** | Given a company website URL, launch a headless Playwright browser and fetch the homepage and `/about` page. Parse rendered HTML with BeautifulSoup, stripping nav, footer, and boilerplate. Return clean text capped at 5,000 characters. Handle timeouts (10s limit), 404s, and JS-heavy sites gracefully. Return `None` on any failure — never raise. | `done` |
-| 13 | **Tavily web search client** | Given participant name + company name, call the Tavily Search API and return the top 5 result snippets as a combined text block. Query format: `"{person name} {company name} business"`. Cap output at 3,000 characters. Handle API errors and quota exhaustion by returning `None` gracefully. | `pending` |
+| 13 | **Tavily web search client** | Given participant name + company name, call the Tavily Search API and return the top 5 result snippets as a combined text block. Query format: `"{person name} {company name} business"`. Cap output at 3,000 characters. Handle API errors and quota exhaustion by returning `None` gracefully. | `done` |
+
+> **Data-quality risk observed during live testing:** a real participant search
+> (`"David Bezemer" "Pensioenvisie"`) returned content entirely about an unrelated
+> company — "Bezemer Group B.V.", a marine winch-rental company that happens to share
+> the surname "Bezemer" — because Tavily's ranking favored the more prominent brand
+> match over the actual (smaller) employer. Not a bug in Task 13's code — the
+> query/cap/error-handling all worked correctly — but a real signal for **Task 19**
+> (LLM normalization): the merged context must keep verbatim Excel fields (name,
+> company) prominent so the LLM can recognize and discount name-collision noise from
+> Tavily rather than treating it as ground truth.
 | 14 | **Tavily news search client** | Given company name, call Tavily in news search mode and return the top 5 recent news snippets. Query format: `"{company name} news funding partnership product launch"`. Cap output at 3,000 characters. Return an empty list on failure — never block the pipeline. | `pending` |
 | 15 | **Crunchbase API client** | Given company name, query the Crunchbase API for: employee count, headquarters, funding stage, funding rounds, investor names, founding year, and categories. Map the API response fields to the structured profile schema. Handle 404 (company not found) and rate limits by returning a partial dict with only the fields successfully retrieved. | `pending` |
 | 16 | **LinkedIn best-effort scraper** | Given a LinkedIn profile URL from the Excel, attempt a Playwright scrape of the public profile page. Extract: name, current title, company, and about section text. If blocked — login wall, HTTP 999, CAPTCHA, or any exception — catch it, log the reason, and return `None`. Never retry the same participant within one enrichment run. This source is entirely optional; its absence must not block the pipeline. | `pending` |
@@ -72,6 +82,18 @@ Frontend and admin panel are handled separately. This plan covers backend only.
 | 18 | **Raw enrichment data merger** | Combine outputs from all 5 enrichment sources into a single structured context string. Prefix each section clearly (e.g., `=== WEBSITE ===`, `=== TAVILY ===`, `=== NEWS ===`, `=== CRUNCHBASE ===`, `=== LINKEDIN ===`). Prepend the original Excel fields (name, designation, looking_for, offerings) verbatim at the top. This merged block is the input to the LLM normalization step. | `pending` |
 | 19 | **LLM normalization → structured JSON profile** | Send the merged enrichment context to the LLM with JSON mode enforced. The prompt instructs the LLM to: fill all profile schema fields from available context, infer missing fields where reasonable (e.g., funding stage mentioned in a news article), write `company.summary` as a synthesis of all sources, and **never modify `person.looking_for` or `person.offerings`** — copy them verbatim from the Excel section of the context. Validate the LLM response against the profile schema and retry once on validation failure. | `pending` |
 | 20 | **Celery enrichment tasks** | `enrich_participant_task(participant_id)`: run all 5 enrichment sources in order → merge → LLM normalize → store the resulting structured JSON on the participant record → update each `EnrichmentJob` row with status and error if any. `batch_enrich_event_task(event_id)`: fan out `enrich_participant_task` for all participants in the event, checking the company deduplication cache before dispatching company-level calls. | `pending` |
+
+> **Open decision (raised 2026-07-15, resolve when building this task):** CLAUDE.md's
+> field-mapping table lists `company.website`'s fallback as "Tavily search," but as
+> currently scoped, Task 13 only returns raw search snippet text — it doesn't parse out
+> a URL. So today's simplest reading is: Tavily's snippets get merged into the LLM
+> context (Task 18/19) and the **LLM** infers `company.website` from whatever's
+> mentioned there, with no code-level chain back into Task 12's scraper. The richer
+> alternative — explicitly extract a URL from Tavily's results and re-invoke
+> `scrape_company_website()` on it before merging — would produce better profiles but
+> adds a real orchestration step not in any task's current spec. Deferred: 100% of
+> participants in the real sample data have a blank `website`, so this doesn't block
+> progress; revisit if enrichment output quality on Tavily-only companies proves weak.
 | 21 | **Enrichment status API endpoint** | `GET /events/{id}/enrichment-status` — return per-participant enrichment status (pending / enriching / done / failed) with a per-source breakdown for each participant. Include aggregate counts: total participants, enriched, failed, and pending. Used by the frontend to poll enrichment progress in real time. | `pending` |
 
 ---
@@ -135,7 +157,7 @@ Task status: `pending` → `done` as each task is completed.
 |---|---|---|---|
 | 1 — Foundation | 1–6 | FastAPI scaffold, models, Alembic, Celery + Redis, pgvector schema | 6 / 6 |
 | 2 — Data Ingestion | 7–11 | Excel/CSV parse, header mapping, validation, tier normalization, upload API | 5 / 5 |
-| 3 — Enrichment Pipeline | 12–21 | 5 enrichment sources, dedup cache, merger, LLM normalization, async Celery jobs | 1 / 10 |
+| 3 — Enrichment Pipeline | 12–21 | 5 enrichment sources, dedup cache, merger, LLM normalization, async Celery jobs | 2 / 10 |
 | 4 — Embedding & Vector Storage | 22–25 | Embedding generation, pgvector upsert, event-scoped similarity search | 0 / 4 |
 | 5 — Matching Engine | 26–33 | Scorers, rule engine, LLM reasoning (JSON mode), bidirectional enforcement, cost estimate | 0 / 8 |
 | 6 — Export | 34–35 | Excel/CSV download with matches + reasoning bullets | 0 / 2 |
