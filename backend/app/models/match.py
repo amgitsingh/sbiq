@@ -44,7 +44,7 @@ class Match(Base):
     linkedin_draft: Mapped[str | None] = mapped_column(Text)
 
     status: Mapped[str] = mapped_column(
-        Enum(MatchStatus, values_callable=lambda e: [x.value for x in e]),
+        Enum(MatchStatus, values_callable=lambda e: [x.value for x in e], native_enum=False),
         default=MatchStatus.pending,
         nullable=False,
     )

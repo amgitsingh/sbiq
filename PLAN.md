@@ -43,7 +43,16 @@ Frontend and admin panel are handled separately. This plan covers backend only.
 > field) default to `business_member` **and are flagged for admin review**, rather than
 > silently downgrading to `normal_member`.
 
-| 11 | **Ingestion API endpoints** | `POST /events` — create event with name, date, description. `POST /events/{id}/upload` — accept multipart file upload, run the full ingestion chain (parse → map → validate → normalize tier), bulk insert participants, return a summary JSON (total, valid, flagged, rejected counts). `GET /events/{id}/participants` — list all participants with their enrichment status. `GET /events` — list all events. | `pending` |
+| 11 | **Ingestion API endpoints** | `POST /events` — create event with name, date, description. `POST /events/{id}/upload` — accept multipart file upload, run the full ingestion chain (parse → map → validate → normalize tier), bulk insert participants, return a summary JSON (total, valid, flagged, rejected counts). `GET /events/{id}/participants` — list all participants with their enrichment status. `GET /events` — list all events. | `done` |
+
+> **Bug fix while wiring this up:** all `Enum(...)` model columns (`MembershipTier`,
+> `EventStatus`, `EnrichmentStatus`, `ParticipantStatus`, `MatchStatus`,
+> `EnrichmentSource`, `JobStatus`) defaulted to SQLAlchemy's native-PostgreSQL-enum
+> mode, which tried to cast inserts against a DB type (e.g. `::membershiptier`) that
+> was never created — the migrations only ever made these columns `VARCHAR`. Fixed by
+> adding `native_enum=False` to every `Enum(...)` column across all four model files;
+> no migration needed since the DB columns were already `VARCHAR`. Also added an
+> explicit `db.rollback()` on exception in `get_db()`.
 
 ---
 
@@ -123,7 +132,7 @@ Task status: `pending` → `done` as each task is completed.
 | Phase | Tasks | Scope | Progress |
 |---|---|---|---|
 | 1 — Foundation | 1–6 | FastAPI scaffold, models, Alembic, Celery + Redis, pgvector schema | 6 / 6 |
-| 2 — Data Ingestion | 7–11 | Excel/CSV parse, header mapping, validation, tier normalization, upload API | 4 / 5 |
+| 2 — Data Ingestion | 7–11 | Excel/CSV parse, header mapping, validation, tier normalization, upload API | 5 / 5 |
 | 3 — Enrichment Pipeline | 12–21 | 5 enrichment sources, dedup cache, merger, LLM normalization, async Celery jobs | 0 / 10 |
 | 4 — Embedding & Vector Storage | 22–25 | Embedding generation, pgvector upsert, event-scoped similarity search | 0 / 4 |
 | 5 — Matching Engine | 26–33 | Scorers, rule engine, LLM reasoning (JSON mode), bidirectional enforcement, cost estimate | 0 / 8 |

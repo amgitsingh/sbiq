@@ -30,7 +30,7 @@ class Event(Base):
     description: Mapped[str | None] = mapped_column(Text)
     matching_rules: Mapped[dict | None] = mapped_column(JSON)
     status: Mapped[str] = mapped_column(
-        Enum(EventStatus, values_callable=lambda e: [x.value for x in e]),
+        Enum(EventStatus, values_callable=lambda e: [x.value for x in e], native_enum=False),
         default=EventStatus.draft,
         nullable=False,
     )

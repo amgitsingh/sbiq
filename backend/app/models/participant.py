@@ -58,7 +58,7 @@ class Participant(Base):
     sector: Mapped[str | None] = mapped_column(String(255))
     company_size: Mapped[str | None] = mapped_column(String(50))
     membership_tier: Mapped[str] = mapped_column(
-        Enum(MembershipTier, values_callable=lambda e: [x.value for x in e]),
+        Enum(MembershipTier, values_callable=lambda e: [x.value for x in e], native_enum=False),
         default=MembershipTier.normal_member,
         nullable=False,
     )
@@ -74,12 +74,12 @@ class Participant(Base):
 
     # Pipeline state
     enrichment_status: Mapped[str] = mapped_column(
-        Enum(EnrichmentStatus, values_callable=lambda e: [x.value for x in e]),
+        Enum(EnrichmentStatus, values_callable=lambda e: [x.value for x in e], native_enum=False),
         default=EnrichmentStatus.pending,
         nullable=False,
     )
     participant_status: Mapped[str] = mapped_column(
-        Enum(ParticipantStatus, values_callable=lambda e: [x.value for x in e]),
+        Enum(ParticipantStatus, values_callable=lambda e: [x.value for x in e], native_enum=False),
         default=ParticipantStatus.eligible,
         nullable=False,
     )

@@ -40,11 +40,11 @@ class EnrichmentJob(Base):
         index=True,
     )
     source: Mapped[str] = mapped_column(
-        Enum(EnrichmentSource, values_callable=lambda e: [x.value for x in e]),
+        Enum(EnrichmentSource, values_callable=lambda e: [x.value for x in e], native_enum=False),
         nullable=False,
     )
     status: Mapped[str] = mapped_column(
-        Enum(JobStatus, values_callable=lambda e: [x.value for x in e]),
+        Enum(JobStatus, values_callable=lambda e: [x.value for x in e], native_enum=False),
         default=JobStatus.pending,
         nullable=False,
     )
