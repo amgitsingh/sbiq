@@ -35,7 +35,14 @@ Frontend and admin panel are handled separately. This plan covers backend only.
 | 7 | **Excel/CSV parser** | Parse `.xlsx` and `.csv` uploads using openpyxl. Extract rows into raw dicts. Handle merged cells, empty rows, and encoding issues. Return two lists: valid raw rows and skipped rows with skip reasons. Never raise on malformed rows — log and skip. | `done` |
 | 8 | **Dutch/English header auto-mapper** | Maintain a canonical mapping of Dutch and English column header synonyms to internal field names (e.g., `"Bedrijfsnaam"`, `"Company Name"`, `"company"` → `"company"`). Apply fuzzy string matching as a fallback for near-matches. Return unmapped columns as warnings (not errors) so the upload still proceeds. | `done` |
 | 9 | **Data validation + sparse row flagging** | Validate each participant row after mapping. Required fields (reject if missing): name, email, company. Warn-level fields: looking_for, offerings — if both are missing, flag the participant for admin review but do not drop them. Validate email format. Normalize whitespace. Return three buckets: valid, flagged (needs review), rejected. | `done` |
-| 10 | **Membership tier normalizer** | Map free-text tier values from the Excel to a canonical enum: `sponsor`, `premium_member`, `business_member`, `normal_member`, `non_member`. Handle common Dutch and English variants (e.g., `"Premium Lid"`, `"SPONSOR"`, `"Business Partner"`, `"Gewoon Lid"`). Default unrecognized values to `normal_member` and log them. Match quota is flat 3 for all tiers currently — normalizer stores tier for future use only. | `pending` |
+| 10 | **Membership tier normalizer** | Map free-text tier values from the Excel to a canonical enum: `sponsor`, `premium_member`, `business_member`, `normal_member`, `non_member`. Handle common Dutch and English variants (e.g., `"Premium Lid"`, `"SPONSOR"`, `"Business Partner"`, `"Gewoon Lid"`). Default unrecognized values to `normal_member` and log them. Match quota is flat 3 for all tiers currently — normalizer stores tier for future use only. | `done` |
+
+> **Refinement per confirmed decision:** blank/missing values default to `normal_member`
+> (no flag — simply unanswered). Values that indicate *some* confirmed membership but
+> not which tier (`"Yes"`) or unparseable garbage (e.g. a phone number typo'd into the
+> field) default to `business_member` **and are flagged for admin review**, rather than
+> silently downgrading to `normal_member`.
+
 | 11 | **Ingestion API endpoints** | `POST /events` — create event with name, date, description. `POST /events/{id}/upload` — accept multipart file upload, run the full ingestion chain (parse → map → validate → normalize tier), bulk insert participants, return a summary JSON (total, valid, flagged, rejected counts). `GET /events/{id}/participants` — list all participants with their enrichment status. `GET /events` — list all events. | `pending` |
 
 ---
@@ -116,7 +123,7 @@ Task status: `pending` → `done` as each task is completed.
 | Phase | Tasks | Scope | Progress |
 |---|---|---|---|
 | 1 — Foundation | 1–6 | FastAPI scaffold, models, Alembic, Celery + Redis, pgvector schema | 6 / 6 |
-| 2 — Data Ingestion | 7–11 | Excel/CSV parse, header mapping, validation, tier normalization, upload API | 3 / 5 |
+| 2 — Data Ingestion | 7–11 | Excel/CSV parse, header mapping, validation, tier normalization, upload API | 4 / 5 |
 | 3 — Enrichment Pipeline | 12–21 | 5 enrichment sources, dedup cache, merger, LLM normalization, async Celery jobs | 0 / 10 |
 | 4 — Embedding & Vector Storage | 22–25 | Embedding generation, pgvector upsert, event-scoped similarity search | 0 / 4 |
 | 5 — Matching Engine | 26–33 | Scorers, rule engine, LLM reasoning (JSON mode), bidirectional enforcement, cost estimate | 0 / 8 |
