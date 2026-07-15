@@ -19,6 +19,12 @@ Frontend and admin panel are handled separately. This plan covers backend only.
 | 5 | **Celery + Redis worker** | Set up Celery app in `app/workers/celery_app.py` with Redis as broker and result backend. Create two separate queues: `enrichment` and `matching` so they can be scaled independently. Create worker entrypoint script. | `done` |
 | 6 | **pgvector schema** | Create `participant_embeddings` table: id, participant_id, event_id, embedding (vector 1536 dimensions for text-embedding-3-small), structured_profile_snapshot (JSON), created_at. Add HNSW index on the embedding column for fast ANN search. Add a separate index on event_id for filtered queries. | `done` |
 
+> **Schema refinement (2026-07-15):** reviewing a real sample export (`data/data.xlsx`)
+> surfaced fields the original `Participant` model didn't cover. Migration `0003` added
+> `phone`, `ideal_connection`, `biggest_opportunity`, and a catch-all `raw_source_data`
+> JSON column (full original row, for any future organizer-specific question). No task
+> numbers changed — this refines Task 3's schema ahead of Tasks 8–11.
+
 ---
 
 ## Phase 2 — Data Ingestion
@@ -26,7 +32,7 @@ Frontend and admin panel are handled separately. This plan covers backend only.
 
 | # | Task | Description | Status |
 |---|---|---|---|
-| 7 | **Excel/CSV parser** | Parse `.xlsx` and `.csv` uploads using openpyxl. Extract rows into raw dicts. Handle merged cells, empty rows, and encoding issues. Return two lists: valid raw rows and skipped rows with skip reasons. Never raise on malformed rows — log and skip. | `pending` |
+| 7 | **Excel/CSV parser** | Parse `.xlsx` and `.csv` uploads using openpyxl. Extract rows into raw dicts. Handle merged cells, empty rows, and encoding issues. Return two lists: valid raw rows and skipped rows with skip reasons. Never raise on malformed rows — log and skip. | `done` |
 | 8 | **Dutch/English header auto-mapper** | Maintain a canonical mapping of Dutch and English column header synonyms to internal field names (e.g., `"Bedrijfsnaam"`, `"Company Name"`, `"company"` → `"company"`). Apply fuzzy string matching as a fallback for near-matches. Return unmapped columns as warnings (not errors) so the upload still proceeds. | `pending` |
 | 9 | **Data validation + sparse row flagging** | Validate each participant row after mapping. Required fields (reject if missing): name, email, company. Warn-level fields: looking_for, offerings — if both are missing, flag the participant for admin review but do not drop them. Validate email format. Normalize whitespace. Return three buckets: valid, flagged (needs review), rejected. | `pending` |
 | 10 | **Membership tier normalizer** | Map free-text tier values from the Excel to a canonical enum: `sponsor`, `premium_member`, `business_member`, `normal_member`, `non_member`. Handle common Dutch and English variants (e.g., `"Premium Lid"`, `"SPONSOR"`, `"Business Partner"`, `"Gewoon Lid"`). Default unrecognized values to `normal_member` and log them. Match quota is flat 3 for all tiers currently — normalizer stores tier for future use only. | `pending` |
@@ -110,7 +116,7 @@ Task status: `pending` → `done` as each task is completed.
 | Phase | Tasks | Scope | Progress |
 |---|---|---|---|
 | 1 — Foundation | 1–6 | FastAPI scaffold, models, Alembic, Celery + Redis, pgvector schema | 6 / 6 |
-| 2 — Data Ingestion | 7–11 | Excel/CSV parse, header mapping, validation, tier normalization, upload API | 0 / 5 |
+| 2 — Data Ingestion | 7–11 | Excel/CSV parse, header mapping, validation, tier normalization, upload API | 1 / 5 |
 | 3 — Enrichment Pipeline | 12–21 | 5 enrichment sources, dedup cache, merger, LLM normalization, async Celery jobs | 0 / 10 |
 | 4 — Embedding & Vector Storage | 22–25 | Embedding generation, pgvector upsert, event-scoped similarity search | 0 / 4 |
 | 5 — Matching Engine | 26–33 | Scorers, rule engine, LLM reasoning (JSON mode), bidirectional enforcement, cost estimate | 0 / 8 |

@@ -52,6 +52,7 @@ class Participant(Base):
     designation: Mapped[str | None] = mapped_column(String(255))
     website: Mapped[str | None] = mapped_column(String(500))
     linkedin_url: Mapped[str | None] = mapped_column(String(500))
+    phone: Mapped[str | None] = mapped_column(String(50))
 
     # Segmentation
     sector: Mapped[str | None] = mapped_column(String(255))
@@ -65,6 +66,11 @@ class Participant(Base):
     # Matchmaking intent — verbatim from Excel, never modified by LLM
     looking_for: Mapped[str | None] = mapped_column(Text)
     offerings: Mapped[str | None] = mapped_column(Text)
+
+    # Supplementary matchmaking signal — distinct from looking_for/offerings above,
+    # not verbatim-protected, not modified by LLM normalization either.
+    ideal_connection: Mapped[str | None] = mapped_column(Text)
+    biggest_opportunity: Mapped[str | None] = mapped_column(Text)
 
     # Pipeline state
     enrichment_status: Mapped[str] = mapped_column(
@@ -80,6 +86,10 @@ class Participant(Base):
 
     # Normalized output from LLM enrichment step
     structured_profile: Mapped[dict | None] = mapped_column(JSON)
+
+    # Full original upload row (original header text -> raw cell value), so any
+    # organizer-specific question with no dedicated column is never lost.
+    raw_source_data: Mapped[dict | None] = mapped_column(JSON)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now(), nullable=False
