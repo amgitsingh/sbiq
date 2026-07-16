@@ -3,6 +3,7 @@ from pydantic import BaseModel, ConfigDict
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.models.enrichment_job import EnrichmentJob
 from app.models.event import Event
 from app.models.participant import EnrichmentStatus, Participant
 from app.services.ingestion import run_ingestion_pipeline
@@ -52,6 +53,28 @@ class UploadSummary(BaseModel):
 class EnrichmentTriggerResult(BaseModel):
     event_id: int
     dispatched: int
+
+
+class SourceStatusOut(BaseModel):
+    source: str
+    status: str
+    error_message: str | None = None
+
+
+class ParticipantEnrichmentStatusOut(BaseModel):
+    participant_id: int
+    name: str
+    enrichment_status: str
+    sources: list[SourceStatusOut]
+
+
+class EnrichmentStatusSummary(BaseModel):
+    total: int
+    pending: int
+    enriching: int
+    done: int
+    failed: int
+    participants: list[ParticipantEnrichmentStatusOut]
 
 
 def _get_event_or_404(event_id: int, db: Session) -> Event:
@@ -134,5 +157,61 @@ def trigger_enrichment(event_id: int, db: Session = Depends(get_db)) -> Enrichme
     process the dispatched jobs.
     """
     _get_event_or_404(event_id, db)
-    result = batch_enrich_event(event_id)
+    # Celery's @task(bind=True) auto-supplies `self` at runtime (Task.__call__
+    # binds the task instance), but its type stubs treat the decorator as
+    # identity-preserving, so Pylance still sees the original (self, event_id)
+    # signature and misreads this single-argument call as missing event_id.
+    result = batch_enrich_event(event_id)  # type: ignore[call-arg]
     return EnrichmentTriggerResult(**result)
+
+
+@router.get("/{event_id}/enrichment-status", response_model=EnrichmentStatusSummary)
+def get_enrichment_status(event_id: int, db: Session = Depends(get_db)) -> EnrichmentStatusSummary:
+    """Per-participant enrichment status with a per-source breakdown, plus
+    aggregate counts. If a participant's enrichment ran more than once
+    (e.g. a Celery retry after a failed LLM normalization), only the most
+    recent EnrichmentJob row per source is shown - earlier rows from prior
+    attempts stay in the DB but aren't surfaced here.
+    """
+    _get_event_or_404(event_id, db)
+
+    participants = db.query(Participant).filter(Participant.event_id == event_id).all()
+    participant_ids = [p.id for p in participants]
+
+    jobs = (
+        db.query(EnrichmentJob)
+        .filter(EnrichmentJob.participant_id.in_(participant_ids))
+        .order_by(EnrichmentJob.created_at)
+        .all()
+    )
+
+    latest_job: dict[tuple[int, str], EnrichmentJob] = {}
+    for job in jobs:
+        latest_job[(job.participant_id, job.source)] = job
+
+    counts = {"pending": 0, "enriching": 0, "done": 0, "failed": 0}
+    participants_out = []
+    for p in participants:
+        counts[p.enrichment_status] += 1
+        sources = [
+            SourceStatusOut(source=source, status=job.status, error_message=job.error_message)
+            for (participant_id, source), job in latest_job.items()
+            if participant_id == p.id
+        ]
+        participants_out.append(
+            ParticipantEnrichmentStatusOut(
+                participant_id=p.id,
+                name=p.name,
+                enrichment_status=p.enrichment_status,
+                sources=sources,
+            )
+        )
+
+    return EnrichmentStatusSummary(
+        total=len(participants),
+        pending=counts["pending"],
+        enriching=counts["enriching"],
+        done=counts["done"],
+        failed=counts["failed"],
+        participants=participants_out,
+    )
