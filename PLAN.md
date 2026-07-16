@@ -204,7 +204,48 @@ Frontend and admin panel are handled separately. This plan covers backend only.
 
 | | | |  |
 |---|---|---|---|
-| 19 | **LLM normalization → structured JSON profile** | Send the merged enrichment context to the LLM with JSON mode enforced. The prompt instructs the LLM to: fill all profile schema fields from available context, infer missing fields where reasonable (e.g., funding stage mentioned in a news article), write `company.summary` as a synthesis of all sources, and **never modify `person.looking_for` or `person.offerings`** — copy them verbatim from the Excel section of the context. Validate the LLM response against the profile schema and retry once on validation failure. | `pending` |
+| 19 | **LLM normalization → structured JSON profile** | Send the merged enrichment context to the LLM with JSON mode enforced. The prompt instructs the LLM to: fill all profile schema fields from available context, infer missing fields where reasonable (e.g., funding stage mentioned in a news article), write `company.summary` as a synthesis of all sources, and **never modify `person.looking_for` or `person.offerings`** — copy them verbatim from the Excel section of the context. Validate the LLM response against the profile schema and retry once on validation failure. | `done` |
+
+> Built 3 files: `app/services/ai_client.py` (the model-agnostic LLM wrapper
+> CLAUDE.md specifies — thin `openai` SDK wrapper pointed at
+> `AI_BASE_URL`/`AI_API_KEY`/`AI_MODEL`, deliberately placed outside
+> `enrichment/` since Task 22 embeddings and the Phase 5 reasoning step will
+> reuse it too; uses portable `response_format={"type": "json_object"}` rather
+> than OpenAI-only strict `json_schema` mode, to stay provider-agnostic);
+> `app/services/enrichment/profile_schema.py` (Pydantic `PersonProfile` /
+> `CompanyProfile` / `StructuredProfile`, mirroring CLAUDE.md's shape exactly,
+> every field optional/defaulted given how sparse real participant data is);
+> `app/services/enrichment/llm_normalizer.py` (`normalize_participant_profile`).
+>
+> **Verbatim guarantee is enforced in code, not just the prompt** — after
+> schema validation, `person.looking_for`/`person.offerings` are unconditionally
+> overwritten with the exact values passed in by the caller (not re-parsed out
+> of the merged text), since a prompt instruction alone isn't a strong enough
+> guarantee for a "confirmed architecture decision." Retry-once covers *any*
+> failure in the call→parse→validate chain (bad JSON, schema mismatch, or an
+> `ai_client` API error) — a transient API failure gets the same single retry a
+> bad response does. A second failure raises `ProfileNormalizationError` rather
+> than degrading to an empty profile, since — unlike the 5 enrichment sources —
+> this step isn't optional; Task 20 should catch this specifically and mark
+> that participant's `enrichment_status = failed`.
+>
+> **Open decision:** the per-call response token cap (`MAX_RESPONSE_TOKENS =
+> 1500`) is a fixed constant, intentionally not wired to
+> `AI_MAX_TOKENS_PER_RUN` — that setting is a whole-run cost cap (per
+> `.env.example`), not a single-call limit. Actual run-level budget enforcement
+> is still unbuilt and belongs to the "Cost visibility" architecture decision
+> (a Phase 5-ish cost estimator), not this task.
+>
+> Verified against real OpenAI calls (`gpt-4o`, real `AI_API_KEY`) using the
+> two merged contexts from the Task 18 demo run: the sparse Dutch participant
+> produced a mostly-null company profile with no hallucinated fields; the
+> OpenAI/Alex Smith participant produced a correctly populated profile
+> (industry, employee count, recent_news, a genuine synthesized summary) with
+> `looking_for`/`offerings` preserved exactly. Also verified via a monkeypatched
+> `chat_json`: a first-call-bad-JSON/second-call-valid case triggers exactly
+> one retry and returns the correct result; an always-failing case raises
+> `ProfileNormalizationError` after exactly 2 attempts.
+
 | 20 | **Celery enrichment tasks** | `enrich_participant_task(participant_id)`: run all 5 enrichment sources in order → merge → LLM normalize → store the resulting structured JSON on the participant record → update each `EnrichmentJob` row with status and error if any. `batch_enrich_event_task(event_id)`: fan out `enrich_participant_task` for all participants in the event, checking the company deduplication cache before dispatching company-level calls. | `pending` |
 
 > **Open decision (raised 2026-07-15, resolve when building this task):** CLAUDE.md's
@@ -284,7 +325,7 @@ Task status: `pending` → `done` as each task is completed.
 |---|---|---|---|
 | 1 — Foundation | 1–6 | FastAPI scaffold, models, Alembic, Celery + Redis, pgvector schema | 6 / 6 |
 | 2 — Data Ingestion | 7–11 | Excel/CSV parse, header mapping, validation, tier normalization, upload API | 5 / 5 |
-| 3 — Enrichment Pipeline | 12–21 | 5 enrichment sources, dedup cache, merger, LLM normalization, async Celery jobs | 7 / 10 |
+| 3 — Enrichment Pipeline | 12–21 | 5 enrichment sources, dedup cache, merger, LLM normalization, async Celery jobs | 8 / 10 |
 | 4 — Embedding & Vector Storage | 22–25 | Embedding generation, pgvector upsert, event-scoped similarity search | 0 / 4 |
 | 5 — Matching Engine | 26–33 | Scorers, rule engine, LLM reasoning (JSON mode), bidirectional enforcement, cost estimate | 0 / 8 |
 | 6 — Export | 34–35 | Excel/CSV download with matches + reasoning bullets | 0 / 2 |
