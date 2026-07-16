@@ -1,3 +1,6 @@
+import logging
+import time
+
 from sqlalchemy.orm import Session
 
 from app.core.database import session_scope
@@ -11,6 +14,17 @@ from app.services.enrichment.llm_normalizer import (
 )
 from app.services.enrichment.merger import build_enrichment_context
 from app.workers.celery_app import celery_app
+
+logger = logging.getLogger(__name__)
+
+# One extra normalization attempt, on top of llm_normalizer's own internal
+# retry-once, after a short delay to let a transient issue (e.g. a rate
+# limit) clear - reusing the already-computed merged_context, never
+# re-running the 5 sources. Previously this was a Celery-level
+# autoretry_for(ProfileNormalizationError) on the whole task, which redid all
+# 5 sources (and wrote 5 redundant EnrichmentJob rows) just to retry the one
+# step that actually failed.
+EXTRA_NORMALIZATION_RETRY_DELAY_SECONDS = 15
 
 
 def _record_job(
@@ -34,13 +48,26 @@ def _record_job(
     db.commit()
 
 
+def _normalize_with_one_extra_retry(merged_context: str, *, looking_for: str | None, offerings: str | None) -> dict:
+    """Call normalize_participant_profile, and if it still fails (both of its
+    own internal attempts exhausted), wait briefly and try once more before
+    giving up. Never re-runs the 5 sources - merged_context is already built.
+    """
+    try:
+        return normalize_participant_profile(merged_context, looking_for=looking_for, offerings=offerings)
+    except ProfileNormalizationError as first_error:
+        logger.warning(
+            f"Normalization failed, retrying once more after "
+            f"{EXTRA_NORMALIZATION_RETRY_DELAY_SECONDS}s: {first_error}"
+        )
+        time.sleep(EXTRA_NORMALIZATION_RETRY_DELAY_SECONDS)
+        return normalize_participant_profile(merged_context, looking_for=looking_for, offerings=offerings)
+
+
 @celery_app.task(
     name="app.workers.enrichment_tasks.enrich_participant",
     bind=True,
     queue="enrichment",
-    max_retries=3,
-    default_retry_delay=60,
-    autoretry_for=(ProfileNormalizationError,),
 )
 def enrich_participant(self, participant_id: int) -> dict:
     """Run the full 5-source enrichment pipeline for a single participant."""
@@ -78,7 +105,7 @@ def enrich_participant(self, participant_id: int) -> dict:
         )
 
         try:
-            profile = normalize_participant_profile(
+            profile = _normalize_with_one_extra_retry(
                 merged_context,
                 looking_for=participant.looking_for,
                 offerings=participant.offerings,

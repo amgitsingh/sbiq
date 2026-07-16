@@ -287,6 +287,18 @@ Frontend and admin panel are handled separately. This plan covers backend only.
 > the model's own training knowledge). Retry-once and the toggle-off fallback
 > (plain `chat_json`, unchanged) both still verified working.
 
+> **Bug found via real usage (a 17-participant run produced 228 `EnrichmentJob`
+> rows instead of the expected 102):** `enrich_participant`'s Celery-level
+> `autoretry_for=(ProfileNormalizationError,)` retried the *entire* task —
+> re-running all 5 sources and re-writing all 6 job rows — just to retry the one
+> step that had actually failed. Fixed by removing the Celery-level retry
+> entirely and adding one bounded extra attempt inside the task itself
+> (`_normalize_with_one_extra_retry`, 15s delay), reusing the already-built
+> merged context — the 5 sources now run exactly once per participant no
+> matter how many normalization attempts it takes. Verified: a
+> permanently-failing case and a fails-once-then-succeeds case both end with
+> exactly 6 job rows (not 12).
+
 | | | |  |
 |---|---|---|---|
 | 21 | **Enrichment status API endpoint** | `GET /events/{id}/enrichment-status` — return per-participant enrichment status (pending / enriching / done / failed) with a per-source breakdown for each participant. Include aggregate counts: total participants, enriched, failed, and pending. Used by the frontend to poll enrichment progress in real time. | `done` |
