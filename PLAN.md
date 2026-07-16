@@ -176,7 +176,34 @@ Frontend and admin panel are handled separately. This plan covers backend only.
 
 | | | |  |
 |---|---|---|---|
-| 18 | **Raw enrichment data merger** | Combine outputs from all 5 enrichment sources into a single structured context string. Prefix each section clearly (e.g., `=== WEBSITE ===`, `=== TAVILY ===`, `=== NEWS ===`, `=== CRUNCHBASE ===`, `=== LINKEDIN ===`). Prepend the original Excel fields (name, designation, looking_for, offerings) verbatim at the top. This merged block is the input to the LLM normalization step. | `pending` |
+| 18 | **Raw enrichment data merger** | Combine outputs from all 5 enrichment sources into a single structured context string. Prefix each section clearly (e.g., `=== WEBSITE ===`, `=== TAVILY ===`, `=== NEWS ===`, `=== CRUNCHBASE ===`, `=== LINKEDIN ===`). Prepend the original Excel fields (name, designation, looking_for, offerings) verbatim at the top. This merged block is the input to the LLM normalization step. | `done` |
+
+> Built `app/services/enrichment/merger.py` — `build_enrichment_context(...)`
+> takes plain keyword args (participant fields + the Task 17 company
+> enrichment dict + the Task 16 LinkedIn dict), not an ORM object, keeping this
+> layer decoupled from the DB same as every other enrichment module. Empty
+> sections are omitted entirely rather than kept as a "no data" placeholder —
+> an absent section already reads as "unknown" to the LLM, and given how
+> sparse the real sample data is (most sources return nothing for most
+> participants), skipping empty sections keeps prompt size and token cost down
+> for no loss of information.
+>
+> **Scope extension:** also folded in `ideal_connection` and
+> `biggest_opportunity` — the two extra columns added in the Task 3 schema
+> refinement, after CLAUDE.md's original enrichment spec was written. They're
+> real free-text signal from the same Excel row with no other consumer, so
+> they're included as extra participant context (non-verbatim, same as every
+> enrichment section) rather than left unused.
+>
+> Verified with two synthetic cases: an all-sparse participant (only a website
+> snippet, everything else empty/None) produces a two-section output with no
+> empty headers; a fully-populated participant produces all 6 sections
+> (participant + 5 sources) correctly labeled and formatted, including
+> Crunchbase's dict fields and LinkedIn's dict fields each rendered as
+> `Label: value` lines.
+
+| | | |  |
+|---|---|---|---|
 | 19 | **LLM normalization → structured JSON profile** | Send the merged enrichment context to the LLM with JSON mode enforced. The prompt instructs the LLM to: fill all profile schema fields from available context, infer missing fields where reasonable (e.g., funding stage mentioned in a news article), write `company.summary` as a synthesis of all sources, and **never modify `person.looking_for` or `person.offerings`** — copy them verbatim from the Excel section of the context. Validate the LLM response against the profile schema and retry once on validation failure. | `pending` |
 | 20 | **Celery enrichment tasks** | `enrich_participant_task(participant_id)`: run all 5 enrichment sources in order → merge → LLM normalize → store the resulting structured JSON on the participant record → update each `EnrichmentJob` row with status and error if any. `batch_enrich_event_task(event_id)`: fan out `enrich_participant_task` for all participants in the event, checking the company deduplication cache before dispatching company-level calls. | `pending` |
 
@@ -257,7 +284,7 @@ Task status: `pending` → `done` as each task is completed.
 |---|---|---|---|
 | 1 — Foundation | 1–6 | FastAPI scaffold, models, Alembic, Celery + Redis, pgvector schema | 6 / 6 |
 | 2 — Data Ingestion | 7–11 | Excel/CSV parse, header mapping, validation, tier normalization, upload API | 5 / 5 |
-| 3 — Enrichment Pipeline | 12–21 | 5 enrichment sources, dedup cache, merger, LLM normalization, async Celery jobs | 6 / 10 |
+| 3 — Enrichment Pipeline | 12–21 | 5 enrichment sources, dedup cache, merger, LLM normalization, async Celery jobs | 7 / 10 |
 | 4 — Embedding & Vector Storage | 22–25 | Embedding generation, pgvector upsert, event-scoped similarity search | 0 / 4 |
 | 5 — Matching Engine | 26–33 | Scorers, rule engine, LLM reasoning (JSON mode), bidirectional enforcement, cost estimate | 0 / 8 |
 | 6 — Export | 34–35 | Excel/CSV download with matches + reasoning bullets | 0 / 2 |
