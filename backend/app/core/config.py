@@ -29,6 +29,12 @@ class Settings(BaseSettings):
     # ever points at a different provider.
     ENABLE_LLM_WEB_SEARCH: bool = True
 
+    # Cross-event enrichment reuse - if the same email was already enriched
+    # recently (any event), reuse that structured profile instead of
+    # re-running the 5 sources + LLM normalization from scratch.
+    ENABLE_ENRICHMENT_REUSE: bool = True
+    ENRICHMENT_REUSE_MAX_AGE_DAYS: int = 30
+
     # Supabase / database
     SUPABASE_URL: str = ""
     SUPABASE_KEY: str = ""

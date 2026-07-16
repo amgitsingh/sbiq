@@ -1,3 +1,4 @@
+from app.models.enriched_profile import EnrichedProfile
 from app.models.enrichment_job import EnrichmentJob, EnrichmentSource, JobStatus
 from app.models.event import Event, EventStatus
 from app.models.match import Match, MatchStatus
@@ -22,4 +23,5 @@ __all__ = [
     "EnrichmentSource",
     "JobStatus",
     "ParticipantEmbedding",
+    "EnrichedProfile",
 ]

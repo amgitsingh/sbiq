@@ -1,8 +1,11 @@
+import copy
 import logging
 import time
+from datetime import datetime
 
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.core.database import session_scope
 from app.models.enrichment_job import EnrichmentJob, EnrichmentSource, JobStatus
 from app.models.participant import EnrichmentStatus, Participant
@@ -13,6 +16,11 @@ from app.services.enrichment.llm_normalizer import (
     normalize_participant_profile,
 )
 from app.services.enrichment.merger import build_enrichment_context
+from app.services.enrichment.profile_reuse import (
+    get_reusable_profile,
+    normalize_email,
+    upsert_enriched_profile,
+)
 from app.workers.celery_app import celery_app
 
 logger = logging.getLogger(__name__)
@@ -76,6 +84,31 @@ def enrich_participant(self, participant_id: int) -> dict:
         if participant is None:
             raise ValueError(f"Participant {participant_id} not found")
 
+        if settings.ENABLE_ENRICHMENT_REUSE:
+            cached = get_reusable_profile(db, participant.email)
+            if cached is not None:
+                age_days = (datetime.utcnow() - cached.last_enriched_at).days
+                # Deep copy - never mutate cached.structured_profile itself,
+                # that dict belongs to the EnrichedProfile row.
+                profile = copy.deepcopy(cached.structured_profile)
+                profile["person"]["looking_for"] = participant.looking_for
+                profile["person"]["offerings"] = participant.offerings
+
+                _record_job(
+                    db,
+                    participant.id,
+                    EnrichmentSource.reused_from_cache,
+                    {
+                        "email": normalize_email(participant.email),
+                        "last_enriched_at": cached.last_enriched_at.isoformat(),
+                        "age_days": age_days,
+                    },
+                )
+                participant.structured_profile = profile
+                participant.enrichment_status = EnrichmentStatus.done
+                db.commit()
+                return {"participant_id": participant_id, "status": "done", "reused": True}
+
         participant.enrichment_status = EnrichmentStatus.enriching
         db.commit()
 
@@ -127,6 +160,8 @@ def enrich_participant(self, participant_id: int) -> dict:
         participant.structured_profile = profile
         participant.enrichment_status = EnrichmentStatus.done
         db.commit()
+
+        upsert_enriched_profile(db, participant.email, profile)
 
         return {"participant_id": participant_id, "status": "done"}
 

@@ -21,6 +21,7 @@ class EnrichmentSource(str, enum.Enum):
     crunchbase = "crunchbase"
     linkedin = "linkedin"
     llm_normalization = "llm_normalization"
+    reused_from_cache = "reused_from_cache"
 
 
 class JobStatus(str, enum.Enum):

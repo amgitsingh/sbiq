@@ -299,6 +299,25 @@ Frontend and admin panel are handled separately. This plan covers backend only.
 > permanently-failing case and a fails-once-then-succeeds case both end with
 > exactly 6 job rows (not 12).
 
+> **Added outside the 40-task list: cross-event enrichment reuse, keyed by
+> email.** New `enriched_profiles` table (migration `0005`) + `profile_reuse.py`
+> — `enrich_participant` checks this first; if the same email was enriched
+> within `ENRICHMENT_REUSE_MAX_AGE_DAYS` (default 30), it reuses that profile
+> instead of re-running the 5 sources + LLM (writes one `reused_from_cache`
+> job row instead of 6), only overriding `looking_for`/`offerings` with this
+> event's own values — those two fields are per-event answers, never reused
+> even when the rest of the profile is. Toggle: `ENABLE_ENRICHMENT_REUSE`.
+>
+> **Bug found and fixed along the way (unrelated to reuse):** the LLM
+> occasionally wraps its JSON response in a ` ```json ` markdown fence despite
+> being told not to — more often observed with `ENABLE_LLM_WEB_SEARCH`'s
+> Responses API path — which `json.loads` can't parse, surfacing as a
+> `ProfileNormalizationError`. Fixed with `_strip_markdown_fence(...)` in
+> `llm_normalizer.py` before parsing. Verified live: reuse across two events
+> (zero source calls, correct per-event `looking_for`/`offerings`), a stale
+> cache correctly triggering a fresh re-run and bumping `last_enriched_at`,
+> and `ENABLE_ENRICHMENT_REUSE=false` bypassing the check entirely.
+
 | | | |  |
 |---|---|---|---|
 | 21 | **Enrichment status API endpoint** | `GET /events/{id}/enrichment-status` — return per-participant enrichment status (pending / enriching / done / failed) with a per-source breakdown for each participant. Include aggregate counts: total participants, enriched, failed, and pending. Used by the frontend to poll enrichment progress in real time. | `done` |
