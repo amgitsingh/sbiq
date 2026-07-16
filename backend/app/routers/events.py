@@ -6,6 +6,7 @@ from app.core.database import get_db
 from app.models.event import Event
 from app.models.participant import EnrichmentStatus, Participant
 from app.services.ingestion import run_ingestion_pipeline
+from app.workers.enrichment_tasks import batch_enrich_event
 
 router = APIRouter(prefix="/events", tags=["events"])
 
@@ -46,6 +47,11 @@ class UploadSummary(BaseModel):
     rejected: int
     unmapped_headers: list[str]
     rejected_details: list[dict]
+
+
+class EnrichmentTriggerResult(BaseModel):
+    event_id: int
+    dispatched: int
 
 
 def _get_event_or_404(event_id: int, db: Session) -> Event:
@@ -117,3 +123,16 @@ def upload_participants(
         unmapped_headers=result.unmapped_headers,
         rejected_details=result.rejected_details,
     )
+
+
+@router.post("/{event_id}/enrich", response_model=EnrichmentTriggerResult, status_code=202)
+def trigger_enrichment(event_id: int, db: Session = Depends(get_db)) -> EnrichmentTriggerResult:
+    """Dispatch enrichment for every participant in the event. A separate,
+    deliberate action rather than automatic on upload - enrichment spends real
+    Tavily/OpenAI credits, and an organizer may want to fix flagged rows first.
+    Requires a Celery worker consuming the 'enrichment' queue to actually
+    process the dispatched jobs.
+    """
+    _get_event_or_404(event_id, db)
+    result = batch_enrich_event(event_id)
+    return EnrichmentTriggerResult(**result)

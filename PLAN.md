@@ -267,6 +267,12 @@ Frontend and admin panel are handled separately. This plan covers backend only.
 > errored" from here. Only the `llm_normalization` row can be `status=failed`
 > with a real `error_message`, since that's the one step that raises.
 
+> **Added outside the 40-task list:** `POST /events/{id}/enrich` (`app/routers/events.py`)
+> — nothing previously called Task 20's Celery tasks, so enrichment couldn't be
+> triggered except from a Python shell. Open decision: a deliberate, separate
+> trigger rather than auto-firing on upload, since enrichment spends real
+> Tavily/OpenAI credits and an organizer may want to fix flagged rows first.
+
 | | | |  |
 |---|---|---|---|
 | 21 | **Enrichment status API endpoint** | `GET /events/{id}/enrichment-status` — return per-participant enrichment status (pending / enriching / done / failed) with a per-source breakdown for each participant. Include aggregate counts: total participants, enriched, failed, and pending. Used by the frontend to poll enrichment progress in real time. | `pending` |
