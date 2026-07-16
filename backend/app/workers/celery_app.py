@@ -36,5 +36,9 @@ celery_app.config_from_object(
     }
 )
 
-# Auto-discover tasks once the worker modules exist
-celery_app.autodiscover_tasks(["app.workers"])
+# autodiscover_tasks() only looks for a submodule literally named "tasks.py"
+# per Celery's Django-style convention - our modules are named
+# enrichment_tasks.py/matching_tasks.py, so it silently found nothing and no
+# task was ever registered. Import them explicitly instead so their
+# @celery_app.task decorators actually run.
+from app.workers import enrichment_tasks, matching_tasks  # noqa: E402,F401
