@@ -246,19 +246,26 @@ Frontend and admin panel are handled separately. This plan covers backend only.
 > one retry and returns the correct result; an always-failing case raises
 > `ProfileNormalizationError` after exactly 2 attempts.
 
-| 20 | **Celery enrichment tasks** | `enrich_participant_task(participant_id)`: run all 5 enrichment sources in order → merge → LLM normalize → store the resulting structured JSON on the participant record → update each `EnrichmentJob` row with status and error if any. `batch_enrich_event_task(event_id)`: fan out `enrich_participant_task` for all participants in the event, checking the company deduplication cache before dispatching company-level calls. | `pending` |
+| | | |  |
+|---|---|---|---|
+| 20 | **Celery enrichment tasks** | `enrich_participant_task(participant_id)`: run all 5 enrichment sources in order → merge → LLM normalize → store the resulting structured JSON on the participant record → update each `EnrichmentJob` row with status and error if any. `batch_enrich_event_task(event_id)`: fan out `enrich_participant_task` for all participants in the event, checking the company deduplication cache before dispatching company-level calls. | `done` |
 
-> **Open decision (raised 2026-07-15, resolve when building this task):** CLAUDE.md's
-> field-mapping table lists `company.website`'s fallback as "Tavily search," but as
-> currently scoped, Task 13 only returns raw search snippet text — it doesn't parse out
-> a URL. So today's simplest reading is: Tavily's snippets get merged into the LLM
-> context (Task 18/19) and the **LLM** infers `company.website` from whatever's
-> mentioned there, with no code-level chain back into Task 12's scraper. The richer
-> alternative — explicitly extract a URL from Tavily's results and re-invoke
-> `scrape_company_website()` on it before merging — would produce better profiles but
-> adds a real orchestration step not in any task's current spec. Deferred: 100% of
-> participants in the real sample data have a blank `website`, so this doesn't block
-> progress; revisit if enrichment output quality on Tavily-only companies proves weak.
+> Implemented the two `app/workers/enrichment_tasks.py` stubs (`enrich_participant`,
+> `batch_enrich_event`). Added `app.core.database.session_scope()` — a
+> `@contextmanager` twin of `get_db()` for Celery tasks, which can't use a FastAPI
+> generator dependency. Added `EnrichmentSource.llm_normalization` so the
+> normalization step's success/failure is a 6th tracked `EnrichmentJob` row, not
+> just the 5 raw sources — otherwise a `ProfileNormalizationError` would be
+> invisible to Task 21's status endpoint. Wired `autoretry_for=(ProfileNormalizationError,)`
+> onto `enrich_participant`'s existing (previously-unused) `max_retries=3,
+> default_retry_delay=60`.
+>
+> **Open limitation:** the 5 raw-source `EnrichmentJob` rows are always
+> `status=done` — Tasks 12–16 were deliberately built to never raise (every
+> failure mode already collapses to `None`/`[]`/`{}` inside each source), so this
+> task genuinely cannot distinguish "toggled off" from "no data found" from "it
+> errored" from here. Only the `llm_normalization` row can be `status=failed`
+> with a real `error_message`, since that's the one step that raises.
 
 | | | |  |
 |---|---|---|---|
@@ -325,7 +332,7 @@ Task status: `pending` → `done` as each task is completed.
 |---|---|---|---|
 | 1 — Foundation | 1–6 | FastAPI scaffold, models, Alembic, Celery + Redis, pgvector schema | 6 / 6 |
 | 2 — Data Ingestion | 7–11 | Excel/CSV parse, header mapping, validation, tier normalization, upload API | 5 / 5 |
-| 3 — Enrichment Pipeline | 12–21 | 5 enrichment sources, dedup cache, merger, LLM normalization, async Celery jobs | 8 / 10 |
+| 3 — Enrichment Pipeline | 12–21 | 5 enrichment sources, dedup cache, merger, LLM normalization, async Celery jobs | 9 / 10 |
 | 4 — Embedding & Vector Storage | 22–25 | Embedding generation, pgvector upsert, event-scoped similarity search | 0 / 4 |
 | 5 — Matching Engine | 26–33 | Scorers, rule engine, LLM reasoning (JSON mode), bidirectional enforcement, cost estimate | 0 / 8 |
 | 6 — Export | 34–35 | Excel/CSV download with matches + reasoning bullets | 0 / 2 |

@@ -6,6 +6,7 @@ from typing import Any
 def build_enrichment_context(
     *,
     name: str | None,
+    company: str | None,
     designation: str | None,
     looking_for: str | None,
     offerings: str | None,
@@ -33,10 +34,21 @@ def build_enrichment_context(
     no other consumer, so they're included here as extra participant context
     for the LLM to draw on - same non-verbatim treatment as every enrichment
     section, never a field Task 19 must preserve exactly.
+
+    company is stated explicitly here as a labeled Excel fact, not left for
+    the LLM to infer from prose - live testing surfaced a real failure mode
+    without it: for a participant with no "Company: ..." line, the LLM
+    misread the "=== TAVILY ===" section header itself as the company name.
     """
     sections = [
         _participant_section(
-            name, designation, looking_for, offerings, ideal_connection, biggest_opportunity
+            name,
+            company,
+            designation,
+            looking_for,
+            offerings,
+            ideal_connection,
+            biggest_opportunity,
         )
     ]
 
@@ -61,6 +73,7 @@ def build_enrichment_context(
 
 def _participant_section(
     name: str | None,
+    company: str | None,
     designation: str | None,
     looking_for: str | None,
     offerings: str | None,
@@ -69,6 +82,7 @@ def _participant_section(
 ) -> str:
     fields = {
         "Name": name,
+        "Company": company,
         "Designation": designation,
         "Looking for": looking_for,
         "Offerings": offerings,

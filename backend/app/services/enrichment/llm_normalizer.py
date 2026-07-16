@@ -48,8 +48,9 @@ Rules:
 empty list for anything not mentioned anywhere - never invent facts.
 - "company.summary" should be a short synthesis of everything known about the \
 company, in your own words.
-- Prefer the participant's own Excel-submitted values for "person.name" and \
-"person.designation" over any conflicting value from LinkedIn or elsewhere.
+- Prefer the participant's own Excel-submitted values for "person.name", \
+"person.designation", and "company.name" over any conflicting value from \
+LinkedIn, web search, or elsewhere.
 - Copy "person.looking_for" and "person.offerings" through EXACTLY as given in the \
 participant's Excel section, character for character, with no rewording, \
 summarizing, or translation. Do not use other sections to fill these two fields in \

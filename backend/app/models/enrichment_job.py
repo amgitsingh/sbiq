@@ -20,6 +20,7 @@ class EnrichmentSource(str, enum.Enum):
     tavily_news = "tavily_news"
     crunchbase = "crunchbase"
     linkedin = "linkedin"
+    llm_normalization = "llm_normalization"
 
 
 class JobStatus(str, enum.Enum):
