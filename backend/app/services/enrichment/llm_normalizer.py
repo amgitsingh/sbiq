@@ -3,7 +3,8 @@ from __future__ import annotations
 import json
 import logging
 
-from app.services.ai_client import chat_json
+from app.core.config import settings
+from app.services.ai_client import chat_json, chat_json_web_search
 from app.services.enrichment.profile_schema import StructuredProfile
 
 logger = logging.getLogger(__name__)
@@ -46,6 +47,10 @@ Synthesize this into a single JSON object with exactly this shape:
 Rules:
 - Fill every field you can reasonably support from the given context. Use null or an \
 empty list for anything not mentioned anywhere - never invent facts.
+- If the given context is too thin to fill in important company fields (industry, \
+products, services, summary, etc.), and you have web search available, search the \
+web for the company (and person, if that helps) to fill the gaps. Prefer the given \
+context over search results whenever they overlap or conflict.
 - "company.summary" should be a short synthesis of everything known about the \
 company, in your own words.
 - Prefer the participant's own Excel-submitted values for "person.name", \
@@ -86,7 +91,10 @@ def normalize_participant_profile(
 
     for attempt in range(1, MAX_ATTEMPTS + 1):
         try:
-            raw = chat_json(SYSTEM_PROMPT, merged_context, max_tokens=MAX_RESPONSE_TOKENS)
+            if settings.ENABLE_LLM_WEB_SEARCH:
+                raw = chat_json_web_search(SYSTEM_PROMPT, merged_context, max_tokens=MAX_RESPONSE_TOKENS)
+            else:
+                raw = chat_json(SYSTEM_PROMPT, merged_context, max_tokens=MAX_RESPONSE_TOKENS)
             parsed = json.loads(raw)
             profile = StructuredProfile.model_validate(parsed)
         except Exception as e:

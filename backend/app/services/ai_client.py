@@ -39,3 +39,33 @@ def chat_json(system_prompt: str, user_prompt: str, *, max_tokens: int) -> str:
         max_tokens=max_tokens,
     )
     return response.choices[0].message.content or "{}"
+
+
+def chat_json_web_search(system_prompt: str, user_prompt: str, *, max_tokens: int) -> str:
+    """Like chat_json, but lets the model autonomously search the web via
+    OpenAI's Responses API hosted `web_search` tool - one call does both the
+    search (OpenAI runs it, not us) and the final synthesis.
+
+    OpenAI-specific - unlike chat_json, this is not portable to a generic
+    OpenAI-compatible endpoint. Callers should gate this behind
+    settings.ENABLE_LLM_WEB_SEARCH so a non-OpenAI AI_BASE_URL can fall back
+    to chat_json instead.
+
+    No server-enforced JSON mode here (uncertain this composes cleanly with
+    the web_search tool) - relies on the prompt instructing JSON-only output,
+    same as the caller's existing json.loads + schema validation + retry-once
+    safety net.
+
+    Raises on any API-level failure, same as chat_json.
+    """
+    client = get_client()
+    response = client.responses.create(
+        model=settings.AI_MODEL,
+        input=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ],
+        tools=[{"type": "web_search"}],
+        max_output_tokens=max_tokens,
+    )
+    return response.output_text or "{}"

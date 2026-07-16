@@ -273,6 +273,20 @@ Frontend and admin panel are handled separately. This plan covers backend only.
 > trigger rather than auto-firing on upload, since enrichment spends real
 > Tavily/OpenAI credits and an organizer may want to fix flagged rows first.
 
+> **Added outside the 40-task list:** LLM normalization can now search the web
+> itself, via OpenAI's Responses API hosted `web_search` tool
+> (`ai_client.chat_json_web_search`, one call — search + synthesis together, not
+> two round trips), toggled by `ENABLE_LLM_WEB_SEARCH`. Prompted by real testing
+> showing 4 of the 5 sources routinely return nothing for small companies.
+> **Open decision:** this is OpenAI-specific, not portable to another
+> `AI_BASE_URL` provider — turn the toggle off if one is used. Required bumping
+> `openai` 1.57.0 → 1.109.1 (the old version predates the Responses API).
+> Verified live: same sparse Pensioenvisie case that exposed the gap now returns
+> `website`, `employee_count`, and `headquarters` that no prior source ever
+> found, confirmed via an actual `web_search_call` in the response (not just
+> the model's own training knowledge). Retry-once and the toggle-off fallback
+> (plain `chat_json`, unchanged) both still verified working.
+
 | | | |  |
 |---|---|---|---|
 | 21 | **Enrichment status API endpoint** | `GET /events/{id}/enrichment-status` — return per-participant enrichment status (pending / enriching / done / failed) with a per-source breakdown for each participant. Include aggregate counts: total participants, enriched, failed, and pending. Used by the frontend to poll enrichment progress in real time. | `done` |

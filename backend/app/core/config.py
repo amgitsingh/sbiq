@@ -23,6 +23,12 @@ class Settings(BaseSettings):
     ENABLE_CRUNCHBASE: bool = False
     ENABLE_LINKEDIN_SCRAPER: bool = True
 
+    # LLM normalization can search the web itself (OpenAI Responses API hosted
+    # tool) to fill gaps the 5 sources above missed. OpenAI-specific - not a
+    # generic "OpenAI-compatible" capability, so turn this off if AI_BASE_URL
+    # ever points at a different provider.
+    ENABLE_LLM_WEB_SEARCH: bool = True
+
     # Supabase / database
     SUPABASE_URL: str = ""
     SUPABASE_KEY: str = ""
