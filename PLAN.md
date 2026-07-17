@@ -300,7 +300,7 @@ Frontend and admin panel are handled separately. This plan covers backend only.
 > exactly 6 job rows (not 12).
 
 > **Added outside the 40-task list: cross-event enrichment reuse, keyed by
-> email.** New `enriched_profiles` table (migration `0005`) + `profile_reuse.py`
+> email.** New `enriched_profiles` table (migration `0004`) + `profile_reuse.py`
 > — `enrich_participant` checks this first; if the same email was enriched
 > within `ENRICHMENT_REUSE_MAX_AGE_DAYS` (default 30), it reuses that profile
 > instead of re-running the 5 sources + LLM (writes one `reused_from_cache`
