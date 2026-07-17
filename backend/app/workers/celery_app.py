@@ -41,4 +41,4 @@ celery_app.config_from_object(
 # enrichment_tasks.py/matching_tasks.py, so it silently found nothing and no
 # task was ever registered. Import them explicitly instead so their
 # @celery_app.task decorators actually run.
-from app.workers import enrichment_tasks, matching_tasks  # noqa: E402,F401
+from app.workers import embedding_tasks, enrichment_tasks, matching_tasks  # noqa: E402,F401

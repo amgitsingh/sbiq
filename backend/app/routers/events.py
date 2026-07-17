@@ -7,7 +7,14 @@ from app.models.enrichment_job import EnrichmentJob
 from app.models.event import Event
 from app.models.participant import EnrichmentStatus, Participant
 from app.services.ingestion import run_ingestion_pipeline
+from app.workers.embedding_tasks import batch_embed_event
 from app.workers.enrichment_tasks import batch_enrich_event
+
+# Rough per-job wall-clock estimate for a single embedding API call
+# (OpenAI text-embedding-3-small round-trip) - used only to give the caller a
+# ballpark, not a scheduling guarantee. Actual throughput depends on Celery
+# worker concurrency, which this endpoint has no visibility into.
+ESTIMATED_SECONDS_PER_EMBEDDING_JOB = 3
 
 router = APIRouter(prefix="/events", tags=["events"])
 
@@ -75,6 +82,12 @@ class EnrichmentStatusSummary(BaseModel):
     done: int
     failed: int
     participants: list[ParticipantEnrichmentStatusOut]
+
+
+class EmbedTriggerResult(BaseModel):
+    event_id: int
+    dispatched: int
+    estimated_completion_seconds: int
 
 
 def _get_event_or_404(event_id: int, db: Session) -> Event:
@@ -214,4 +227,37 @@ def get_enrichment_status(event_id: int, db: Session = Depends(get_db)) -> Enric
         done=counts["done"],
         failed=counts["failed"],
         participants=participants_out,
+    )
+
+
+@router.post("/{event_id}/embed", response_model=EmbedTriggerResult, status_code=202)
+def trigger_embedding(event_id: int, db: Session = Depends(get_db)) -> EmbedTriggerResult:
+    """Dispatch embedding generation for every enriched participant in the
+    event. Callable only after enrichment has finished - rejects while any
+    participant is still 'pending' or 'enriching', since running this early
+    would just embed a partial set and silently miss the rest (there's no
+    automatic re-trigger once the remaining participants finish enriching).
+
+    In the normal flow this is redundant - enrich_participant already embeds
+    automatically (Task 23). This is the manual path: backfilling
+    participants enriched before that existed, or retrying ones whose
+    automatic embedding attempt failed and was swallowed.
+    """
+    _get_event_or_404(event_id, db)
+
+    statuses = [
+        s for (s,) in db.query(Participant.enrichment_status).filter(Participant.event_id == event_id).all()
+    ]
+    if not statuses:
+        raise HTTPException(status_code=400, detail="This event has no participants yet")
+    if any(s in (EnrichmentStatus.pending, EnrichmentStatus.enriching) for s in statuses):
+        raise HTTPException(status_code=400, detail="Enrichment is still in progress for this event")
+
+    # Same Pylance/Celery bind=True false positive as trigger_enrichment above.
+    result = batch_embed_event(event_id)  # type: ignore[call-arg]
+    dispatched = result["dispatched"]
+    return EmbedTriggerResult(
+        event_id=event_id,
+        dispatched=dispatched,
+        estimated_completion_seconds=dispatched * ESTIMATED_SECONDS_PER_EMBEDDING_JOB,
     )
