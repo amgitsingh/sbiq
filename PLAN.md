@@ -395,7 +395,7 @@ Frontend and admin panel are handled separately. This plan covers backend only.
 | 30 | **Bidirectional match enforcement** | After the LLM selects A→B: check if a match record from B to A already exists. If not, create the reverse record B→A with `is_bidirectional = True` and the same reasoning mirrored. Prevents duplicate pair creation in the case where both A and B independently selected each other through their own matching runs. | `done` |
 | 31 | **Pre-run cost estimator** | Before any matching run: count enriched participants in the event. Estimate embedding token cost (avg profile character length × participant count, converted to tokens, priced against `text-embedding-3-small` rate). Estimate LLM reasoning token cost (avg prompt size with candidates × participant count, priced against the configured model rate). Return a breakdown: embedding cost, LLM cost, total in USD. | `done` |
 | 32 | **Celery matching tasks** | `match_participant_task(participant_id, event_id)`: run similarity search → rule engine → LLM reasoning → store match records → enforce bidirectional. `batch_match_event_task(event_id)`: fan out `match_participant_task` for all embedded participants in the event, respecting tier-based processing order (sponsors dispatched first). Track matching progress per participant. | `done` |
-| 33 | **POST /events/{id}/match endpoint** | Trigger the matching run for an event. Validate that all participants have been embedded. Return the cost estimate and require a `confirm=true` query parameter to actually enqueue the batch job — prevents accidental runs. Enqueue `batch_match_event_task`. Return a job ID and estimated duration. | `pending` |
+| 33 | **POST /events/{id}/match endpoint** | Trigger the matching run for an event. Validate that all participants have been embedded. Return the cost estimate and require a `confirm=true` query parameter to actually enqueue the batch job — prevents accidental runs. Enqueue `batch_match_event_task`. Return a job ID and estimated duration. | `done` |
 
 > Task 26 built `app/services/matching/token_overlap.py` (`tokenize`,
 > `token_overlap_score`) - new `matching/` subpackage mirroring `enrichment/`'s
@@ -555,6 +555,31 @@ Frontend and admin panel are handled separately. This plan covers backend only.
 > `is_bidirectional=False`, both with real drafts) rather than duplicating -
 > exactly 2 rows for that pair throughout.
 
+> Task 33 added `POST /events/{id}/match` to `events.py`. Gates on the same
+> "not embedded yet" check as the reasoning behind `/embed`'s own gate, but
+> phrased as a hard reject naming the shortfall count, since matching without
+> embeddings would silently produce empty candidate pools rather than an
+> obvious error. Dispatches `batch_match_event` asynchronously via `.delay()`
+> and returns its real Celery task ID as `job_id` - a deliberate difference
+> from `/enrich` and `/embed`, which call their batch task directly and
+> return an immediate count instead; Task 33 explicitly asks for a job ID
+> back, which only a real async dispatch can honestly provide. Cost-gate
+> works as two calls to the same endpoint: without `?confirm=true` it's HTTP
+> 200 with just the cost breakdown and nothing dispatched (`job_id: null`);
+> with it, HTTP 202, a real dispatch, and a job ID. Live-verified through the
+> real API end-to-end: 400 for zero participants, 400 for enriched-but-not-
+> embedded (naming the count), a real embed run to clear that gate, 200/
+> preview mode with no dispatch, then 202/confirmed mode whose returned
+> `job_id` was confirmed to be the exact Celery task ID the worker log showed
+> processing - and the run itself produced a genuine mutual match between the
+> two test participants (both directions independently selected, both
+> `is_bidirectional=False`), consistent with Task 30's verified behavior.
+
+Phase 5 (Matching Engine) is now fully built: similarity search -> rule
+engine -> LLM reasoning -> bidirectional match storage -> cost-gated trigger,
+all live-verified against real Postgres, Redis, OpenAI, and Celery - nothing
+in this phase was verified against mocks alone.
+
 ---
 
 ## Phase 6 — Export & Output
@@ -590,7 +615,7 @@ Task status: `pending` → `done` as each task is completed.
 | 2 — Data Ingestion | 7–11 | Excel/CSV parse, header mapping, validation, tier normalization, upload API | 5 / 5 |
 | 3 — Enrichment Pipeline | 12–21 | 5 enrichment sources, dedup cache, merger, LLM normalization, async Celery jobs | 10 / 10 |
 | 4 — Embedding & Vector Storage | 22–25 | Embedding generation, pgvector upsert, event-scoped similarity search | 4 / 4 |
-| 5 — Matching Engine | 26–33 | Scorers, rule engine, LLM reasoning (JSON mode), bidirectional enforcement, cost estimate | 7 / 8 |
+| 5 — Matching Engine | 26–33 | Scorers, rule engine, LLM reasoning (JSON mode), bidirectional enforcement, cost estimate | 8 / 8 |
 | 6 — Export | 34–35 | Excel/CSV download with matches + reasoning bullets | 0 / 2 |
 | 7 — Testing & Deployment | 43–47 | Unit, integration, E2E tests, Railway + Supabase production deploy | 0 / 5 |
 

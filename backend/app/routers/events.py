@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFile, status
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy.orm import Session
 
@@ -6,15 +6,23 @@ from app.core.database import get_db
 from app.models.enrichment_job import EnrichmentJob
 from app.models.event import Event
 from app.models.participant import EnrichmentStatus, Participant
+from app.models.participant_embedding import ParticipantEmbedding
 from app.services.ingestion import run_ingestion_pipeline
+from app.services.matching.cost_estimator import estimate_matching_run_cost
 from app.workers.embedding_tasks import batch_embed_event
 from app.workers.enrichment_tasks import batch_enrich_event
+from app.workers.matching_tasks import batch_match_event
 
 # Rough per-job wall-clock estimate for a single embedding API call
 # (OpenAI text-embedding-3-small round-trip) - used only to give the caller a
 # ballpark, not a scheduling guarantee. Actual throughput depends on Celery
 # worker concurrency, which this endpoint has no visibility into.
 ESTIMATED_SECONDS_PER_EMBEDDING_JOB = 3
+
+# Rough per-job wall-clock estimate for one match_participant run (a free/local
+# rule-engine pass plus one real LLM reasoning call) - based on real observed
+# timings during Task 32's live verification (~1-7s depending on match count).
+ESTIMATED_SECONDS_PER_MATCH_JOB = 8
 
 router = APIRouter(prefix="/events", tags=["events"])
 
@@ -88,6 +96,22 @@ class EmbedTriggerResult(BaseModel):
     event_id: int
     dispatched: int
     estimated_completion_seconds: int
+
+
+class MatchCostBreakdown(BaseModel):
+    participant_count: int
+    matching_eligible_count: int
+    embedding_cost_usd: float
+    llm_cost_usd: float
+    total_cost_usd: float
+
+
+class MatchTriggerResult(BaseModel):
+    event_id: int
+    confirmed: bool
+    cost: MatchCostBreakdown
+    job_id: str | None = None
+    estimated_duration_seconds: int | None = None
 
 
 def _get_event_or_404(event_id: int, db: Session) -> Event:
@@ -260,4 +284,70 @@ def trigger_embedding(event_id: int, db: Session = Depends(get_db)) -> EmbedTrig
         event_id=event_id,
         dispatched=dispatched,
         estimated_completion_seconds=dispatched * ESTIMATED_SECONDS_PER_EMBEDDING_JOB,
+    )
+
+
+@router.post("/{event_id}/match", response_model=MatchTriggerResult)
+def trigger_matching(
+    event_id: int, response: Response, confirm: bool = False, db: Session = Depends(get_db)
+) -> MatchTriggerResult:
+    """Cost-gated trigger for a matching run, per CLAUDE.md's "estimated cost
+    shown before triggering matching run": called without `?confirm=true`,
+    this only returns the cost breakdown (HTTP 200, nothing dispatched) -
+    call it again with `?confirm=true` once you've reviewed the number to
+    actually enqueue the run (HTTP 202).
+
+    Requires every enriched participant to already be embedded (rejects
+    otherwise, naming the shortfall so the caller knows to run
+    POST /events/{id}/embed first) - matching without embeddings would just
+    silently produce empty candidate pools for everyone.
+
+    Dispatches batch_match_event asynchronously (unlike /enrich and /embed,
+    which call their batch task directly and return an immediate dispatched
+    count) - this task explicitly asks for a job ID back, so the caller can
+    look the run up later via Celery's result backend.
+    """
+    _get_event_or_404(event_id, db)
+
+    enriched = (
+        db.query(Participant)
+        .filter(Participant.event_id == event_id, Participant.enrichment_status == EnrichmentStatus.done)
+        .all()
+    )
+    if not enriched:
+        raise HTTPException(status_code=400, detail="No enriched participants in this event yet")
+
+    embedded_ids = {
+        pid
+        for (pid,) in db.query(ParticipantEmbedding.participant_id)
+        .filter(ParticipantEmbedding.event_id == event_id)
+        .all()
+    }
+    missing = [p.id for p in enriched if p.id not in embedded_ids]
+    if missing:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"{len(missing)} enriched participant(s) are not embedded yet - "
+                f"run POST /events/{event_id}/embed first"
+            ),
+        )
+
+    cost = MatchCostBreakdown(**estimate_matching_run_cost(db, event_id=event_id))
+
+    if not confirm:
+        response.status_code = status.HTTP_200_OK
+        return MatchTriggerResult(event_id=event_id, confirmed=False, cost=cost)
+
+    response.status_code = status.HTTP_202_ACCEPTED
+    # Celery's @task(bind=True) auto-supplies `self` at runtime - same Pylance
+    # false positive noted on the other trigger endpoints above, but .delay()
+    # is a real Task method the stubs do see correctly, so no ignore needed here.
+    async_result = batch_match_event.delay(event_id)
+    return MatchTriggerResult(
+        event_id=event_id,
+        confirmed=True,
+        cost=cost,
+        job_id=async_result.id,
+        estimated_duration_seconds=cost.matching_eligible_count * ESTIMATED_SECONDS_PER_MATCH_JOB,
     )
