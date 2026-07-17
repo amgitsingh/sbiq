@@ -392,7 +392,7 @@ Frontend and admin panel are handled separately. This plan covers backend only.
 | 27 | **Sector alignment + company size scorers** | Sector scorer: exact industry match = 1.0, adjacent sector (predefined adjacency map, e.g., fintech ↔ banking) = 0.5, unrelated = 0.0. Company size scorer: same bucket = 1.0, one bucket apart = 0.5, two or more apart = 0.0. Size buckets: 1–10, 11–50, 51–200, 201–1000, 1000+. Both return float 0–1. | `done` |
 | 28 | **Rule engine** | For each participant, take their similarity search candidates and apply composite scoring: `score = (token_overlap × 0.5) + (sector × 0.3) + (size × 0.2)`. Hard exclusions: same-company pairs (matched by normalized company name). Global deduplication: track all seen pairs in a set so A→B and B→A are not both processed. Return the top 5–10 ranked candidates per participant. Process sponsors first, then premium members, then others — so the best candidates are allocated to higher-priority participants first. | `done` |
 | 29 | **LLM matching reasoning service** | Send a participant's full structured JSON profile along with their 5–10 rule engine candidates to the LLM with JSON mode enforced. The prompt instructs the LLM to select the best 3–5 matches and return a structured response: `matches[].participant_id`, `matches[].rank`, `matches[].reasoning` (array of 3 bullet strings), `matches[].email_draft`, `matches[].linkedin_draft`. Validate the response schema. Retry once on invalid schema. Log input and output token counts per call. | `done` |
-| 30 | **Bidirectional match enforcement** | After the LLM selects A→B: check if a match record from B to A already exists. If not, create the reverse record B→A with `is_bidirectional = True` and the same reasoning mirrored. Prevents duplicate pair creation in the case where both A and B independently selected each other through their own matching runs. | `pending` |
+| 30 | **Bidirectional match enforcement** | After the LLM selects A→B: check if a match record from B to A already exists. If not, create the reverse record B→A with `is_bidirectional = True` and the same reasoning mirrored. Prevents duplicate pair creation in the case where both A and B independently selected each other through their own matching runs. | `done` |
 | 31 | **Pre-run cost estimator** | Before any matching run: count enriched participants in the event. Estimate embedding token cost (avg profile character length × participant count, converted to tokens, priced against `text-embedding-3-small` rate). Estimate LLM reasoning token cost (avg prompt size with candidates × participant count, priced against the configured model rate). Return a breakdown: embedding cost, LLM cost, total in USD. | `pending` |
 | 32 | **Celery matching tasks** | `match_participant_task(participant_id, event_id)`: run similarity search → rule engine → LLM reasoning → store match records → enforce bidirectional. `batch_match_event_task(event_id)`: fan out `match_participant_task` for all embedded participants in the event, respecting tier-based processing order (sponsors dispatched first). Track matching progress per participant. | `pending` |
 | 33 | **POST /events/{id}/match endpoint** | Trigger the matching run for an event. Validate that all participants have been embedded. Return the cost estimate and require a `confirm=true` query parameter to actually enqueue the batch job — prevents accidental runs. Enqueue `batch_match_event_task`. Return a job ID and estimated duration. | `pending` |
@@ -475,6 +475,27 @@ Frontend and admin panel are handled separately. This plan covers backend only.
 > fintech candidate with concrete, profile-grounded reasoning and skipped the
 > gardening one entirely, with real token counts logged. Also verified the
 > retry-then-raise path with a simulated hallucinated `participant_id`.
+>
+> Task 30 built `app/services/matching/match_writer.py` (`store_match`) - the
+> first Phase 5 task that actually writes to the `matches` table (Tasks
+> 26-29 were pure computation). Upserts on the ordered `(event_id,
+> participant_a_id, participant_b_id)` triple so a participant's matching run
+> can be safely re-run without duplicating rows, not just a plain insert.
+> `email_draft`/`linkedin_draft` are deliberately *not* mirrored onto the
+> auto-created reverse record (only `reasoning`, `rank`, and `score` are) -
+> drafts are personalized and directional (A's outreach *to* B), so copying
+> them onto B→A would put A's words in B's mouth; a genuine pair fills in
+> later if B's own run independently selects A. When that happens, the
+> existing placeholder is updated in place (content replaced,
+> `is_bidirectional` flipped back to `False` since it's no longer a mere
+> mirror) rather than creating a second row - this is the "A→B = B→A counted
+> once" duplicate prevention. Live-verified all three cases against the real
+> DB: a genuine A→B store correctly creates both the genuine row and a null-
+> draft mirrored placeholder; a later genuine B→A store from B's own run
+> upgrades that placeholder in place (content replaced, flag flipped) without
+> touching A→B's original row or creating a 3rd row; and re-running A→B's own
+> store again updates in place rather than duplicating - 2 rows in the table
+> throughout all three steps.
 
 ---
 
@@ -511,7 +532,7 @@ Task status: `pending` → `done` as each task is completed.
 | 2 — Data Ingestion | 7–11 | Excel/CSV parse, header mapping, validation, tier normalization, upload API | 5 / 5 |
 | 3 — Enrichment Pipeline | 12–21 | 5 enrichment sources, dedup cache, merger, LLM normalization, async Celery jobs | 10 / 10 |
 | 4 — Embedding & Vector Storage | 22–25 | Embedding generation, pgvector upsert, event-scoped similarity search | 4 / 4 |
-| 5 — Matching Engine | 26–33 | Scorers, rule engine, LLM reasoning (JSON mode), bidirectional enforcement, cost estimate | 4 / 8 |
+| 5 — Matching Engine | 26–33 | Scorers, rule engine, LLM reasoning (JSON mode), bidirectional enforcement, cost estimate | 5 / 8 |
 | 6 — Export | 34–35 | Excel/CSV download with matches + reasoning bullets | 0 / 2 |
 | 7 — Testing & Deployment | 43–47 | Unit, integration, E2E tests, Railway + Supabase production deploy | 0 / 5 |
 
