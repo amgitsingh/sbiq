@@ -36,6 +36,24 @@ similar hidden dependency, add it here.
   `client.responses` to exist — added well after `1.57.0` (originally pinned;
   bumped to `1.109.1`). Downgrading the `openai` package would silently break this
   feature with an `AttributeError`, not a config error.
+- **`AI_EMBEDDING_MODEL` is hard-coupled to a hardcoded `1536` dimension in the
+  schema.** `participant_embeddings.embedding` is `Vector(1536)` (migration `0002`),
+  sized for `text-embedding-3-small`'s output. Switching `AI_EMBEDDING_MODEL` to
+  anything with a different output dimension (e.g. `text-embedding-3-large` is
+  3072) will fail at insert time with a pgvector dimension error — every embedding
+  write breaks (Task 22's `generate_embedding`, called automatically from every
+  enrichment run) until both the column type and a new migration are updated to
+  match.
+- **Matching-run cost estimates (`cost_estimator.py`) silently go stale if
+  `AI_MODEL`/`AI_EMBEDDING_MODEL` change.** LLM pricing is a hardcoded table keyed
+  by substring match against `AI_MODEL` (`gpt-4o`, `gpt-4o-mini`, `gpt-4-turbo`,
+  `gpt-3.5`); an unrecognized model silently falls back to gpt-4o-equivalent
+  pricing rather than erroring — could over- or under-state cost with no signal
+  that it happened. Embedding pricing is a single constant
+  (`EMBEDDING_PRICE_PER_1K_TOKENS`) hardcoded for `text-embedding-3-small`
+  specifically, with no fallback table at all — changing `AI_EMBEDDING_MODEL`
+  never updates it. Both need a manual code update whenever either model changes,
+  not just an `.env` edit.
 
 ## Enrichment source toggles (`ENABLE_WEBSITE_SCRAPER`, `ENABLE_TAVILY_WEB_SEARCH`, `ENABLE_TAVILY_NEWS_SEARCH`, `ENABLE_CRUNCHBASE`, `ENABLE_LINKEDIN_SCRAPER`)
 
@@ -55,6 +73,26 @@ similar hidden dependency, add it here.
   degrades to `None` — which looks identical to "LinkedIn blocked us" in the logs.
   This is a real diagnostic trap: a missing binary and a genuine block are
   indistinguishable from the enrichment output alone.
+
+## Cross-event reuse (`ENABLE_ENRICHMENT_REUSE`, `ENRICHMENT_REUSE_MAX_AGE_DAYS`)
+
+- **This cache is global by email, not scoped to an event, tenant, or
+  organization.** `enriched_profiles` is keyed on normalized email alone. Two
+  completely unrelated events sharing a participant's email will reuse each
+  other's cached company/person data (with that event's own `looking_for`/
+  `offerings` always overlaid — never stale on that specific pair of fields, per
+  the verbatim guarantee — but everything else, including `company.summary`, is
+  shared as-is).
+- **Toggling `ENABLE_ENRICHMENT_REUSE` off does not clear the cache.** It only
+  stops new reads from consulting `enriched_profiles`; the table keeps
+  accumulating writes from every successful fresh enrichment regardless of the
+  flag (`upsert_enriched_profile` isn't gated by the toggle). Flipping it back on
+  later immediately resumes reusing whatever accumulated while it was off,
+  subject to `ENRICHMENT_REUSE_MAX_AGE_DAYS`.
+- **`ENRICHMENT_REUSE_MAX_AGE_DAYS` is evaluated at reuse-check time, not
+  write time.** Lowering it doesn't retroactively invalidate anything explicitly
+  — there's no cleanup job — it just changes the cutoff the next time
+  `get_reusable_profile` runs for a given email.
 
 ## Database (`DATABASE_URL`)
 
@@ -103,6 +141,23 @@ similar hidden dependency, add it here.
   doesn't work reliably on Windows). This processes one task at a time — fine for
   local testing, but don't carry `--pool=solo` into the production deployment
   (Linux, per CLAUDE.md), which should use the default pool for real concurrency.
+- **A worker only processes the queue(s) named in its own `-Q` flag — there are
+  now two, `enrichment` and `matching` (Phase 5 added the second).** A worker
+  started with `-Q enrichment` will never pick up `batch_match_event`/
+  `match_participant` tasks (or vice versa) — they queue up in Redis silently,
+  with no error anywhere. This is easy to hit in local dev: `POST
+  /events/{id}/match?confirm=true` returns a real `job_id` and HTTP 202 either
+  way, so a caller has no signal the task is stuck rather than running. Run
+  `-Q enrichment,matching` (both) for local dev, or a dedicated worker per queue
+  in production per `worker.py`'s own doc comment.
+- **The worker startup banner's queue binding line can look wrong and not be.**
+  It printed `matching exchange=enrichment(direct) key=enrichment` for the
+  `matching` queue during Task 32's verification — looks like both queues are
+  bound to the same exchange/key, which would suggest cross-queue message
+  leakage. An empirical dispatch-and-consume test confirmed routing is actually
+  correct; this is a cosmetic Celery/Kombu display quirk on the Redis transport,
+  not a real bug. Don't "fix" it by touching `Queue(...)` definitions in
+  `celery_app.py` without re-confirming an actual routing problem first.
 
 ## Enum columns (`native_enum=False`)
 
