@@ -394,7 +394,7 @@ Frontend and admin panel are handled separately. This plan covers backend only.
 | 29 | **LLM matching reasoning service** | Send a participant's full structured JSON profile along with their 5–10 rule engine candidates to the LLM with JSON mode enforced. The prompt instructs the LLM to select the best 3–5 matches and return a structured response: `matches[].participant_id`, `matches[].rank`, `matches[].reasoning` (array of 3 bullet strings), `matches[].email_draft`, `matches[].linkedin_draft`. Validate the response schema. Retry once on invalid schema. Log input and output token counts per call. | `done` |
 | 30 | **Bidirectional match enforcement** | After the LLM selects A→B: check if a match record from B to A already exists. If not, create the reverse record B→A with `is_bidirectional = True` and the same reasoning mirrored. Prevents duplicate pair creation in the case where both A and B independently selected each other through their own matching runs. | `done` |
 | 31 | **Pre-run cost estimator** | Before any matching run: count enriched participants in the event. Estimate embedding token cost (avg profile character length × participant count, converted to tokens, priced against `text-embedding-3-small` rate). Estimate LLM reasoning token cost (avg prompt size with candidates × participant count, priced against the configured model rate). Return a breakdown: embedding cost, LLM cost, total in USD. | `done` |
-| 32 | **Celery matching tasks** | `match_participant_task(participant_id, event_id)`: run similarity search → rule engine → LLM reasoning → store match records → enforce bidirectional. `batch_match_event_task(event_id)`: fan out `match_participant_task` for all embedded participants in the event, respecting tier-based processing order (sponsors dispatched first). Track matching progress per participant. | `pending` |
+| 32 | **Celery matching tasks** | `match_participant_task(participant_id, event_id)`: run similarity search → rule engine → LLM reasoning → store match records → enforce bidirectional. `batch_match_event_task(event_id)`: fan out `match_participant_task` for all embedded participants in the event, respecting tier-based processing order (sponsors dispatched first). Track matching progress per participant. | `done` |
 | 33 | **POST /events/{id}/match endpoint** | Trigger the matching run for an event. Validate that all participants have been embedded. Return the cost estimate and require a `confirm=true` query parameter to actually enqueue the batch job — prevents accidental runs. Enqueue `batch_match_event_task`. Return a job ID and estimated duration. | `pending` |
 
 > Task 26 built `app/services/matching/token_overlap.py` (`tokenize`,
@@ -526,6 +526,37 @@ Frontend and admin panel are handled separately. This plan covers backend only.
 
 ---
 
+> Task 32 built `app/workers/matching_tasks.py` (`match_participant`,
+> `batch_match_event`), wiring together every Phase 5 building block so far
+> (Tasks 24, 28, 29, 30). Added a new `matching_status` column on
+> `Participant` (migration `0005`), mirroring `enrichment_status` exactly
+> (pending/matching/done/failed) - the task description's "track matching
+> progress per participant" reads as the same tracking mechanism already
+> established for enrichment, not a new concept. `batch_match_event` requires
+> an actual `participant_embeddings` row (join, not just
+> `enrichment_status=done`) before dispatching - a participant can be
+> enrichment-done with no embedding yet if Task 23's automatic attempt failed
+> silently. No Celery-level autoretry on `match_participant` - `select_matches`
+> already retries once internally, and a full-task retry on top of that would
+> risk paying for a second LLM call for no benefit, same lesson as the
+> enrichment retry-storm bug. Non-member/review-flagged exclusion is enforced
+> twice - once in `batch_match_event`'s dispatch query, and again defensively
+> inside `match_participant` itself in case it's ever invoked directly.
+> Live-verified through the real Celery worker on the `matching` queue (the
+> startup banner's queue binding line looked suspicious -
+> "exchange=enrichment(direct) key=enrichment" for the `matching` queue -
+> but an empirical dispatch-and-consume test confirmed routing is actually
+> correct; cosmetic banner quirk, not a bug) with 5 real participants across
+> 4 tiers: the non-member was correctly never dispatched (stayed
+> `matching_status=pending`) while still surfacing as a real LLM-selected
+> candidate for two other participants; and two participants independently
+> selected each other in separate task runs, which correctly upgraded the
+> auto-mirrored placeholder into a genuine bidirectional pair in place (both
+> `is_bidirectional=False`, both with real drafts) rather than duplicating -
+> exactly 2 rows for that pair throughout.
+
+---
+
 ## Phase 6 — Export & Output
 > Generate the final deliverable: a downloadable Excel/CSV with all match pairs and reasoning.
 
@@ -559,7 +590,7 @@ Task status: `pending` → `done` as each task is completed.
 | 2 — Data Ingestion | 7–11 | Excel/CSV parse, header mapping, validation, tier normalization, upload API | 5 / 5 |
 | 3 — Enrichment Pipeline | 12–21 | 5 enrichment sources, dedup cache, merger, LLM normalization, async Celery jobs | 10 / 10 |
 | 4 — Embedding & Vector Storage | 22–25 | Embedding generation, pgvector upsert, event-scoped similarity search | 4 / 4 |
-| 5 — Matching Engine | 26–33 | Scorers, rule engine, LLM reasoning (JSON mode), bidirectional enforcement, cost estimate | 6 / 8 |
+| 5 — Matching Engine | 26–33 | Scorers, rule engine, LLM reasoning (JSON mode), bidirectional enforcement, cost estimate | 7 / 8 |
 | 6 — Export | 34–35 | Excel/CSV download with matches + reasoning bullets | 0 / 2 |
 | 7 — Testing & Deployment | 43–47 | Unit, integration, E2E tests, Railway + Supabase production deploy | 0 / 5 |
 

@@ -37,6 +37,13 @@ class ParticipantStatus(str, enum.Enum):
     review = "review"
 
 
+class MatchingStatus(str, enum.Enum):
+    pending = "pending"
+    matching = "matching"
+    done = "done"
+    failed = "failed"
+
+
 class Participant(Base):
     __tablename__ = "participants"
 
@@ -81,6 +88,11 @@ class Participant(Base):
     participant_status: Mapped[str] = mapped_column(
         Enum(ParticipantStatus, values_callable=lambda e: [x.value for x in e], native_enum=False),
         default=ParticipantStatus.eligible,
+        nullable=False,
+    )
+    matching_status: Mapped[str] = mapped_column(
+        Enum(MatchingStatus, values_callable=lambda e: [x.value for x in e], native_enum=False),
+        default=MatchingStatus.pending,
         nullable=False,
     )
 
