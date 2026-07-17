@@ -389,7 +389,7 @@ Frontend and admin panel are handled separately. This plan covers backend only.
 | # | Task | Description | Status |
 |---|---|---|---|
 | 26 | **Token overlap scorer** | Tokenize and normalize (lowercase, remove stopwords) the `looking_for` and `offerings` fields. Score a candidate pair A↔B as: `overlap(A.looking_for, B.offerings) + overlap(B.looking_for, A.offerings)`. Return a float 0–1. This is the primary intent-alignment signal in the rule engine. | `done` |
-| 27 | **Sector alignment + company size scorers** | Sector scorer: exact industry match = 1.0, adjacent sector (predefined adjacency map, e.g., fintech ↔ banking) = 0.5, unrelated = 0.0. Company size scorer: same bucket = 1.0, one bucket apart = 0.5, two or more apart = 0.0. Size buckets: 1–10, 11–50, 51–200, 201–1000, 1000+. Both return float 0–1. | `pending` |
+| 27 | **Sector alignment + company size scorers** | Sector scorer: exact industry match = 1.0, adjacent sector (predefined adjacency map, e.g., fintech ↔ banking) = 0.5, unrelated = 0.0. Company size scorer: same bucket = 1.0, one bucket apart = 0.5, two or more apart = 0.0. Size buckets: 1–10, 11–50, 51–200, 201–1000, 1000+. Both return float 0–1. | `done` |
 | 28 | **Rule engine** | For each participant, take their similarity search candidates and apply composite scoring: `score = (token_overlap × 0.5) + (sector × 0.3) + (size × 0.2)`. Hard exclusions: same-company pairs (matched by normalized company name). Global deduplication: track all seen pairs in a set so A→B and B→A are not both processed. Return the top 5–10 ranked candidates per participant. Process sponsors first, then premium members, then others — so the best candidates are allocated to higher-priority participants first. | `pending` |
 | 29 | **LLM matching reasoning service** | Send a participant's full structured JSON profile along with their 5–10 rule engine candidates to the LLM with JSON mode enforced. The prompt instructs the LLM to select the best 3–5 matches and return a structured response: `matches[].participant_id`, `matches[].rank`, `matches[].reasoning` (array of 3 bullet strings), `matches[].email_draft`, `matches[].linkedin_draft`. Validate the response schema. Retry once on invalid schema. Log input and output token counts per call. | `pending` |
 | 30 | **Bidirectional match enforcement** | After the LLM selects A→B: check if a match record from B to A already exists. If not, create the reverse record B→A with `is_bidirectional = True` and the same reasoning mirrored. Prevents duplicate pair creation in the case where both A and B independently selected each other through their own matching runs. | `pending` |
@@ -412,6 +412,25 @@ Frontend and admin panel are handled separately. This plan covers backend only.
 > fields don't crash, and Dutch text (untranslated, per the English-only phase
 > boundary) tokenizes and matches correctly since no language-specific logic is
 > involved.
+>
+> Task 27 built `app/services/matching/sector_size.py`
+> (`sector_alignment_score`, `company_size_score`). Checked real sample data
+> (`data/data.xlsx`) before writing this - both `sector` and `company_size` are
+> raw free text with no controlled vocabulary (e.g. sector: "Banking /
+> occupational health and absenteeism"; size: "4400 +", "1 - 10 FTE", "x",
+> "I am bringing a guest"), not the clean bucketed values the task description
+> implies. Sector: keyword-based classifier maps free text into zero or more
+> of ~18 canonical categories (a raw string can be genuinely multi-topic, e.g.
+> the banking/health example above classifies as both); exact-category-overlap
+> wins over adjacency, which is checked via a symmetric adjacency map built
+> from a flat pair list (avoids the bug class where an edit adds A→B but
+> forgets B→A). Company size: regex-extracts numbers from free text (handles
+> commas, decimals, "+"/"FTE" suffixes, and 2-number ranges via averaging),
+> unparseable garbage returns `None` and scores 0.0 rather than crashing or
+> guessing. Live-verified: all 16 unique real `sector` values and 17 unique
+> real `company_size` values from the sample file classify/parse sensibly;
+> exact/adjacent/unrelated/garbage scoring cases all confirmed correct for
+> both scorers.
 
 ---
 
@@ -448,7 +467,7 @@ Task status: `pending` → `done` as each task is completed.
 | 2 — Data Ingestion | 7–11 | Excel/CSV parse, header mapping, validation, tier normalization, upload API | 5 / 5 |
 | 3 — Enrichment Pipeline | 12–21 | 5 enrichment sources, dedup cache, merger, LLM normalization, async Celery jobs | 10 / 10 |
 | 4 — Embedding & Vector Storage | 22–25 | Embedding generation, pgvector upsert, event-scoped similarity search | 4 / 4 |
-| 5 — Matching Engine | 26–33 | Scorers, rule engine, LLM reasoning (JSON mode), bidirectional enforcement, cost estimate | 1 / 8 |
+| 5 — Matching Engine | 26–33 | Scorers, rule engine, LLM reasoning (JSON mode), bidirectional enforcement, cost estimate | 2 / 8 |
 | 6 — Export | 34–35 | Excel/CSV download with matches + reasoning bullets | 0 / 2 |
 | 7 — Testing & Deployment | 43–47 | Unit, integration, E2E tests, Railway + Supabase production deploy | 0 / 5 |
 
