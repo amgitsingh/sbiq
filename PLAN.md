@@ -390,7 +390,7 @@ Frontend and admin panel are handled separately. This plan covers backend only.
 |---|---|---|---|
 | 26 | **Token overlap scorer** | Tokenize and normalize (lowercase, remove stopwords) the `looking_for` and `offerings` fields. Score a candidate pair A↔B as: `overlap(A.looking_for, B.offerings) + overlap(B.looking_for, A.offerings)`. Return a float 0–1. This is the primary intent-alignment signal in the rule engine. | `done` |
 | 27 | **Sector alignment + company size scorers** | Sector scorer: exact industry match = 1.0, adjacent sector (predefined adjacency map, e.g., fintech ↔ banking) = 0.5, unrelated = 0.0. Company size scorer: same bucket = 1.0, one bucket apart = 0.5, two or more apart = 0.0. Size buckets: 1–10, 11–50, 51–200, 201–1000, 1000+. Both return float 0–1. | `done` |
-| 28 | **Rule engine** | For each participant, take their similarity search candidates and apply composite scoring: `score = (token_overlap × 0.5) + (sector × 0.3) + (size × 0.2)`. Hard exclusions: same-company pairs (matched by normalized company name). Global deduplication: track all seen pairs in a set so A→B and B→A are not both processed. Return the top 5–10 ranked candidates per participant. Process sponsors first, then premium members, then others — so the best candidates are allocated to higher-priority participants first. | `pending` |
+| 28 | **Rule engine** | For each participant, take their similarity search candidates and apply composite scoring: `score = (token_overlap × 0.5) + (sector × 0.3) + (size × 0.2)`. Hard exclusions: same-company pairs (matched by normalized company name). Global deduplication: track all seen pairs in a set so A→B and B→A are not both processed. Return the top 5–10 ranked candidates per participant. Process sponsors first, then premium members, then others — so the best candidates are allocated to higher-priority participants first. | `done` |
 | 29 | **LLM matching reasoning service** | Send a participant's full structured JSON profile along with their 5–10 rule engine candidates to the LLM with JSON mode enforced. The prompt instructs the LLM to select the best 3–5 matches and return a structured response: `matches[].participant_id`, `matches[].rank`, `matches[].reasoning` (array of 3 bullet strings), `matches[].email_draft`, `matches[].linkedin_draft`. Validate the response schema. Retry once on invalid schema. Log input and output token counts per call. | `pending` |
 | 30 | **Bidirectional match enforcement** | After the LLM selects A→B: check if a match record from B to A already exists. If not, create the reverse record B→A with `is_bidirectional = True` and the same reasoning mirrored. Prevents duplicate pair creation in the case where both A and B independently selected each other through their own matching runs. | `pending` |
 | 31 | **Pre-run cost estimator** | Before any matching run: count enriched participants in the event. Estimate embedding token cost (avg profile character length × participant count, converted to tokens, priced against `text-embedding-3-small` rate). Estimate LLM reasoning token cost (avg prompt size with candidates × participant count, priced against the configured model rate). Return a breakdown: embedding cost, LLM cost, total in USD. | `pending` |
@@ -431,6 +431,28 @@ Frontend and admin panel are handled separately. This plan covers backend only.
 > real `company_size` values from the sample file classify/parse sensibly;
 > exact/adjacent/unrelated/garbage scoring cases all confirmed correct for
 > both scorers.
+>
+> Task 28 built `app/services/matching/rule_engine.py` (`score_pair`,
+> `rank_candidates`, `run_rule_engine_for_event`). Pulled in two rules from
+> CLAUDE.md's Priority & Eligibility Rules table that the task description
+> itself doesn't mention but that belong at exactly this layer: non-members
+> (0 matches allocated) and review-flagged participants (blank
+> looking_for/offerings, "not auto-matched") never get a shortlist generated
+> *for* them, but both are still eligible to appear *in* other participants'
+> shortlists - a review-flagged participant's blank fields already zero out
+> their token-overlap contribution naturally, so no extra filtering was needed
+> there, just the exclusion from being a primary subject. "A→B = B→A counted
+> once" is implemented as a computation cache (`pair_cache`, keyed by
+> `frozenset`) rather than a result exclusion, since `score_pair` is fully
+> symmetric and the same pair can legitimately appear in both participants'
+> shortlists - it's the score computation that's deduplicated, not the
+> listing. Live-verified with 7 participants across all 5 tiers (including a
+> same-company pair and a fintech-relevant non-member): non-member and
+> review-flagged participants correctly got no shortlist of their own while
+> still appearing as candidates for others (the non-member ranked #1 for both
+> the sponsor and premium fintech participants); same-company pair excluded
+> each other bidirectionally; cached pair scores confirmed symmetric
+> (Sponsor→Premium and Premium→Sponsor both scored 0.487).
 
 ---
 
@@ -467,7 +489,7 @@ Task status: `pending` → `done` as each task is completed.
 | 2 — Data Ingestion | 7–11 | Excel/CSV parse, header mapping, validation, tier normalization, upload API | 5 / 5 |
 | 3 — Enrichment Pipeline | 12–21 | 5 enrichment sources, dedup cache, merger, LLM normalization, async Celery jobs | 10 / 10 |
 | 4 — Embedding & Vector Storage | 22–25 | Embedding generation, pgvector upsert, event-scoped similarity search | 4 / 4 |
-| 5 — Matching Engine | 26–33 | Scorers, rule engine, LLM reasoning (JSON mode), bidirectional enforcement, cost estimate | 2 / 8 |
+| 5 — Matching Engine | 26–33 | Scorers, rule engine, LLM reasoning (JSON mode), bidirectional enforcement, cost estimate | 3 / 8 |
 | 6 — Export | 34–35 | Excel/CSV download with matches + reasoning bullets | 0 / 2 |
 | 7 — Testing & Deployment | 43–47 | Unit, integration, E2E tests, Railway + Supabase production deploy | 0 / 5 |
 
