@@ -393,7 +393,7 @@ Frontend and admin panel are handled separately. This plan covers backend only.
 | 28 | **Rule engine** | For each participant, take their similarity search candidates and apply composite scoring: `score = (token_overlap × 0.5) + (sector × 0.3) + (size × 0.2)`. Hard exclusions: same-company pairs (matched by normalized company name). Global deduplication: track all seen pairs in a set so A→B and B→A are not both processed. Return the top 5–10 ranked candidates per participant. Process sponsors first, then premium members, then others — so the best candidates are allocated to higher-priority participants first. | `done` |
 | 29 | **LLM matching reasoning service** | Send a participant's full structured JSON profile along with their 5–10 rule engine candidates to the LLM with JSON mode enforced. The prompt instructs the LLM to select the best 3–5 matches and return a structured response: `matches[].participant_id`, `matches[].rank`, `matches[].reasoning` (array of 3 bullet strings), `matches[].email_draft`, `matches[].linkedin_draft`. Validate the response schema. Retry once on invalid schema. Log input and output token counts per call. | `done` |
 | 30 | **Bidirectional match enforcement** | After the LLM selects A→B: check if a match record from B to A already exists. If not, create the reverse record B→A with `is_bidirectional = True` and the same reasoning mirrored. Prevents duplicate pair creation in the case where both A and B independently selected each other through their own matching runs. | `done` |
-| 31 | **Pre-run cost estimator** | Before any matching run: count enriched participants in the event. Estimate embedding token cost (avg profile character length × participant count, converted to tokens, priced against `text-embedding-3-small` rate). Estimate LLM reasoning token cost (avg prompt size with candidates × participant count, priced against the configured model rate). Return a breakdown: embedding cost, LLM cost, total in USD. | `pending` |
+| 31 | **Pre-run cost estimator** | Before any matching run: count enriched participants in the event. Estimate embedding token cost (avg profile character length × participant count, converted to tokens, priced against `text-embedding-3-small` rate). Estimate LLM reasoning token cost (avg prompt size with candidates × participant count, priced against the configured model rate). Return a breakdown: embedding cost, LLM cost, total in USD. | `done` |
 | 32 | **Celery matching tasks** | `match_participant_task(participant_id, event_id)`: run similarity search → rule engine → LLM reasoning → store match records → enforce bidirectional. `batch_match_event_task(event_id)`: fan out `match_participant_task` for all embedded participants in the event, respecting tier-based processing order (sponsors dispatched first). Track matching progress per participant. | `pending` |
 | 33 | **POST /events/{id}/match endpoint** | Trigger the matching run for an event. Validate that all participants have been embedded. Return the cost estimate and require a `confirm=true` query parameter to actually enqueue the batch job — prevents accidental runs. Enqueue `batch_match_event_task`. Return a job ID and estimated duration. | `pending` |
 
@@ -496,6 +496,33 @@ Frontend and admin panel are handled separately. This plan covers backend only.
 > touching A→B's original row or creating a 3rd row; and re-running A→B's own
 > store again updates in place rather than duplicating - 2 rows in the table
 > throughout all three steps.
+>
+> Task 31 built `app/services/matching/cost_estimator.py`
+> (`estimate_matching_run_cost`). Character lengths come from each
+> participant's real stored `structured_profile`, serialized with the exact
+> same `serialize_profile_to_text` used for real embedding input (Task 22) -
+> not a synthetic guess. Two participant counts, not one: embedding cost is
+> priced against every enriched participant (Task 23 embeds all of them
+> unconditionally), while LLM cost is priced only against participants who'll
+> actually get a rule-engine shortlist and an LLM call - excludes non-members
+> and review-flagged participants, mirroring Task 28's own filtering exactly,
+> so the estimate doesn't overstate cost for people who will never trigger a
+> match run. Prompt-size estimate uses 10 candidates per participant (the top
+> of the rule engine's 5-10 range) so the estimate errs high, never low, per
+> the same cost-guardrail spirit as `AI_MAX_TOKENS_PER_RUN`. LLM pricing is a
+> small table keyed by substring match against `AI_MODEL` (gpt-4o/mini,
+> gpt-4-turbo, gpt-3.5, falling back to gpt-4o-equivalent pricing for an
+> unrecognized model) - needs a manual update if `AI_MODEL` changes to
+> something not listed, noted for `CONFIG_CAVEATS.md`. No tiktoken dependency;
+> uses a ~4-chars/token heuristic, which matches this task's own "avg
+> character length" framing and is precise enough for a pre-run guardrail, not
+> a real bill. Live-verified: a realistic 6-participant mix (all 5 tiers plus
+> a review-flagged one) correctly counted 6 for embedding but only 4 for LLM
+> (excluding the non-member and the review-flagged participant); zero-
+> participant event returns clean zeros without crashing; a 300-participant
+> scale test (CLAUDE.md's stated target size) came out under $3 total,
+> confirming the "cost stays low even for 300+ participant events" design
+> principle actually holds with real numbers.
 
 ---
 
@@ -532,7 +559,7 @@ Task status: `pending` → `done` as each task is completed.
 | 2 — Data Ingestion | 7–11 | Excel/CSV parse, header mapping, validation, tier normalization, upload API | 5 / 5 |
 | 3 — Enrichment Pipeline | 12–21 | 5 enrichment sources, dedup cache, merger, LLM normalization, async Celery jobs | 10 / 10 |
 | 4 — Embedding & Vector Storage | 22–25 | Embedding generation, pgvector upsert, event-scoped similarity search | 4 / 4 |
-| 5 — Matching Engine | 26–33 | Scorers, rule engine, LLM reasoning (JSON mode), bidirectional enforcement, cost estimate | 5 / 8 |
+| 5 — Matching Engine | 26–33 | Scorers, rule engine, LLM reasoning (JSON mode), bidirectional enforcement, cost estimate | 6 / 8 |
 | 6 — Export | 34–35 | Excel/CSV download with matches + reasoning bullets | 0 / 2 |
 | 7 — Testing & Deployment | 43–47 | Unit, integration, E2E tests, Railway + Supabase production deploy | 0 / 5 |
 
