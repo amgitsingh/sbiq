@@ -69,3 +69,16 @@ def chat_json_web_search(system_prompt: str, user_prompt: str, *, max_tokens: in
         max_output_tokens=max_tokens,
     )
     return response.output_text or "{}"
+
+
+def embed_text(text: str) -> tuple[list[float], int]:
+    """Call the configured embedding model, return (vector, total_tokens).
+
+    Thin wrapper, same contract as chat_json - raises on any API-level
+    failure rather than degrading silently. Retry policy lives with the
+    caller (app.services.embedding), same split as llm_normalizer owning
+    the retry loop around chat_json/chat_json_web_search.
+    """
+    client = get_client()
+    response = client.embeddings.create(model=settings.AI_EMBEDDING_MODEL, input=text)
+    return list(response.data[0].embedding), response.usage.total_tokens
