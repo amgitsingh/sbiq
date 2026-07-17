@@ -388,7 +388,7 @@ Frontend and admin panel are handled separately. This plan covers backend only.
 
 | # | Task | Description | Status |
 |---|---|---|---|
-| 26 | **Token overlap scorer** | Tokenize and normalize (lowercase, remove stopwords) the `looking_for` and `offerings` fields. Score a candidate pair A↔B as: `overlap(A.looking_for, B.offerings) + overlap(B.looking_for, A.offerings)`. Return a float 0–1. This is the primary intent-alignment signal in the rule engine. | `pending` |
+| 26 | **Token overlap scorer** | Tokenize and normalize (lowercase, remove stopwords) the `looking_for` and `offerings` fields. Score a candidate pair A↔B as: `overlap(A.looking_for, B.offerings) + overlap(B.looking_for, A.offerings)`. Return a float 0–1. This is the primary intent-alignment signal in the rule engine. | `done` |
 | 27 | **Sector alignment + company size scorers** | Sector scorer: exact industry match = 1.0, adjacent sector (predefined adjacency map, e.g., fintech ↔ banking) = 0.5, unrelated = 0.0. Company size scorer: same bucket = 1.0, one bucket apart = 0.5, two or more apart = 0.0. Size buckets: 1–10, 11–50, 51–200, 201–1000, 1000+. Both return float 0–1. | `pending` |
 | 28 | **Rule engine** | For each participant, take their similarity search candidates and apply composite scoring: `score = (token_overlap × 0.5) + (sector × 0.3) + (size × 0.2)`. Hard exclusions: same-company pairs (matched by normalized company name). Global deduplication: track all seen pairs in a set so A→B and B→A are not both processed. Return the top 5–10 ranked candidates per participant. Process sponsors first, then premium members, then others — so the best candidates are allocated to higher-priority participants first. | `pending` |
 | 29 | **LLM matching reasoning service** | Send a participant's full structured JSON profile along with their 5–10 rule engine candidates to the LLM with JSON mode enforced. The prompt instructs the LLM to select the best 3–5 matches and return a structured response: `matches[].participant_id`, `matches[].rank`, `matches[].reasoning` (array of 3 bullet strings), `matches[].email_draft`, `matches[].linkedin_draft`. Validate the response schema. Retry once on invalid schema. Log input and output token counts per call. | `pending` |
@@ -396,6 +396,22 @@ Frontend and admin panel are handled separately. This plan covers backend only.
 | 31 | **Pre-run cost estimator** | Before any matching run: count enriched participants in the event. Estimate embedding token cost (avg profile character length × participant count, converted to tokens, priced against `text-embedding-3-small` rate). Estimate LLM reasoning token cost (avg prompt size with candidates × participant count, priced against the configured model rate). Return a breakdown: embedding cost, LLM cost, total in USD. | `pending` |
 | 32 | **Celery matching tasks** | `match_participant_task(participant_id, event_id)`: run similarity search → rule engine → LLM reasoning → store match records → enforce bidirectional. `batch_match_event_task(event_id)`: fan out `match_participant_task` for all embedded participants in the event, respecting tier-based processing order (sponsors dispatched first). Track matching progress per participant. | `pending` |
 | 33 | **POST /events/{id}/match endpoint** | Trigger the matching run for an event. Validate that all participants have been embedded. Return the cost estimate and require a `confirm=true` query parameter to actually enqueue the batch job — prevents accidental runs. Enqueue `batch_match_event_task`. Return a job ID and estimated duration. | `pending` |
+
+> Task 26 built `app/services/matching/token_overlap.py` (`tokenize`,
+> `token_overlap_score`) - new `matching/` subpackage mirroring `enrichment/`'s
+> convention, since Phase 5 has several related scorer files ahead (Task 27,
+> then Task 28 combining them). Overlap uses the Szymkiewicz-Simpson
+> coefficient (`|intersection| / min(|A|,|B|)`) rather than Jaccard, since
+> `looking_for`/`offerings` are often very different lengths and overlap
+> coefficient asks "how much of the shorter phrase is covered" rather than
+> penalizing for the longer phrase's extra words. The two directional overlaps
+> are averaged, not summed, to keep the final score in the spec's required
+> [0, 1] range - a straight sum of two [0, 1] values could reach 2. Live-verified:
+> exact reciprocal match scores 1.0, no overlap scores 0.0, a one-directional-only
+> match scores half of a bidirectional one (not double-counted), empty/None
+> fields don't crash, and Dutch text (untranslated, per the English-only phase
+> boundary) tokenizes and matches correctly since no language-specific logic is
+> involved.
 
 ---
 
@@ -432,7 +448,7 @@ Task status: `pending` → `done` as each task is completed.
 | 2 — Data Ingestion | 7–11 | Excel/CSV parse, header mapping, validation, tier normalization, upload API | 5 / 5 |
 | 3 — Enrichment Pipeline | 12–21 | 5 enrichment sources, dedup cache, merger, LLM normalization, async Celery jobs | 10 / 10 |
 | 4 — Embedding & Vector Storage | 22–25 | Embedding generation, pgvector upsert, event-scoped similarity search | 4 / 4 |
-| 5 — Matching Engine | 26–33 | Scorers, rule engine, LLM reasoning (JSON mode), bidirectional enforcement, cost estimate | 0 / 8 |
+| 5 — Matching Engine | 26–33 | Scorers, rule engine, LLM reasoning (JSON mode), bidirectional enforcement, cost estimate | 1 / 8 |
 | 6 — Export | 34–35 | Excel/CSV download with matches + reasoning bullets | 0 / 2 |
 | 7 — Testing & Deployment | 43–47 | Unit, integration, E2E tests, Railway + Supabase production deploy | 0 / 5 |
 
