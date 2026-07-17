@@ -6,6 +6,7 @@ import logging
 from app.core.config import settings
 from app.services.ai_client import chat_json, chat_json_web_search
 from app.services.enrichment.profile_schema import StructuredProfile
+from app.services.json_utils import strip_markdown_fence
 
 logger = logging.getLogger(__name__)
 
@@ -68,22 +69,6 @@ class ProfileNormalizationError(Exception):
     """Raised when the LLM never produced a schema-valid profile after retrying."""
 
 
-def _strip_markdown_fence(raw: str) -> str:
-    """Strip a ```json ... ``` (or plain ```...```) fence if present.
-
-    Despite explicit "no markdown" instructions, the model occasionally wraps
-    its JSON response in a code fence anyway - observed more often with
-    ENABLE_LLM_WEB_SEARCH's Responses API path. json.loads() has no tolerance
-    for this, so it must be stripped before parsing.
-    """
-    text = raw.strip()
-    if not text.startswith("```"):
-        return text
-    text = text.removeprefix("```json").removeprefix("```")
-    text = text.removesuffix("```")
-    return text.strip()
-
-
 def normalize_participant_profile(
     merged_context: str, *, looking_for: str | None, offerings: str | None
 ) -> dict:
@@ -111,7 +96,7 @@ def normalize_participant_profile(
                 raw = chat_json_web_search(SYSTEM_PROMPT, merged_context, max_tokens=MAX_RESPONSE_TOKENS)
             else:
                 raw = chat_json(SYSTEM_PROMPT, merged_context, max_tokens=MAX_RESPONSE_TOKENS)
-            parsed = json.loads(_strip_markdown_fence(raw))
+            parsed = json.loads(strip_markdown_fence(raw))
             profile = StructuredProfile.model_validate(parsed)
         except Exception as e:
             last_error = e

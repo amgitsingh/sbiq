@@ -41,6 +41,29 @@ def chat_json(system_prompt: str, user_prompt: str, *, max_tokens: int) -> str:
     return response.choices[0].message.content or "{}"
 
 
+def chat_json_with_usage(system_prompt: str, user_prompt: str, *, max_tokens: int) -> tuple[str, dict]:
+    """Like chat_json, but also returns token usage - for call sites that need
+    to log input/output token counts (e.g. llm_matcher), without changing
+    chat_json's simpler contract for callers that don't.
+    """
+    client = get_client()
+    response = client.chat.completions.create(
+        model=settings.AI_MODEL,
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ],
+        response_format={"type": "json_object"},
+        max_tokens=max_tokens,
+    )
+    usage = response.usage
+    token_usage = {
+        "input_tokens": usage.prompt_tokens if usage else 0,
+        "output_tokens": usage.completion_tokens if usage else 0,
+    }
+    return response.choices[0].message.content or "{}", token_usage
+
+
 def chat_json_web_search(system_prompt: str, user_prompt: str, *, max_tokens: int) -> str:
     """Like chat_json, but lets the model autonomously search the web via
     OpenAI's Responses API hosted `web_search` tool - one call does both the
