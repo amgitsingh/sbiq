@@ -582,13 +582,37 @@ in this phase was verified against mocks alone.
 
 ---
 
-## Phase 6 — Export & Output
-> Generate the final deliverable: a downloadable Excel/CSV with all match pairs and reasoning.
+## Phase 6 — Match Output
+> Original scope (Excel/CSV export, openpyxl) descoped per explicit direction -
+> no file export needed. Replaced with a single paginated read API over the
+> `matches` table instead.
 
 | # | Task | Description | Status |
 |---|---|---|---|
-| 34 | **Excel/CSV export formatter** | Generate an `.xlsx` file with one row per participant: name, email, company, then up to 3 match columns each containing: matched participant name, matched company, 3 reasoning bullets, email draft, LinkedIn draft. Include only approved matches if the organizer has reviewed them, otherwise include all pending matches. Use openpyxl with bold headers and auto-sized columns. | `pending` |
-| 35 | **GET /events/{id}/export endpoint** | Stream the generated file as a download response. Accept `?format=csv` for a CSV fallback. Include the event name and date in the filename (e.g., `TechEvent_2026-07-14_matches.xlsx`). Return HTTP 400 with a clear message if matching has not been run yet for the event. | `pending` |
+| 34 | ~~Excel/CSV export formatter~~ | Descoped - not needed. | `cancelled` |
+| 35 | **GET /events/{id}/matches endpoint** | Paginated read of all match pairs for an event (`limit`/`offset`, default 50, max 200 per page), one row per pair - A→B and B→A are deduplicated to a single row, not returned as two. No status filter - returns every pair regardless of `MatchStatus`. Each row includes both participants (id/name/email/company), rank, score, reasoning bullets, email/LinkedIn drafts, status, and `mutual`. Ordered by `id` for stable pagination. | `done` |
+
+> First cut returned both directions of a bidirectional pair as separate rows
+> (A→B and B→A) - corrected after live user testing surfaced it as an
+> unwanted near-duplicate, not a useful distinction. Now deduplicated per
+> unordered pair: the genuine (real reasoning/drafts) row always wins over an
+> auto-mirrored placeholder (Task 30's placeholders are never anyone's own
+> real selection); where *both* directions are genuine (each side
+> independently selected the other), the lower id wins, purely for
+> deterministic output. `is_bidirectional` was replaced with `mutual` in the
+> response - the old field stopped being meaningful once every returned row
+> is guaranteed genuine (`is_bidirectional=False`); `mutual` instead answers
+> "did both sides pick this pair independently", which is real information
+> the dedup would otherwise silently discard. Built with `joinedload` on both
+> participant relationships to avoid N+1 queries; dedup happens in Python
+> after fetching all of an event's matches (not at the DB layer), since a
+> pair's two rows must be compared against each other before paging, not
+> within one page. Live-verified against a real 4-row dataset (one mutual
+> pair, one one-sided pair with a placeholder): correctly collapsed to 2
+> pairs, mutual pair flagged `mutual=true`, one-sided pair kept the genuine
+> row and dropped the null-draft placeholder; `limit`/`offset` paging
+> reconfirmed correct over the deduplicated set; 400s reconfirmed for
+> `limit=0`, `limit=500` (over the 200 cap), and `offset=-1`.
 
 ---
 
@@ -616,7 +640,7 @@ Task status: `pending` → `done` as each task is completed.
 | 3 — Enrichment Pipeline | 12–21 | 5 enrichment sources, dedup cache, merger, LLM normalization, async Celery jobs | 10 / 10 |
 | 4 — Embedding & Vector Storage | 22–25 | Embedding generation, pgvector upsert, event-scoped similarity search | 4 / 4 |
 | 5 — Matching Engine | 26–33 | Scorers, rule engine, LLM reasoning (JSON mode), bidirectional enforcement, cost estimate | 8 / 8 |
-| 6 — Export | 34–35 | Excel/CSV download with matches + reasoning bullets | 0 / 2 |
+| 6 — Match Output | 34–35 | Paginated GET /matches API (Excel/CSV export descoped) | 1 / 2 (1 cancelled) |
 | 7 — Testing & Deployment | 43–47 | Unit, integration, E2E tests, Railway + Supabase production deploy | 0 / 5 |
 
 **Total: 40 tasks** — frontend and admin panel handled separately.

@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFile, status
 from pydantic import BaseModel, ConfigDict
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.core.database import get_db
 from app.models.enrichment_job import EnrichmentJob
 from app.models.event import Event
+from app.models.match import Match
 from app.models.participant import EnrichmentStatus, Participant
 from app.models.participant_embedding import ParticipantEmbedding
 from app.services.ingestion import run_ingestion_pipeline
@@ -23,6 +24,9 @@ ESTIMATED_SECONDS_PER_EMBEDDING_JOB = 3
 # rule-engine pass plus one real LLM reasoning call) - based on real observed
 # timings during Task 32's live verification (~1-7s depending on match count).
 ESTIMATED_SECONDS_PER_MATCH_JOB = 8
+
+DEFAULT_MATCHES_LIMIT = 50
+MAX_MATCHES_LIMIT = 200
 
 router = APIRouter(prefix="/events", tags=["events"])
 
@@ -350,4 +354,122 @@ def trigger_matching(
         cost=cost,
         job_id=async_result.id,
         estimated_duration_seconds=cost.matching_eligible_count * ESTIMATED_SECONDS_PER_MATCH_JOB,
+    )
+
+
+class MatchParticipantOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+    email: str | None = None
+    company: str | None = None
+
+
+class MatchOut(BaseModel):
+    id: int
+    participant_a: MatchParticipantOut
+    participant_b: MatchParticipantOut
+    rank: int | None = None
+    score: float | None = None
+    reasoning: list[str] | None = None
+    email_draft: str | None = None
+    linkedin_draft: str | None = None
+    status: str
+    mutual: bool
+
+
+class PaginatedMatchesOut(BaseModel):
+    total: int
+    limit: int
+    offset: int
+    matches: list[MatchOut]
+
+
+def _dedupe_pair_rows(matches: list[Match]) -> list[tuple[Match, bool]]:
+    """Collapse A->B / B->A row pairs down to one row per unordered pair.
+
+    Every stored pair has at least one genuine (is_bidirectional=False) row -
+    store_match always writes the genuine side itself, only auto-creating the
+    reverse as a placeholder if it didn't already exist (Task 30). So a
+    genuine row always wins over a placeholder; where both directions are
+    genuine (each side independently selected the other), that pair is
+    "mutual" and the lower id wins, purely for deterministic output.
+
+    Returns (representative_row, mutual) pairs, mutual meaning both sides
+    independently selected each other - the placeholder case is never mutual,
+    since a placeholder was never anyone's own real selection.
+    """
+    best: dict[frozenset[int], Match] = {}
+    mutual: dict[frozenset[int], bool] = {}
+
+    for m in matches:
+        pair_key = frozenset((m.participant_a_id, m.participant_b_id))
+        current = best.get(pair_key)
+        if current is None:
+            best[pair_key] = m
+            mutual[pair_key] = False
+            continue
+
+        if not current.is_bidirectional and not m.is_bidirectional:
+            mutual[pair_key] = True
+            if m.id < current.id:
+                best[pair_key] = m
+        elif current.is_bidirectional and not m.is_bidirectional:
+            best[pair_key] = m
+
+    return sorted(((best[k], mutual[k]) for k in best), key=lambda pair: pair[0].id)
+
+
+@router.get("/{event_id}/matches", response_model=PaginatedMatchesOut)
+def list_matches(
+    event_id: int,
+    limit: int = DEFAULT_MATCHES_LIMIT,
+    offset: int = 0,
+    db: Session = Depends(get_db),
+) -> PaginatedMatchesOut:
+    """One row per match pair (deduplicated - A->B and B->A are the same
+    relationship, not two matches), paginated.
+
+    No status filter - returns every pair regardless of MatchStatus
+    (pending/approved/rejected). Ordered by id, so pagination is stable
+    across calls even as new matches are added between pages.
+    """
+    _get_event_or_404(event_id, db)
+
+    if limit < 1 or limit > MAX_MATCHES_LIMIT:
+        raise HTTPException(status_code=400, detail=f"limit must be between 1 and {MAX_MATCHES_LIMIT}")
+    if offset < 0:
+        raise HTTPException(status_code=400, detail="offset must be >= 0")
+
+    all_matches = (
+        db.query(Match)
+        .filter(Match.event_id == event_id)
+        .options(joinedload(Match.participant_a), joinedload(Match.participant_b))
+        .order_by(Match.id)
+        .all()
+    )
+    deduped = _dedupe_pair_rows(all_matches)
+    total = len(deduped)
+    page = deduped[offset : offset + limit]
+
+    return PaginatedMatchesOut(
+        total=total,
+        limit=limit,
+        offset=offset,
+        matches=[
+            MatchOut(
+                id=m.id,
+                participant_a=MatchParticipantOut.model_validate(m.participant_a),
+                participant_b=MatchParticipantOut.model_validate(m.participant_b),
+                rank=m.rank,
+                score=m.score,
+                reasoning=m.reasoning,
+                email_draft=m.email_draft,
+                linkedin_draft=m.linkedin_draft,
+                status=m.status,
+                mutual=is_mutual,
+            )
+            for m, is_mutual in page
+        ],
     )
