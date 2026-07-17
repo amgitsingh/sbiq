@@ -15,6 +15,8 @@ from app.services.enrichment.llm_normalizer import (
     ProfileNormalizationError,
     normalize_participant_profile,
 )
+from app.services.embedding import EmbeddingGenerationError, generate_embedding
+from app.services.embedding_store import upsert_participant_embedding
 from app.services.enrichment.merger import build_enrichment_context
 from app.services.enrichment.profile_reuse import (
     get_reusable_profile,
@@ -72,6 +74,27 @@ def _normalize_with_one_extra_retry(merged_context: str, *, looking_for: str | N
         return normalize_participant_profile(merged_context, looking_for=looking_for, offerings=offerings)
 
 
+def _embed_and_store(db: Session, participant: Participant, profile: dict) -> None:
+    """Generate and upsert this participant's embedding for their event.
+
+    Best-effort: embedding failure does not fail enrichment - the structured
+    profile is already valid and stored, which is what enrichment_status
+    tracks. A missing embedding is recoverable later via Task 25's dedicated
+    /embed endpoint, so it's logged and swallowed here rather than raised.
+    """
+    try:
+        vector, _tokens = generate_embedding(profile)
+        upsert_participant_embedding(
+            db,
+            participant_id=participant.id,
+            event_id=participant.event_id,
+            embedding=vector,
+            structured_profile=profile,
+        )
+    except EmbeddingGenerationError as e:
+        logger.warning(f"Embedding generation failed for participant {participant.id}: {e}")
+
+
 @celery_app.task(
     name="app.workers.enrichment_tasks.enrich_participant",
     bind=True,
@@ -107,6 +130,9 @@ def enrich_participant(self, participant_id: int) -> dict:
                 participant.structured_profile = profile
                 participant.enrichment_status = EnrichmentStatus.done
                 db.commit()
+
+                _embed_and_store(db, participant, profile)
+
                 return {"participant_id": participant_id, "status": "done", "reused": True}
 
         participant.enrichment_status = EnrichmentStatus.enriching
@@ -162,6 +188,8 @@ def enrich_participant(self, participant_id: int) -> dict:
         db.commit()
 
         upsert_enriched_profile(db, participant.email, profile)
+
+        _embed_and_store(db, participant, profile)
 
         return {"participant_id": participant_id, "status": "done"}
 

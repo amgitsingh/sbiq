@@ -330,7 +330,7 @@ Frontend and admin panel are handled separately. This plan covers backend only.
 | # | Task | Description | Status |
 |---|---|---|---|
 | 22 | **Embedding generation service** | Serialize the structured JSON profile to a flat text string (person fields first, then company fields, in a consistent format). Call the OpenAI `text-embedding-3-small` API to get a 1536-dimension vector. Handle API errors with one retry. Log token count per call to support cost tracking. | `done` |
-| 23 | **pgvector upsert service** | Store or update a participant's embedding in the `participant_embeddings` table. Upsert on `(participant_id, event_id)`. Store the embedding vector alongside a snapshot of the structured profile JSON for debugging. Called automatically after LLM normalization completes for each participant. | `pending` |
+| 23 | **pgvector upsert service** | Store or update a participant's embedding in the `participant_embeddings` table. Upsert on `(participant_id, event_id)`. Store the embedding vector alongside a snapshot of the structured profile JSON for debugging. Called automatically after LLM normalization completes for each participant. | `done` |
 | 24 | **Event-scoped cosine similarity search** | Given a `participant_id` and `event_id`: fetch the participant's embedding, run a pgvector cosine similarity query with a hard `WHERE event_id = ?` filter — never search across events. Exclude the participant themselves from results. Return the top N candidates (configurable, default 20) with their similarity scores. Output feeds directly into the rule engine. | `pending` |
 | 25 | **POST /events/{id}/embed endpoint** | Trigger embedding generation for all enriched participants in an event. Skip any participant whose `enrichment_status` is not `done`. Enqueue embedding jobs as Celery tasks. Return the number of jobs enqueued and an estimated completion time. Callable only after enrichment is complete. | `pending` |
 
@@ -343,6 +343,19 @@ Frontend and admin panel are handled separately. This plan covers backend only.
 > to write to it. Live-verified against the real OpenAI embeddings API (1536-dim
 > vector, real token counts) and against a simulated failure (confirms retry-once-
 > then-raise).
+>
+> Task 23 built `app/services/embedding_store.py` (`upsert_participant_embedding`)
+> and wired it into `enrich_participant` right after `structured_profile` is set,
+> on both the fresh-enrichment and cache-reuse paths — embeddings are scoped to
+> `(participant_id, event_id)`, never reused cross-event, since `looking_for`/
+> `offerings` (and therefore the embedded text) are per-event even when the rest
+> of the profile is reused. Embedding failure is caught and logged, not raised —
+> it doesn't invalidate an otherwise-successful enrichment; Task 25's endpoint is
+> the recovery path for a missing embedding. Live-verified end-to-end through the
+> real Celery task (not mocked): fresh path produces a correct embedding scoped
+> to its event; reuse path (same email, second event) confirmed to produce a
+> different embedding reflecting that event's own looking_for/offerings, not a
+> copy of the first event's.
 
 ---
 
@@ -394,7 +407,7 @@ Task status: `pending` → `done` as each task is completed.
 | 1 — Foundation | 1–6 | FastAPI scaffold, models, Alembic, Celery + Redis, pgvector schema | 6 / 6 |
 | 2 — Data Ingestion | 7–11 | Excel/CSV parse, header mapping, validation, tier normalization, upload API | 5 / 5 |
 | 3 — Enrichment Pipeline | 12–21 | 5 enrichment sources, dedup cache, merger, LLM normalization, async Celery jobs | 10 / 10 |
-| 4 — Embedding & Vector Storage | 22–25 | Embedding generation, pgvector upsert, event-scoped similarity search | 1 / 4 |
+| 4 — Embedding & Vector Storage | 22–25 | Embedding generation, pgvector upsert, event-scoped similarity search | 2 / 4 |
 | 5 — Matching Engine | 26–33 | Scorers, rule engine, LLM reasoning (JSON mode), bidirectional enforcement, cost estimate | 0 / 8 |
 | 6 — Export | 34–35 | Excel/CSV download with matches + reasoning bullets | 0 / 2 |
 | 7 — Testing & Deployment | 43–47 | Unit, integration, E2E tests, Railway + Supabase production deploy | 0 / 5 |
