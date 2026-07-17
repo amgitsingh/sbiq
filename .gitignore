@@ -40,6 +40,9 @@ alembic/versions/*.pyc
 celerybeat-schedule
 celerybeat.pid
 
+# Log files (ad-hoc celery/uvicorn logs from local dev runs)
+*.log
+
 # Playwright
 playwright/.cache/
 
