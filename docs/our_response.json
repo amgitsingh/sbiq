@@ -1,0 +1,1203 @@
+{
+  "total": 46,
+  "limit": 50,
+  "offset": 0,
+  "matches": [
+    {
+      "id": 31,
+      "participant_a": {
+        "id": 571,
+        "name": "Britt Bleeker",
+        "email": "britt.bleeker@westcordhotels.nl",
+        "company": "Westcord"
+      },
+      "participant_b": {
+        "id": 575,
+        "name": "Danny van Stiphout",
+        "email": "danny@lloff.nl",
+        "company": "lloff - facilitaire horeca specialisten"
+      },
+      "rank": 1,
+      "score": 0.3416666666666667,
+      "reasoning": [
+        "Both work within the hospitality industry, offering potential for cross-service opportunities.",
+        "Britt can provide hotel venues perfect for lloff's workplace catering consultancy offerings.",
+        "They can collaborate on creating enhanced food service experiences for hotel clients."
+      ],
+      "email_draft": "Hi Danny, I’m Britt Bleeker from Westcord Hotels. With your expertise in workplace catering consultancy, I believe we could enhance client experiences, especially in our Dutch hotel venues. I'd love to discuss potential collaborations where our services complement each other. Looking forward to connecting!",
+      "linkedin_draft": "Hi Danny, I'm Britt from Westcord Hotels. I think we have common interests in hospitality. Let's connect!",
+      "status": "pending",
+      "mutual": true
+    },
+    {
+      "id": 33,
+      "participant_a": {
+        "id": 571,
+        "name": "Britt Bleeker",
+        "email": "britt.bleeker@westcordhotels.nl",
+        "company": "Westcord"
+      },
+      "participant_b": {
+        "id": 589,
+        "name": "Marco van Barneveld",
+        "email": "marco@stomerijcollectief.nl",
+        "company": "Stomerij Collectief"
+      },
+      "rank": 2,
+      "score": 0.08333333333333333,
+      "reasoning": [
+        "Marco's business focuses on services relevant to the hospitality sector.",
+        "Stomerij Collectief offers laundry solutions, potentially benefitting Westcord's hotels.",
+        "His interest in hospitality aligns with the services Britt seeks for Westcord customers."
+      ],
+      "email_draft": "Hi Marco, I'm Britt Bleeker with Westcord Hotels. Your services in hospitality caught my attention as we're continuously seeking partners to enhance our guest experience. I believe your laundry services could be a great addition to our hotel offerings. Let’s explore this further!",
+      "linkedin_draft": "Hi Marco, I'm Britt from Westcord Hotels. I think your services would be an intriguing fit for our hospitality needs. Let's connect!",
+      "status": "pending",
+      "mutual": true
+    },
+    {
+      "id": 35,
+      "participant_a": {
+        "id": 571,
+        "name": "Britt Bleeker",
+        "email": "britt.bleeker@westcordhotels.nl",
+        "company": "Westcord"
+      },
+      "participant_b": {
+        "id": 597,
+        "name": "Peter-Joost Post",
+        "email": "pj@ticketkeeper.com",
+        "company": "Ticketkeeper BV"
+      },
+      "rank": 3,
+      "score": 0.3,
+      "reasoning": [
+        "Peter-Joost's company, Ticketkeeper, offers event ticketing solutions, which aligns with Westcord's event location offerings.",
+        "The platform's focus on secure digital distribution could enhance Westcord's customer event experiences.",
+        "Both are Dutch companies, facilitating easier local collaboration."
+      ],
+      "email_draft": "Hi Peter-Joost, I'm Britt Bleeker with Westcord Hotels. I'm intrigued by Ticketkeeper's advanced ticketing solutions. Given our event locations across the Netherlands, I think there could be significant synergy between our offerings. I'd love to discuss potential collaboration opportunities!",
+      "linkedin_draft": "Hi Peter-Joost, I'm Britt from Westcord Hotels. Your work with Ticketkeeper aligns with our event hosting capabilities. Let's connect!",
+      "status": "pending",
+      "mutual": false
+    },
+    {
+      "id": 37,
+      "participant_a": {
+        "id": 570,
+        "name": "Bas Ambachtsheer",
+        "email": "bas@bitsing.nl",
+        "company": "Bitsing"
+      },
+      "participant_b": {
+        "id": 594,
+        "name": "Oscar Niezen",
+        "email": "cohortconsulting@xs4all.nl",
+        "company": "CoHort Consulting"
+      },
+      "rank": 1,
+      "score": 0.3,
+      "reasoning": [
+        "Both Bas and Oscar are CEOs of consulting firms, offering potential synergies in methodologies and approaches.",
+        "Oscar has a strong network in Asia, which could open doors for Bas's company, Bitsing, to expand internationally.",
+        "Oscar's experience with government and subsidy processes may complement Bas's interest in achieving financial returns for ambitious goals."
+      ],
+      "email_draft": "Hi Oscar, I’m Bas Ambachtsheer from Bitsing. I’m intrigued by your extensive network in Asia and experience in government-related projects. As we aim for predictable growth partnering with proven methodologies, I think our consulting approaches might have a lot to share. Looking forward to discussing potential synergies.",
+      "linkedin_draft": "Hi Oscar, I’m eager to connect! Your expertise in Asia and my focus on predictable growth through consulting could complement each other well. Let’s explore synergies.",
+      "status": "pending",
+      "mutual": true
+    },
+    {
+      "id": 39,
+      "participant_a": {
+        "id": 576,
+        "name": "Edwin Groenewoud",
+        "email": "egroenewoud@temisluxury.com",
+        "company": "Temis Luxury"
+      },
+      "participant_b": {
+        "id": 599,
+        "name": "Rim Alaoui",
+        "email": "rimyalaoui@gmail.com",
+        "company": "Omoka"
+      },
+      "rank": 1,
+      "score": 0.05,
+      "reasoning": [
+        "Rim Alaoui's company, Omoka, focuses on urban and regional logistics, which aligns with Temis Luxury's specialization in luxury logistics solutions.",
+        "Rim is looking for new ideas and network connections, and Edwin is looking for new clients in a related industry, offering a potential mutual benefit.",
+        "Both companies use technology-driven strategies (Omoka with visual AI, Temis Luxury with logistics solutions), providing a shared technological interest for collaboration."
+      ],
+      "email_draft": "Hi Rim, I see we're both engaged in the logistics field, only you bring a tech twist with Omoka's urban logistics solutions. At Temis Luxury, we specialize in the transport of luxury goods, and I'm eager to explore how our services might complement each other. Would you be open to a discussion about potential collaboration opportunities? Looking forward to hearing from you!",
+      "linkedin_draft": "Hi Rim, I'm impressed by Omoka's innovative approach to logistics. At Temis Luxury, we, too, are in the logistics field, offering exclusive services. Let's connect to explore potential synergies.",
+      "status": "pending",
+      "mutual": false
+    },
+    {
+      "id": 41,
+      "participant_a": {
+        "id": 576,
+        "name": "Edwin Groenewoud",
+        "email": "egroenewoud@temisluxury.com",
+        "company": "Temis Luxury"
+      },
+      "participant_b": {
+        "id": 608,
+        "name": "Geoffrey Burgh",
+        "email": "geoffrey@vdbsalesconsultancy.nl",
+        "company": "VDB SalesConsultancy"
+      },
+      "rank": 2,
+      "score": 0.03571428571428571,
+      "reasoning": [
+        "Geoffrey Burgh offers B2B lead generation, which can help Edwin in reaching new clients in the luxury fashion and jewelry sectors.",
+        "Both companies focus on reaching small and medium businesses, indicating a potential target audience overlap.",
+        "VDB SalesConsultancy offers services in content optimization, which could complement Edwin's strategic goals to expand client outreach."
+      ],
+      "email_draft": "Hello Geoffrey, I'm intrigued by VDB SalesConsultancy's expertise in B2B lead generation. At Temis Luxury, we're looking to expand our client base in the exclusive fashion and jewelry markets. I believe your services could be crucial in enhancing our client acquisition strategy. Would you be interested in discussing this potential collaboration further?",
+      "linkedin_draft": "Hi Geoffrey, as the Commercial Director at Temis Luxury, I'm keen on expanding our reach in the luxury markets. Your lead generation expertise is exactly what we need. Let's connect!",
+      "status": "pending",
+      "mutual": false
+    },
+    {
+      "id": 43,
+      "participant_a": {
+        "id": 577,
+        "name": "Evert Lassche",
+        "email": "elassche@lmi-nl.com",
+        "company": "LMI Noord-Holland"
+      },
+      "participant_b": {
+        "id": 573,
+        "name": "Coen Splinter",
+        "email": "coen@aandachtigleiderschap.nl",
+        "company": "Aandachtig Leiderschap"
+      },
+      "rank": 1,
+      "score": 0.08333333333333333,
+      "reasoning": [
+        "Evert Lassche and Coen Splinter both focus on leadership development and organizational issues.",
+        "Coen is looking for entrepreneurs that are 'stuck,' which aligns with Evert's expertise in leadership and organizational questions.",
+        "Both are in the leadership development industry, suggesting compatibility in offerings and client base."
+      ],
+      "email_draft": "Beste Coen, mijn naam is Evert Lassche van LMI Noord-Holland. Wij delen een interesse in leiderschapsontwikkeling, specifiek binnen organisaties waar ondernemers tegen problemen aanlopen. Ik geloof dat onze gezamenlijke expertise op het gebied van persoonlijk leiderschap en organisatieontwikkeling kan leiden tot wederzijds voordelige inzichten. Zou u geïnteresseerd zijn in een nadere kennismaking?",
+      "linkedin_draft": "Hallo Coen, als collega in leiderschapsontwikkeling dacht ik dat het waardevol kon zijn om onze ervaringen en technieken te delen. Laten we verbinden!",
+      "status": "pending",
+      "mutual": false
+    },
+    {
+      "id": 45,
+      "participant_a": {
+        "id": 577,
+        "name": "Evert Lassche",
+        "email": "elassche@lmi-nl.com",
+        "company": "LMI Noord-Holland"
+      },
+      "participant_b": {
+        "id": 582,
+        "name": "Jan Peter van Diemen",
+        "email": "jp@janpetervandiemen.nl",
+        "company": "De Nieuwe Ondernemerslente"
+      },
+      "rank": 2,
+      "score": 0.05,
+      "reasoning": [
+        "Both Evert and Jan Peter work on personal and organizational development.",
+        "Jan Peter offers business coaching, which complements Evert’s work on leadership challenges.",
+        "There is a common focus on supporting entrepreneurs’ development, presenting collaboration opportunities."
+      ],
+      "email_draft": "Hallo Jan Peter, ik ben Evert Lassche, Directeur bij LMI Noord-Holland. Ik zag dat u ondernemers begeleidt in persoonlijke en zakelijke ontwikkeling. Dit sluit mooi aan bij de vraagstukken rondom leiderschap en organisatie waar ik me mee bezighoud. Ik denk dat een samenwerking nieuwe mogelijkheden kan openen. Heeft u interesse in een gesprek hierover?",
+      "linkedin_draft": "Beste Jan Peter, ik ben actief in leiderschap en organisatie vraagstukken. Graag connecteer ik om te verkennen hoe we gezamenlijk ondernemers kunnen ondersteunen.",
+      "status": "pending",
+      "mutual": false
+    },
+    {
+      "id": 47,
+      "participant_a": {
+        "id": 577,
+        "name": "Evert Lassche",
+        "email": "elassche@lmi-nl.com",
+        "company": "LMI Noord-Holland"
+      },
+      "participant_b": {
+        "id": 614,
+        "name": "Edward de Jong",
+        "email": "e.dejong@jbcbv.eu",
+        "company": "De Jong Business Consultancy BV"
+      },
+      "rank": 3,
+      "score": 0,
+      "reasoning": [
+        "Edward's focus on strategic leadership aligns with Evert's expertise in organizational leadership issues.",
+        "De Jong Business Consultancy's service offerings in organization development complement Evert’s interests.",
+        "Both aim to improve organizational effectiveness, suggesting potential collaboration areas."
+      ],
+      "email_draft": "Hoi Edward, Evert Lassche hier van LMI Noord-Holland. We delen een interesse in strategisch leiderschap en organisatieontwikkeling, wat ons werk aanzienlijk overlapt. Ik zie mogelijke kruisbestuiving van onze inzichten en methoden die nuttig kunnen zijn voor de cliënten die we bedienen. Staat u open voor een gesprek om dit verder te onderzoeken?",
+      "linkedin_draft": "Hallo Edward, als iemand die zich bezighoudt met leiderschap en organisatieontwikkeling, zou ik graag verbinden om onze ervaringen te delen.",
+      "status": "pending",
+      "mutual": false
+    },
+    {
+      "id": 49,
+      "participant_a": {
+        "id": 582,
+        "name": "Jan Peter van Diemen",
+        "email": "jp@janpetervandiemen.nl",
+        "company": "De Nieuwe Ondernemerslente"
+      },
+      "participant_b": {
+        "id": 573,
+        "name": "Coen Splinter",
+        "email": "coen@aandachtigleiderschap.nl",
+        "company": "Aandachtig Leiderschap"
+      },
+      "rank": 1,
+      "score": 0.041666666666666664,
+      "reasoning": [
+        "Both Jan Peter van Diemen and Coen Splinter offer coaching services focused on personal and business development.",
+        "Coen is looking for entrepreneurs who are struggling, aligning well with Jan Peter's offering of guidance and development.",
+        "Both participants operate within the coaching and leadership development domains, facilitating potential collaboration."
+      ],
+      "email_draft": "Hi Coen, I hope you're doing well. I came across your profile and noticed that we both have a focus on coaching entrepreneurs, particularly in personal and business development. I believe there might be valuable insights and collaboration opportunities for us, especially given your focus on entrepreneurs seeking leadership development. I'd love to discuss how our approaches can complement each other. Looking forward to your thoughts.",
+      "linkedin_draft": "Hi Coen, I noticed we both work in the field of personal and business coaching. Let's connect and explore ways to enhance our services.",
+      "status": "pending",
+      "mutual": true
+    },
+    {
+      "id": 51,
+      "participant_a": {
+        "id": 582,
+        "name": "Jan Peter van Diemen",
+        "email": "jp@janpetervandiemen.nl",
+        "company": "De Nieuwe Ondernemerslente"
+      },
+      "participant_b": {
+        "id": 579,
+        "name": "Frans Razoux Schultz",
+        "email": "frazoux@yahoo.com",
+        "company": "Opex"
+      },
+      "rank": 2,
+      "score": 0.05,
+      "reasoning": [
+        "Frans Razoux Schultz is looking for ambitious startups and scale-ups, a segment that could benefit from Jan Peter's business coaching services.",
+        "Frans offers mentorship and funding support, which complements Jan Peter’s guidance in business development.",
+        "Both parties are interested in fostering business growth and development for entrepreneurs."
+      ],
+      "email_draft": "Hi Frans, I found your work with ambitious startups and scale-ups intriguing. As a business coach dedicated to personal and business development, I believe our services can offer comprehensive support to these businesses. I'd love to discuss how my coaching could align with your mentorship and funding strategies. Looking forward to hearing from you.",
+      "linkedin_draft": "Hi Frans, I admire your focus on startups and scale-ups which aligns with my business coaching offerings. Let's connect to explore potential synergies.",
+      "status": "pending",
+      "mutual": false
+    },
+    {
+      "id": 53,
+      "participant_a": {
+        "id": 582,
+        "name": "Jan Peter van Diemen",
+        "email": "jp@janpetervandiemen.nl",
+        "company": "De Nieuwe Ondernemerslente"
+      },
+      "participant_b": {
+        "id": 590,
+        "name": "Mirella Bosch",
+        "email": "contact@miraqel.com",
+        "company": "Miraqel.com"
+      },
+      "rank": 3,
+      "score": 0.07142857142857142,
+      "reasoning": [
+        "Mirella Bosch is involved in personal coaching with a health and vitality focus, which complements Jan Peter's coaching on business and personal development.",
+        "Mirella is seeking entrepreneurial people who are interested in personal growth, aligning with Jan Peter’s services for entrepreneurs.",
+        "Both participants are dedicated to coaching that affects personal growth and empowerment."
+      ],
+      "email_draft": "Hi Mirella, I was captivated by your focus on health and personal coaching. At De Nieuwe Ondernemerslente, we center our services on personal and business development for entrepreneurs. I see potential in combining our efforts to drive both health and business excellence for clients. I’d enjoy discussing how we can collaborate to enhance our combined impact.",
+      "linkedin_draft": "Hi Mirella, I was fascinated by your approach to personal coaching and health. Let's connect and discuss how our expertise in coaching can complement each other.",
+      "status": "pending",
+      "mutual": true
+    },
+    {
+      "id": 55,
+      "participant_a": {
+        "id": 586,
+        "name": "Kristian Heck",
+        "email": "k.heckinfo@gmail.com",
+        "company": "Kristian AI"
+      },
+      "participant_b": {
+        "id": 602,
+        "name": "Arthur Beemster",
+        "email": "a.beemster@goedemensen.nu",
+        "company": "Goedemensen projectprofessionals"
+      },
+      "rank": 1,
+      "score": 0.225,
+      "reasoning": [
+        "Arthur Beemster is actively looking for business opportunities in AI, aligning with Kristian Heck's offerings.",
+        "Goedemensen projectprofessionals provides AI solutions within public and private organizations, potentially complementing Kristian AI's services.",
+        "Both companies have a focus on result-driven projects which can lead to mutually beneficial collaborations."
+      ],
+      "email_draft": "Hi Arthur,\n\nI am Kristian Heck, CEO of Kristian AI. I noticed your interest in business opportunities around AI and think there could be great synergy between our offerings. We specialize in AI solutions and could explore potential collaborations in delivering value-driven projects. I'd love to discuss this further with you.\n\nBest regards,\nKristian",
+      "linkedin_draft": "Hi Arthur, I'm interested in your work with Goedemensen. Let's connect to explore potential collaboration opportunities in AI solutions.",
+      "status": "pending",
+      "mutual": false
+    },
+    {
+      "id": 57,
+      "participant_a": {
+        "id": 586,
+        "name": "Kristian Heck",
+        "email": "k.heckinfo@gmail.com",
+        "company": "Kristian AI"
+      },
+      "participant_b": {
+        "id": 599,
+        "name": "Rim Alaoui",
+        "email": "rimyalaoui@gmail.com",
+        "company": "Omoka"
+      },
+      "rank": 2,
+      "score": 0,
+      "reasoning": [
+        "Rim Alaoui's company, Omoka, specializes in technology with a focus on visual AI, which directly relates to Kristian AI's expertise in AI solutions.",
+        "Omoka's use of AI for productivity enhancements in manufacturing can complement Kristian AI's offerings.",
+        "Rim is actively seeking new ideas and networking opportunities, which aligns with Kristian's interest in expanding client relationships."
+      ],
+      "email_draft": "Hi Rim,\n\nI'm Kristian Heck, CEO of Kristian AI. I was intrigued by Omoka's focus on using visual AI for logistics and manufacturing. Since we specialize in AI solutions as well, I believe we could collaborate to foster innovations in AI-driven productivity. Would you be interested in connecting to discuss this further?\n\nLooking forward to your reply,\nKristian",
+      "linkedin_draft": "Hi Rim, I see that Omoka is doing fascinating work in AI. I'd love to connect and explore how we might collaborate in this space.",
+      "status": "pending",
+      "mutual": false
+    },
+    {
+      "id": 59,
+      "participant_a": {
+        "id": 589,
+        "name": "Marco van Barneveld",
+        "email": "marco@stomerijcollectief.nl",
+        "company": "Stomerij Collectief"
+      },
+      "participant_b": {
+        "id": 575,
+        "name": "Danny van Stiphout",
+        "email": "danny@lloff.nl",
+        "company": "lloff - facilitaire horeca specialisten"
+      },
+      "rank": 2,
+      "score": 0.041666666666666664,
+      "reasoning": [
+        "Danny is involved in workplace catering consultancy, which aligns with some of the facilities services in the hospitality industry.",
+        "Both Marco and Danny are in the business of improving service quality in business operations, although Marco's focus is on cleaning.",
+        "There is a potential for collaboration where Stomerij Collectief helps maintain uniforms and linens for lloff's clients."
+      ],
+      "email_draft": "Hi Danny, I'm Marco from Stomerij Collectief. We offer a range of cleaning services tailored for the hospitality sector, including garment maintenance for hotel staff, which might benefit your workplace catering clients. I'd love to discuss how we could potentially support your consultancy efforts with our specialized services. Looking forward to chatting!",
+      "linkedin_draft": "Hi Danny, I'd like to connect to discuss how Stomerij Collectief's services in laundry could complement your catering consultancy in hospitality environments.",
+      "status": "pending",
+      "mutual": false
+    },
+    {
+      "id": 61,
+      "participant_a": {
+        "id": 597,
+        "name": "Peter-Joost Post",
+        "email": "pj@ticketkeeper.com",
+        "company": "Ticketkeeper BV"
+      },
+      "participant_b": {
+        "id": 579,
+        "name": "Frans Razoux Schultz",
+        "email": "frazoux@yahoo.com",
+        "company": "Opex"
+      },
+      "rank": 1,
+      "score": 0.3,
+      "reasoning": [
+        "Frans Razoux Schultz offers mentorship and help to get funding, which aligns with Peter-Joost's need for investment.",
+        "Frans is interested in working with ambitious startups and scale-ups, and Ticketkeeper B.V. fits this profile as a growing SaaS company.",
+        "Opex's expertise in result-driven go-to-market strategies could complement Ticketkeeper's ticketing solutions by enhancing market reach."
+      ],
+      "email_draft": "Hi Frans, I'm Peter-Joost, founder of Ticketkeeper B.V., a SaaS company revolutionizing ticketing solutions. I see that you offer mentorship and assist in securing funding for ambitious startups, which aligns well with my current needs. I believe that your expertise could greatly benefit our growth strategy. Would you be open to exploring this further?",
+      "linkedin_draft": "Hi Frans, I'm the founder of Ticketkeeper, a growing SaaS platform. I see you support startups with funding and GTM strategies, which could greatly benefit us. Let's connect!",
+      "status": "pending",
+      "mutual": false
+    },
+    {
+      "id": 63,
+      "participant_a": {
+        "id": 597,
+        "name": "Peter-Joost Post",
+        "email": "pj@ticketkeeper.com",
+        "company": "Ticketkeeper BV"
+      },
+      "participant_b": {
+        "id": 603,
+        "name": "Danielle Brons",
+        "email": "danielle@brandxtension.nl",
+        "company": "BrandXtension BV"
+      },
+      "rank": 2,
+      "score": 0.15,
+      "reasoning": [
+        "Danielle Brons's company, BrandXtension BV, specializes in event organization, which complements Ticketkeeper's ticketing SaaS solutions.",
+        "Both are focused on events, which can lead to synergies in service offerings and market reach.",
+        "Danielle's offerings in event support on a project basis align with Peter-Joost's knowledge in events and ticketing."
+      ],
+      "email_draft": "Hello Danielle, I'm Peter-Joost from Ticketkeeper, a digital ticketing platform. We specialize in ticket distribution and event solutions, and I noticed that BrandXtension BV provides event organization support. I believe there could be potential collaboration opportunities for us. Would you be interested in discussing this further?",
+      "linkedin_draft": "Hi Danielle, I'm Peter-Joost from Ticketkeeper. I see you support events and exhibitions, and I'm interested in how we might collaborate. Let's connect!",
+      "status": "pending",
+      "mutual": false
+    },
+    {
+      "id": 65,
+      "participant_a": {
+        "id": 596,
+        "name": "peter clercx",
+        "email": "peterclercx@mac.com",
+        "company": "TheBrandHotel"
+      },
+      "participant_b": {
+        "id": 603,
+        "name": "Danielle Brons",
+        "email": "danielle@brandxtension.nl",
+        "company": "BrandXtension BV"
+      },
+      "rank": 1,
+      "score": 0,
+      "reasoning": [
+        "Both The Brand Hotel and BrandXtension BV specialize in advertising services, presenting potential synergies.",
+        "Danielle Brons' expertise in event organization complements Peter Clercx's marketing and business planning services.",
+        "Both companies are small to medium enterprises, which may allow for more agile and personalized collaboration."
+      ],
+      "email_draft": "Hi Danielle, I’m Peter Clercx, Creative Director at TheBrandHotel. I noticed your expertise in graphic design and event organization aligns well with our award-winning marketing strategies. I’d love to explore how we can collaborate or support each other’s projects.",
+      "linkedin_draft": "Hi Danielle, I'm Peter Clercx, Creative Director at TheBrandHotel. I believe our shared focus on creative communication could lead to great collaboration opportunities!",
+      "status": "pending",
+      "mutual": false
+    },
+    {
+      "id": 67,
+      "participant_a": {
+        "id": 596,
+        "name": "peter clercx",
+        "email": "peterclercx@mac.com",
+        "company": "TheBrandHotel"
+      },
+      "participant_b": {
+        "id": 570,
+        "name": "Bas Ambachtsheer",
+        "email": "bas@bitsing.nl",
+        "company": "Bitsing"
+      },
+      "rank": 2,
+      "score": 0,
+      "reasoning": [
+        "Bitsing's innovative business management methods could enhance The Brand Hotel's strategic marketing solutions.",
+        "Bas Ambachtsheer’s consulting background could provide valuable insights for TheBrandHotel’s concierge services.",
+        "Both companies aim to achieve significant goals with predictable financial returns, indicating potential alignment in strategic outlook."
+      ],
+      "email_draft": "Hello Bas, I’m Peter Clercx from TheBrandHotel. I find your work with the Bitsing method fascinating and believe there might be room for us to integrate some of your strategic growth insights into our marketing services. Would you be open to a conversation?",
+      "linkedin_draft": "Hi Bas, I'm Peter Clercx from TheBrandHotel. Your proven business strategies intrigued me, and I'd love to explore how we can possibly collaborate.",
+      "status": "pending",
+      "mutual": false
+    },
+    {
+      "id": 69,
+      "participant_a": {
+        "id": 596,
+        "name": "peter clercx",
+        "email": "peterclercx@mac.com",
+        "company": "TheBrandHotel"
+      },
+      "participant_b": {
+        "id": 576,
+        "name": "Edwin Groenewoud",
+        "email": "egroenewoud@temisluxury.com",
+        "company": "Temis Luxury"
+      },
+      "rank": 3,
+      "score": 0,
+      "reasoning": [
+        "Edwin Groenewoud’s experience with luxury goods logistics aligns with The Brand Hotel's high-profile clientele, such as Amazon HQ2.",
+        "Temis Luxury's extensive network in exclusive transport solutions complements Peter Clercx’s strategic marketing services, opening avenues for mutual referrals.",
+        "Both parties have an international focus, e.g., Temis Luxury's acquisition activities, which fits The Brand Hotel's diverse project history."
+      ],
+      "email_draft": "Hi Edwin, I’m Peter Clercx from TheBrandHotel. Your work at Temis Luxury, especially with secure high-end logistics, aligns perfectly with the high-profile clientele we serve. I’d love to discuss how we might work together to enhance the service offerings for our respective clients.",
+      "linkedin_draft": "Hi Edwin, I'm Peter Clercx from TheBrandHotel. I'm impressed by your expertise in logistics for luxury goods and would love to connect.",
+      "status": "pending",
+      "mutual": false
+    },
+    {
+      "id": 71,
+      "participant_a": {
+        "id": 573,
+        "name": "Coen Splinter",
+        "email": "coen@aandachtigleiderschap.nl",
+        "company": "Aandachtig Leiderschap"
+      },
+      "participant_b": {
+        "id": 581,
+        "name": "Jan de Vries",
+        "email": "info@stijg.eu",
+        "company": "Stijg Coaching en Therapie"
+      },
+      "rank": 2,
+      "score": 0,
+      "reasoning": [
+        "Jan de Vries offers both business coaching and personal development services, aligning with Coen's leadership coaching expertise.",
+        "Stijg Coaching en Therapie provides unique family business-focused services, offering a new perspective to Coen's clientele.",
+        "Both share interests in personal development through coaching, providing room for sharing best practices and methodologies."
+      ],
+      "email_draft": "Hello Jan, I found your approach at Stijg Coaching en Therapie quite fascinating, especially your unique focus on family business issues. As someone who also works closely with leaders needing personal development in their business journey, I see potential for shared insights. Could we possibly connect to discuss this further?",
+      "linkedin_draft": "Hi Jan, your work in business and personal development coaching resonates with my focus on leadership. Let's connect to share insights.",
+      "status": "pending",
+      "mutual": true
+    },
+    {
+      "id": 73,
+      "participant_a": {
+        "id": 573,
+        "name": "Coen Splinter",
+        "email": "coen@aandachtigleiderschap.nl",
+        "company": "Aandachtig Leiderschap"
+      },
+      "participant_b": {
+        "id": 614,
+        "name": "Edward de Jong",
+        "email": "e.dejong@jbcbv.eu",
+        "company": "De Jong Business Consultancy BV"
+      },
+      "rank": 3,
+      "score": 0,
+      "reasoning": [
+        "Edward de Jong's focus on strategic leadership and organization development aligns with Coen's expertise in leadership coaching.",
+        "Coen's personal leadership coaching could be a valuable addition to the business consultancy services offered by Edward.",
+        "Edward's extensive consulting background provides potential opportunities for collaboration in enhancing leadership skills within organizations."
+      ],
+      "email_draft": "Hi Edward, your focus on strategic leadership and organization development at De Jong Business Consultancy caught my attention. At Aandachtig Leiderschap, we emphasize personal leadership growth, which could integrate seamlessly with your consultancy services. I would love to discuss how we might enhance leadership capabilities together.",
+      "linkedin_draft": "Hello Edward, I admire your strategic focus in consultancy. It would be great to connect and explore our shared interest in leadership development.",
+      "status": "pending",
+      "mutual": false
+    },
+    {
+      "id": 75,
+      "participant_a": {
+        "id": 578,
+        "name": "Frank Soonius",
+        "email": "info@franksoonius.com",
+        "company": "FrankSoonius/Dream-Driver"
+      },
+      "participant_b": {
+        "id": 583,
+        "name": "Jeroen de Rijk",
+        "email": "jeroen@baileo.nl",
+        "company": "Baileo Music Productions"
+      },
+      "rank": 1,
+      "score": 0.05357142857142857,
+      "reasoning": [
+        "Both Frank and Jeroen are involved in creative fields, providing potential for collaboration in film and music production.",
+        "Frank's focus on motivational speaking overlaps with Jeroen's experience in producing live music events, creating synergy for joint speaking engagements or events.",
+        "Jeroen is looking for decision-makers interested in booking live music, aligning with Frank's interest in the entertainment industry."
+      ],
+      "email_draft": "Hi Jeroen, I’m Frank Soonius, the owner of FrankSoonius/Dream-Driver. I specialize in motivational and keynote speaking and have a screenplay that we are adapting from my book. I noticed your extensive background in music production with Baileo Music Productions. I believe there could be interesting synergies between your music projects and my speaking engagements or upcoming film projects. I’d love to explore how we can work together. Looking forward to connecting!",
+      "linkedin_draft": "Hi Jeroen, I’m Frank, a keynote speaker and author. I’m interested in your work with Baileo Music, particularly given my focus on film projects and speaking engagements. Let’s connect!",
+      "status": "pending",
+      "mutual": false
+    },
+    {
+      "id": 77,
+      "participant_a": {
+        "id": 578,
+        "name": "Frank Soonius",
+        "email": "info@franksoonius.com",
+        "company": "FrankSoonius/Dream-Driver"
+      },
+      "participant_b": {
+        "id": 603,
+        "name": "Danielle Brons",
+        "email": "danielle@brandxtension.nl",
+        "company": "BrandXtension BV"
+      },
+      "rank": 2,
+      "score": 0.03571428571428571,
+      "reasoning": [
+        "Danielle's expertise in event organization complements Frank's interest in speaking engagements, opening opportunities for partnerships in event planning.",
+        "BrandXtension's focus on visual communication could enhance the promotional strategies for Frank's book and film script.",
+        "Danielle's interest in new contacts aligns with Frank's search for industry connections in film and speaking."
+      ],
+      "email_draft": "Hi Danielle, I’m Frank Soonius, owner of FrankSoonius/Dream-Driver. My work involves motivational speaking and I’ve recently been working on a film adaptation of my book. Your expertise in graphic design and event management at BrandXtension caught my attention. I think there are several ways we could collaborate to bring creative solutions to upcoming events. Looking forward to your thoughts!",
+      "linkedin_draft": "Hi Danielle, I’m Frank and I’m involved in motivational speaking and film projects. Your work in visual communication and event management is intriguing. Let’s connect to explore joint opportunities!",
+      "status": "pending",
+      "mutual": false
+    },
+    {
+      "id": 79,
+      "participant_a": {
+        "id": 579,
+        "name": "Frans Razoux Schultz",
+        "email": "frazoux@yahoo.com",
+        "company": "Opex"
+      },
+      "participant_b": {
+        "id": 586,
+        "name": "Kristian Heck",
+        "email": "k.heckinfo@gmail.com",
+        "company": "Kristian AI"
+      },
+      "rank": 1,
+      "score": 0.3,
+      "reasoning": [
+        "Kristian Heck is a CEO looking for clients in the AI sector, aligning with Frans Razoux Schultz's target of ambitious startups that might need AI solutions.",
+        "Kristian AI offers AI solutions, which could complement Frans's GTM strategy expertise to jointly develop market-winning AI products.",
+        "Their mutual focus on growth and innovation makes them a compatible pair for mentorship and expanding client bases."
+      ],
+      "email_draft": "Hi Kristian, I am Frans Razoux Schultz, Founder of Opex. I noticed your work at Kristian AI providing AI solutions, and I believe we could collaborate effectively. My expertise in crafting result-driven GTM strategies could align well with your offerings, especially to scale AI solutions with ambitious startups. Let's explore potential synergies. Looking forward to your thoughts.",
+      "linkedin_draft": "Hi Kristian, I'm Frans Razoux Schultz from Opex. Your focus on AI solutions interests me, and I think we might find great synergy in scaling ventures. Let's connect!",
+      "status": "pending",
+      "mutual": false
+    },
+    {
+      "id": 81,
+      "participant_a": {
+        "id": 579,
+        "name": "Frans Razoux Schultz",
+        "email": "frazoux@yahoo.com",
+        "company": "Opex"
+      },
+      "participant_b": {
+        "id": 605,
+        "name": "Walter van Gent",
+        "email": "AstonAnalytics@Planet.nl",
+        "company": "Aston Analytics B.V."
+      },
+      "rank": 2,
+      "score": 0.08333333333333333,
+      "reasoning": [
+        "Walter van Gent is seeking funding for transactions, and Frans specializes in assisting with funding, making them an ideal match.",
+        "Aston Analytics provides data-driven solutions, which would benefit from Frans's mentorship in formulating GTM strategies.",
+        "Both operate within consulting environments, providing a common ground for collaborative strategy development."
+      ],
+      "email_draft": "Hello Walter, I'm Frans Razoux Schultz, Founder of Opex. Given your pursuit of funding for transactions with Aston Analytics, I'd love to explore how I can assist. With my background in facilitating funding and strategic GTM, there could be substantial synergies for us to explore. Let's connect to discuss.",
+      "linkedin_draft": "Hi Walter, I’m Frans Razoux Schultz from Opex. Your funding goals at Aston Analytics caught my attention. I would love to see how we might support each other. Let's connect!",
+      "status": "pending",
+      "mutual": true
+    },
+    {
+      "id": 83,
+      "participant_a": {
+        "id": 579,
+        "name": "Frans Razoux Schultz",
+        "email": "frazoux@yahoo.com",
+        "company": "Opex"
+      },
+      "participant_b": {
+        "id": 570,
+        "name": "Bas Ambachtsheer",
+        "email": "bas@bitsing.nl",
+        "company": "Bitsing"
+      },
+      "rank": 3,
+      "score": 0.15,
+      "reasoning": [
+        "Bas Ambachtsheer's offerings align with growth, an area where Frans provides strategic mentorship, creating a potential collaboration for business development.",
+        "Bitsing utilizes proven management methods that could be refined or expanded with Frans's experience in result-driven GTM strategies.",
+        "Both are involved in consulting, providing a shared platform for exchanging insights on predicting and achieving ambitious business goals."
+      ],
+      "email_draft": "Hi Bas, I'm Frans Razoux Schultz from Opex. Your work at Bitsing caught my eye, particularly your growth focus using scientifically proven methods. I specialize in a result-driven GTM approach and offer mentorship for expanding business success. I'd be keen to discuss how we might collaborate. Let me know if you're open for a conversation!",
+      "linkedin_draft": "Hello Bas, I am Frans from Opex. Impressed by Bitsing's growth-centric approach, I see potential in collaborating on achieving ambitious business outcomes. Let’s connect!",
+      "status": "pending",
+      "mutual": false
+    },
+    {
+      "id": 85,
+      "participant_a": {
+        "id": 580,
+        "name": "Giwanni Schaap",
+        "email": "giwanni@invisibleairco.com",
+        "company": "Invisible Airco"
+      },
+      "participant_b": {
+        "id": 603,
+        "name": "Danielle Brons",
+        "email": "danielle@brandxtension.nl",
+        "company": "BrandXtension BV"
+      },
+      "rank": 1,
+      "score": 0.23333333333333334,
+      "reasoning": [
+        "Both companies operate in creative industries with a focus on design and aesthetics, potentially facilitating complementary partnerships.",
+        "Danielle Brons focuses on event and promotional consultancy, which could directly support Invisible Airco's aim to connect with end users through exhibitions and promotional events.",
+        "BrandXtension BV's expertise in visual communication and advertising can amplify Invisible Airco's transparent pricing and energy-efficient solutions in targeted markets."
+      ],
+      "email_draft": "Hello Danielle,\n\nI hope this message finds you well. I'm Giwanni Schaap, Director at Invisible Airco. Our company provides innovative air conditioning solutions that blend seamlessly into aesthetically sensitive environments. Given your expertise in event promotion and visual communication, I believe there could be a unique opportunity for collaboration to enhance our market reach. I'd love to explore how we might work together to advance both our businesses.\n\nWarm regards,\nGiwanni Schaap",
+      "linkedin_draft": "Hi Danielle, I'm Giwanni from Invisible Airco. Your expertise in visual promotions and event management seems like a great fit with our innovative solutions. Let's connect!",
+      "status": "pending",
+      "mutual": false
+    },
+    {
+      "id": 87,
+      "participant_a": {
+        "id": 581,
+        "name": "Jan de Vries",
+        "email": "info@stijg.eu",
+        "company": "Stijg Coaching en Therapie"
+      },
+      "participant_b": {
+        "id": 582,
+        "name": "Jan Peter van Diemen",
+        "email": "jp@janpetervandiemen.nl",
+        "company": "De Nieuwe Ondernemerslente"
+      },
+      "rank": 2,
+      "score": 0,
+      "reasoning": [
+        "Both work in business and personal coaching, with a target audience of entrepreneurs.",
+        "Jan Peter van Diemen’s experience with creating space in ventures complements Jan de Vries’s work with family businesses.",
+        "Potential for collaborative sessions combining each other's coaching specialties."
+      ],
+      "email_draft": "Hi Jan Peter,\n\nHope you are doing well. I am Jan de Vries, and I run Stijg Coaching en Therapie, focusing on family business coaching and psycho-social therapies. Your work at De Nieuwe Ondernemerslente in guiding entrepreneurs really resonated with me. I think our combined expertise could offer comprehensive support to business clients. Would you be interested in discussing opportunities to collaborate?\n\nWarm regards,\nJan",
+      "linkedin_draft": "Hi Jan Peter, I’m Jan de Vries from Stijg Coaching en Therapie. I admire your work with entrepreneurs and see opportunities for collaboration. Let’s connect!",
+      "status": "pending",
+      "mutual": false
+    },
+    {
+      "id": 89,
+      "participant_a": {
+        "id": 581,
+        "name": "Jan de Vries",
+        "email": "info@stijg.eu",
+        "company": "Stijg Coaching en Therapie"
+      },
+      "participant_b": {
+        "id": 607,
+        "name": "Anja Vreeburg",
+        "email": "anja@flowently.com",
+        "company": "Flowently"
+      },
+      "rank": 3,
+      "score": 0,
+      "reasoning": [
+        "Anja Vreeburg is seeking connections with Amsterdam entrepreneurs, aligning with Jan's local network interests.",
+        "Flowently’s language training services could benefit Jan’s therapy clients looking to improve communication skills.",
+        "Potential for cross-promotional opportunities between language and therapy services."
+      ],
+      "email_draft": "Hi Anja,\n\nI am Jan de Vries from Stijg Coaching en Therapie, specializing in family business issues and emotional development. Your company, Flowently, with its focus on language training, could complement the communication aspects of my coaching methods. I am keen to discuss how we might support each other's clients by bridging language and therapeutic insights.\n\nBest regards,\nJan",
+      "linkedin_draft": "Hi Anja, I’m Jan de Vries of Stijg Coaching en Therapie. I’m interested in connecting with fellow Amsterdam entrepreneurs. Let’s connect!",
+      "status": "pending",
+      "mutual": false
+    },
+    {
+      "id": 91,
+      "participant_a": {
+        "id": 583,
+        "name": "Jeroen de Rijk",
+        "email": "jeroen@baileo.nl",
+        "company": "Baileo Music Productions"
+      },
+      "participant_b": {
+        "id": 597,
+        "name": "Peter-Joost Post",
+        "email": "pj@ticketkeeper.com",
+        "company": "Ticketkeeper BV"
+      },
+      "rank": 1,
+      "score": 0.2125,
+      "reasoning": [
+        "Peter-Joost Post's company, Ticketkeeper B.V., is deeply involved in the events industry with their ticketing platform, which aligns well with Jeroen de Rijk's expertise in live music production.",
+        "Both businesses operate in related sectors that involve similar client bases - event attendees and organizers.",
+        "Jeroen's 45 years of experience in music production can offer valuable insights and collaboration opportunities for the event-driven focus of Ticketkeeper."
+      ],
+      "email_draft": "Hi Peter-Joost, I’m Jeroen de Rijk from Baileo Music Productions. Given your expertise in event ticketing with Ticketkeeper and my extensive background in music production, there could be an opportunity to collaborate on integrating live music events with your platform. I'd love to explore how we might support each other’s endeavors over a call or meeting. Best, Jeroen.",
+      "linkedin_draft": "Hi Peter-Joost, I’m Jeroen from Baileo Music Productions. With our shared interest in events, I'd love to connect and explore potential collaborations.",
+      "status": "pending",
+      "mutual": false
+    },
+    {
+      "id": 93,
+      "participant_a": {
+        "id": 583,
+        "name": "Jeroen de Rijk",
+        "email": "jeroen@baileo.nl",
+        "company": "Baileo Music Productions"
+      },
+      "participant_b": {
+        "id": 603,
+        "name": "Danielle Brons",
+        "email": "danielle@brandxtension.nl",
+        "company": "BrandXtension BV"
+      },
+      "rank": 2,
+      "score": 0.17083333333333334,
+      "reasoning": [
+        "Danielle Brons' company BrandXtension specializes in event organization, which complements Jeroen's knowledge in live music production.",
+        "Both are in roles that involve creative projects and would benefit from a discussion around combining visual communication with music events.",
+        "Danielle is looking for new contacts, aligning with Jeroen's interest in expanding his network with decision-makers."
+      ],
+      "email_draft": "Hello Danielle, I’m Jeroen de Rijk from Baileo Music Productions. Your work at BrandXtension in event organization and visual communication caught my eye as it perfectly complements how music events can be marketed. Let's connect to discuss potential partnership opportunities. Warm regards, Jeroen.",
+      "linkedin_draft": "Hi Danielle, I’m Jeroen. Your expertise in event organization and visual communication intrigues me. Let’s connect to explore synergies in our fields.",
+      "status": "pending",
+      "mutual": false
+    },
+    {
+      "id": 95,
+      "participant_a": {
+        "id": 585,
+        "name": "Kees Heuveling van Beek",
+        "email": "kees@invisibleairco.com",
+        "company": "Invisible Airco"
+      },
+      "participant_b": {
+        "id": 603,
+        "name": "Danielle Brons",
+        "email": "danielle@brandxtension.nl",
+        "company": "BrandXtension BV"
+      },
+      "rank": 1,
+      "score": 0.23333333333333334,
+      "reasoning": [
+        "Danielle Brons from BrandXtension BV offers networking and event support, which could help Invisible Airco in reaching more end users and partners.",
+        "BrandXtension operates in visual communication, potentially useful for developing promotional materials that Invisible Airco can use to market their unique air conditioning solutions.",
+        "Both are small-sized businesses, allowing for flexible and personalized collaboration opportunities."
+      ],
+      "email_draft": "Hi Danielle,\n\nI hope this message finds you well. My name is Kees Heuveling van Beek, and I am the Sales Manager at Invisible Airco. We specialize in air conditioning solutions that integrate seamlessly into historic buildings, preserving aesthetics without the need for outdoor units. I'm very interested in your expertise in networking and event support, as it could be beneficial in reaching more end users and partners. I believe our innovative approach could complement your offerings at BrandXtension BV. Let me know if you'd be interested in discussing this further.\n\nBest regards,\nKees",
+      "linkedin_draft": "Hi Danielle, I'm Kees from Invisible Airco. I see potential in collaborating, particularly around networking and promotional support. Let's connect!",
+      "status": "pending",
+      "mutual": false
+    },
+    {
+      "id": 97,
+      "participant_a": {
+        "id": 585,
+        "name": "Kees Heuveling van Beek",
+        "email": "kees@invisibleairco.com",
+        "company": "Invisible Airco"
+      },
+      "participant_b": {
+        "id": 570,
+        "name": "Bas Ambachtsheer",
+        "email": "bas@bitsing.nl",
+        "company": "Bitsing"
+      },
+      "rank": 2,
+      "score": 0.15,
+      "reasoning": [
+        "Bas Ambachtsheer's consulting expertise at Bitsing could assist Invisible Airco in achieving ambitious sales goals and optimizing business processes.",
+        "Though operating in different industries, both companies focus on growth and increasing market impact, creating an opportunity for strategic collaboration.",
+        "Invisible Airco can benefit from the scientifically proven methods offered by Bitsing to reliably achieve sales targets in the construction sector."
+      ],
+      "email_draft": "Hello Bas,\n\nI'm Kees Heuveling van Beek, Sales Manager from Invisible Airco. I came across your company, Bitsing, and your approach to achieving ambitious business goals intrigued me. We specialize in innovative air conditioning solutions and are always seeking to optimize our processes and expand our reach. I believe there’s a great fit between your methodologies and our growth objectives, and I'd love to explore potential synergies.\n\nWarm regards,\nKees",
+      "linkedin_draft": "Hi Bas, I’m Kees from Invisible Airco. I’m intrigued by your growth methodologies at Bitsing and would love to connect to explore collaboration!",
+      "status": "pending",
+      "mutual": false
+    },
+    {
+      "id": 99,
+      "participant_a": {
+        "id": 585,
+        "name": "Kees Heuveling van Beek",
+        "email": "kees@invisibleairco.com",
+        "company": "Invisible Airco"
+      },
+      "participant_b": {
+        "id": 602,
+        "name": "Arthur Beemster",
+        "email": "a.beemster@goedemensen.nu",
+        "company": "Goedemensen projectprofessionals"
+      },
+      "rank": 3,
+      "score": 0.08333333333333333,
+      "reasoning": [
+        "Arthur Beemster from Goedemensen Projectprofessionals offers AI solutions that might be leveraged to optimize Invisible Airco's operations or customer outreach strategies.",
+        "The focus on business analysis and smart procurement aligns with Invisible Airco's goal of providing innovative solutions efficiently.",
+        "Goedemensen's experience in both public and private sectors can open doors for Invisible Airco to expand into new market segments."
+      ],
+      "email_draft": "Dear Arthur,\n\nI'm Kees Heuveling van Beek from Invisible Airco. I was fascinated to learn about your company's expertise in AI and procurement. Our company focuses on premium air conditioning solutions without external units, and I believe implementing smart technologies could significantly enhance our market capabilities. I would appreciate the opportunity to discuss how we can collaborate to drive mutual growth.\n\nBest,\nKees",
+      "linkedin_draft": "Hi Arthur, I’m Kees from Invisible Airco. Your work at Goedemensen Projectprofessionals in AI solutions interests me for potential collaboration. Let’s connect!",
+      "status": "pending",
+      "mutual": false
+    },
+    {
+      "id": 101,
+      "participant_a": {
+        "id": 588,
+        "name": "Marcel Gotje",
+        "email": "marcel@protecteye.eu",
+        "company": "Protect Eye Nederland"
+      },
+      "participant_b": {
+        "id": 608,
+        "name": "Geoffrey Burgh",
+        "email": "geoffrey@vdbsalesconsultancy.nl",
+        "company": "VDB SalesConsultancy"
+      },
+      "rank": 1,
+      "score": 0,
+      "reasoning": [
+        "Geoffrey Burgh's company, VDB SalesConsultancy, specializes in B2B lead generation which could directly assist Marcel in expanding his client base.",
+        "Both companies target the B2B sector, making their expertise and networks complementary.",
+        "Outsourcing cold calling could enhance Protect Eye Nederland's market penetration effectively and efficiently."
+      ],
+      "email_draft": "Dear Geoffrey,\n\nI am Marcel Gotje, Directeur of Protect Eye Nederland, a company with over 37 years of experience in providing expert security services across the Netherlands. I noticed your expertise in B2B lead generation through VDB SalesConsultancy, and I believe there could be a strong synergy between our businesses. I would love to explore how your lead generation expertise could help us reach more clients in the security sector. Looking forward to discussing this opportunity further.\n\nBest regards,\nMarcel",
+      "linkedin_draft": "Hi Geoffrey, I’m Marcel Gotje from Protect Eye Nederland. Your B2B lead generation expertise at VDB SalesConsultancy interests me—let's connect!",
+      "status": "pending",
+      "mutual": false
+    },
+    {
+      "id": 103,
+      "participant_a": {
+        "id": 590,
+        "name": "Mirella Bosch",
+        "email": "contact@miraqel.com",
+        "company": "Miraqel.com"
+      },
+      "participant_b": {
+        "id": 573,
+        "name": "Coen Splinter",
+        "email": "coen@aandachtigleiderschap.nl",
+        "company": "Aandachtig Leiderschap"
+      },
+      "rank": 2,
+      "score": 0.041666666666666664,
+      "reasoning": [
+        "Coen Splinter offers personal leadership coaching, which complements Mirella's orthomolecular coaching focus.",
+        "Both target entrepreneurs looking to enhance their personal skills and health.",
+        "Mirella's health focus can complement Coen's leadership initiatives, fostering holistic personal development."
+      ],
+      "email_draft": "Hi Coen, I'm impressed by your work at Aandachtig Leiderschap in developing leadership skills. My coaching focuses on supporting health and vitality, which aligns well with personal leadership development. Let's connect to explore how we can support entrepreneurs from a holistic perspective. Best, Mirella.",
+      "linkedin_draft": "Hi Coen, your focus on personal leadership coaching perfectly complements my health-based coaching approach. Excited to connect!",
+      "status": "pending",
+      "mutual": false
+    },
+    {
+      "id": 105,
+      "participant_a": {
+        "id": 590,
+        "name": "Mirella Bosch",
+        "email": "contact@miraqel.com",
+        "company": "Miraqel.com"
+      },
+      "participant_b": {
+        "id": 607,
+        "name": "Anja Vreeburg",
+        "email": "anja@flowently.com",
+        "company": "Flowently"
+      },
+      "rank": 3,
+      "score": 0.05555555555555555,
+      "reasoning": [
+        "Anja Vreeburg is also an entrepreneur interested in connecting with other business owners.",
+        "Her language training services could benefit from Mirella's health and focus initiatives.",
+        "Both are based in domains that emphasize personal growth and development."
+      ],
+      "email_draft": "Hi Anja, I was intrigued by Flowently's focus on language integration and personal growth. As a health and vitality coach, I believe there's potential for collaboration, enhancing the personal development of our clients. Let's connect! Best regards, Mirella.",
+      "linkedin_draft": "Hi Anja, our shared interest in personal growth and business development could lead to exciting collaborations. Let's connect!",
+      "status": "pending",
+      "mutual": false
+    },
+    {
+      "id": 107,
+      "participant_a": {
+        "id": 594,
+        "name": "Oscar Niezen",
+        "email": "cohortconsulting@xs4all.nl",
+        "company": "CoHort Consulting"
+      },
+      "participant_b": {
+        "id": 575,
+        "name": "Danny van Stiphout",
+        "email": "danny@lloff.nl",
+        "company": "lloff - facilitaire horeca specialisten"
+      },
+      "rank": 2,
+      "score": 0.325,
+      "reasoning": [
+        "Danny's expertise in workplace catering ties into the food sector where Oscar is focusing his efforts in Asia.",
+        "Oscar's network in Asia could offer Danny potential new markets and perspectives for his workplace catering consulting.",
+        "Both parties offer consultancy services, providing a common ground for knowledge exchange and partnership."
+      ],
+      "email_draft": "Hello Danny, I was impressed by lloff's innovative approaches in workplace catering. My strong network in Asia's food and agri sectors might provide new insights and opportunities for your services. I'd love the chance to discuss this further. Best regards, Oscar.",
+      "linkedin_draft": "Hi Danny, I find your work in workplace hospitality fascinating. Let's connect and explore how our expertise might intersect.",
+      "status": "pending",
+      "mutual": false
+    },
+    {
+      "id": 109,
+      "participant_a": {
+        "id": 600,
+        "name": "Salomon Engelsman",
+        "email": "info@sunice.nl",
+        "company": "Sunice"
+      },
+      "participant_b": {
+        "id": 603,
+        "name": "Danielle Brons",
+        "email": "danielle@brandxtension.nl",
+        "company": "BrandXtension BV"
+      },
+      "rank": 1,
+      "score": 0.15,
+      "reasoning": [
+        "Both Sunice and BrandXtension BV are involved in event organization, providing opportunities for collaboration.",
+        "Danielle Brons offers graphic design and visual communication services which might enhance Sunice's brand visibility.",
+        "BrandXtension’s expertise in promotions could complement Sunice's marketing needs for its sporting goods."
+      ],
+      "email_draft": "Dear Danielle, I am Salomon Engelsman, Producer at Sunice, a brand that focuses on performance-enhancing golf and ski outerwear. I see that BrandXtension BV specializes in visual communication and event organization, which aligns well with our goal to elevate our brand presence. I believe your expertise could greatly assist in our marketing projects. Looking forward to the possibility of collaborating.",
+      "linkedin_draft": "Hi Danielle, I'm Salomon from Sunice. Noticing our shared interest in event organization, I'd like to connect and explore mutual opportunities in our respective industries.",
+      "status": "pending",
+      "mutual": false
+    },
+    {
+      "id": 111,
+      "participant_a": {
+        "id": 601,
+        "name": "Santiago Varela",
+        "email": "santiago.vareladieguez@hotmail.com",
+        "company": "DIEGUEZ legal"
+      },
+      "participant_b": {
+        "id": 590,
+        "name": "Mirella Bosch",
+        "email": "contact@miraqel.com",
+        "company": "Miraqel.com"
+      },
+      "rank": 1,
+      "score": 0.03571428571428571,
+      "reasoning": [
+        "Mirella Bosch offers coaching and advice enhancing focus, which complements legal advisory roles focused on mental well-being.",
+        "Both Santiago and Mirella are engaged in businesses that support personal and professional growth.",
+        "Mirella's focus on health and vitality aligns with keeping employees productive and legally fit, which is a potential point of collaboration."
+      ],
+      "email_draft": "Hi Mirella, I came across your expertise in orthomolecular advice and personal coaching. At DIEGUEZ legal, we understand the importance of health and well-being in the workplace, which complements our service in labor law. I'm interested in discussing how we might collaborate to enhance employee wellness from a legal standpoint.",
+      "linkedin_draft": "Hi Mirella, I'm interested in learning more about your health and wellness insights. Let's connect!",
+      "status": "pending",
+      "mutual": false
+    },
+    {
+      "id": 113,
+      "participant_a": {
+        "id": 606,
+        "name": "Solomon Floyd",
+        "email": "Solomon@KodiakCapitalAdvisory.com",
+        "company": "Fur Family Flights"
+      },
+      "participant_b": {
+        "id": 576,
+        "name": "Edwin Groenewoud",
+        "email": "egroenewoud@temisluxury.com",
+        "company": "Temis Luxury"
+      },
+      "rank": 1,
+      "score": 0,
+      "reasoning": [
+        "Edwin Groenewoud offers logistics solutions, which aligns with Solomon's interests in the logistics sector.",
+        "Edwin's international logistics company could be beneficial for Solomon's European network expansion as both operate globally.",
+        "Temis Luxury's premium home delivery services could complement Fur Family Flights' high-end travel offerings."
+      ],
+      "email_draft": "Hi Edwin, I'm Solomon Floyd, owner of Fur Family Flights. I've noted your expertise in luxury logistics and secure transportation which dovetails with my interest in expanding our logistics services globally. I believe our companies could find synergies in high-end logistics and aviation services. Looking forward to connecting and discussing potential collaborations.",
+      "linkedin_draft": "Hi Edwin, I'm Solomon Floyd from Fur Family Flights. Your work in exclusive logistics caught my eye as I'm looking to grow our network in similar spaces. Let's connect!",
+      "status": "pending",
+      "mutual": false
+    },
+    {
+      "id": 115,
+      "participant_a": {
+        "id": 606,
+        "name": "Solomon Floyd",
+        "email": "Solomon@KodiakCapitalAdvisory.com",
+        "company": "Fur Family Flights"
+      },
+      "participant_b": {
+        "id": 579,
+        "name": "Frans Razoux Schultz",
+        "email": "frazoux@yahoo.com",
+        "company": "Opex"
+      },
+      "rank": 2,
+      "score": 0,
+      "reasoning": [
+        "Frans Razoux Schultz is interested in ambitious startups and scale-ups, which aligns with Solomon's experience in starting and exiting companies.",
+        "Frans offers mentorship and assistance in funding, which could be beneficial for Solomon's aviation enterprises.",
+        "Frans' focus on result-driven GTM strategy could help Solomon with strategic growth and market entry strategies in Europe."
+      ],
+      "email_draft": "Hello Frans, I'm Solomon Floyd, owner of Fur Family Flights. I have founded and exited several companies and am currently focusing on scaling our aviation services in Europe. Your expertise in mentoring startups and growth strategies could align well with our ambitions. I'd love to explore potential collaboration.",
+      "linkedin_draft": "Hi Frans, I'm Solomon Floyd. Your interest in startups and expertise in growth strategies are very intriguing. Let's connect to explore mutual opportunities!",
+      "status": "pending",
+      "mutual": false
+    },
+    {
+      "id": 117,
+      "participant_a": {
+        "id": 607,
+        "name": "Anja Vreeburg",
+        "email": "anja@flowently.com",
+        "company": "Flowently"
+      },
+      "participant_b": {
+        "id": 584,
+        "name": "Josanne Roelofs",
+        "email": "josanne.roelofs@hotmail.com",
+        "company": "Verhuisdieren"
+      },
+      "rank": 1,
+      "score": 0.0625,
+      "reasoning": [
+        "Both are founders based in Amsterdam, facilitating easy local networking.",
+        "Josanne seeks sparringsessies, aligning with Anja's interest in meeting fellow entrepreneurs.",
+        "Marketing strategy insights from Josanne could benefit Anja's language training business outreach."
+      ],
+      "email_draft": "Hi Josanne,\n\nI hope this message finds you well. As a fellow Amsterdam-based entrepreneur, I am always keen to connect with like-minded professionals in the area. I noticed your interest in sparringsessies and believe our conversation could benefit both our ventures. At Flowently, we specialize in language training, which might also complement your marketing strategies for Verhuisdieren.\nLooking forward to exploring the possibilities with you.\n\nBest,\nAnja",
+      "linkedin_draft": "Hi Josanne, I'd love to connect with a fellow Amsterdam entrepreneur. Let's share insights and support each other's endeavors.",
+      "status": "pending",
+      "mutual": false
+    },
+    {
+      "id": 119,
+      "participant_a": {
+        "id": 607,
+        "name": "Anja Vreeburg",
+        "email": "anja@flowently.com",
+        "company": "Flowently"
+      },
+      "participant_b": {
+        "id": 583,
+        "name": "Jeroen de Rijk",
+        "email": "jeroen@baileo.nl",
+        "company": "Baileo Music Productions"
+      },
+      "rank": 2,
+      "score": 0.17777777777777776,
+      "reasoning": [
+        "Both operate in creative industries within Amsterdam, providing potential for collaboration.",
+        "Jeroen seeks decision-makers interested in live or recorded music, which could align with cultural language events organized by Flowently.",
+        "Anja's language training for businesses could aid Baileo Music Productions in international client communications."
+      ],
+      "email_draft": "Hi Jeroen,\n\nI came across your profile and was intrigued by your extensive experience in music production. As the owner of Flowently, a language training service, I see potential for collaboration, especially in enhancing communication with international artists or audiences. Let's explore how we can mutually benefit from our expertise here in Amsterdam.\n\nLooking forward to your thoughts.\n\nBest regards,\nAnja",
+      "linkedin_draft": "Hi Jeroen, as a fellow entrepreneur in Amsterdam, I am interested in exploring how language training might support music production endeavors. Let's connect!",
+      "status": "pending",
+      "mutual": false
+    },
+    {
+      "id": 121,
+      "participant_a": {
+        "id": 607,
+        "name": "Anja Vreeburg",
+        "email": "anja@flowently.com",
+        "company": "Flowently"
+      },
+      "participant_b": {
+        "id": 570,
+        "name": "Bas Ambachtsheer",
+        "email": "bas@bitsing.nl",
+        "company": "Bitsing"
+      },
+      "rank": 3,
+      "score": 0.15,
+      "reasoning": [
+        "Bas' consulting focus on business growth aligns with Anja's interest in expanding Flowently's services.",
+        "Anja's language training can enhance Bas' client communication during international expansions.",
+        "Both are interested in corporate success, providing a mutual ground for potential partnerships."
+      ],
+      "email_draft": "Hi Bas,\n\nI'm reaching out to connect with you as your expertise in business growth consulting caught my attention. At Flowently, we focus on language training, which could be a great addition to helping your clients communicate effectively in international markets. I believe there could be a synergy between our businesses, and I would love to discuss this with you.\n\nAll the best,\nAnja",
+      "linkedin_draft": "Hi Bas, I'm keen to connect and discuss how language training might complement your business growth strategies. Let's explore synergies!",
+      "status": "pending",
+      "mutual": false
+    }
+  ]
+}

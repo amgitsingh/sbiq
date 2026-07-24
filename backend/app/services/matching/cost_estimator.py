@@ -28,7 +28,7 @@ ESTIMATED_OUTPUT_TOKENS_PER_PARTICIPANT = 600
 # common aliases ("gpt-4o", "gpt-4o-2026-01-01") still resolve. Falls back to
 # the configured model's cheapest known neighbor if unrecognized - update
 # this table whenever AI_MODEL changes to a model not listed here (see
-# CONFIG_CAVEATS.md).
+# docs/CONFIG_CAVEATS.md).
 EMBEDDING_PRICE_PER_1K_TOKENS = 0.00002  # text-embedding-3-small
 
 _LLM_PRICING_PER_1K_TOKENS: dict[str, tuple[float, float]] = {

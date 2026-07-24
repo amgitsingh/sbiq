@@ -16,7 +16,7 @@ TIMEOUT_SECONDS = 10.0
 # NOTE: these field_ids reflect Crunchbase's documented v4 REST API shape at
 # implementation time. This client has NOT been exercised against a live
 # account — CRUNCHBASE_API_KEY is unset and ENABLE_CRUNCHBASE defaults to
-# False (see PLAN.md Task 15: no API key available yet). Before flipping
+# False (see docs/PLAN.md Task 15: no API key available yet). Before flipping
 # ENABLE_CRUNCHBASE on, verify these field_ids and the response shape
 # against Crunchbase's current API reference — their schema has changed
 # over time and this may need adjustment.

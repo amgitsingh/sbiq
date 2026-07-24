@@ -1,0 +1,1719 @@
+{
+  "run_id": "wave1-corporate-priority",
+  "event_id": 3,
+  "event_name": "24junideelnemersversie15",
+  "approved": true,
+  "readme": "# Run: wave1-corporate-priority\n\n**Event:** 24junideelnemersversie15 (id 3) · MeerBusiness Amsterdam\n**Approach:** Strategic \"Smart Business Matching\" with corporate priority\n\nThis run matches on genuine **business opportunity**, not just size/sector. Pair scoring is\naligned to seven criteria:\n\n- Potential customer–supplier relationships\n- Shared interests\n- Strategic partnerships\n- Innovation opportunities\n- Complementary expertise\n- Common challenges\n- Growth potential\n\n## How matches are chosen\n\n- **Weights:** commercial fit 0.34, sector 0.16, strategic value 0.14, growth/revenue 0.14,\n  size 0.07, decision authority 0.06, brand/network 0.05, feasibility 0.04.\n- **Company sizes & sectors** come from LinkedIn research (see the participant profiles).\n- **Every company is matched to at most 3 others** — its 3 best matches. Big corporates are\n  not exempt (no over-allocation).\n- **Sponsors are anchored** to their strongest corporate matches (ABN AMRO, J.P. Morgan,\n  WestCord, plus mid-size Blenheim / Protect Eye / Ebicus), which also consumes the big\n  corporates up to the cap.\n- **No forced big-corp matching.** PMs and BMs get their best *strategic* match; once a big\n  corporate is at its cap, the next-best strategic match is used instead. If nothing clears the\n  quality bar, a recipient is left under-filled rather than force-matched.\n- **Whole attendee list is eligible as a counterpart** — including non-members (e.g. J.P. Morgan,\n  Onlinebetalen.nl, Specsavers surface where they're the best available fit).\n\n## Tiers & quotas\n\n- Recipients (who receive an email): sponsors (**top 3** matches), premium members (**top 2**),\n  business members (**top 1**). Non-members are counterparts only, never recipients.\n- Each recipient shows its own matches first; a match someone else initiated only fills a\n  remaining slot, so no one ever exceeds their quota.\n\n## Emails\n\nSponsor emails are hand-written in Dutch (why / opportunity / how the sponsor helps + priority\norder). Other recipients get generated template emails. Review and approve before sending.\n",
+  "recipients": [
+    {
+      "recipient": {
+        "id": "p_093",
+        "name": "Ellen Spithoven",
+        "company": "Preneurz",
+        "tier": "sponsor",
+        "email": "ellen@preneurz.amsterdam"
+      },
+      "email_md": "**Ellen Spithoven – Preneurz**\n**Sponsor | AI-adoptie, student-gedreven prototypes, masterclasses & innovatieprogramma's**\n\nToegepaste matchcriteria: grote corporates & enterprises · organisaties met actieve innovatie-,\ndigitaliserings- of AI-initiatieven · senior beslissers en business developers · duidelijke kansen\nvoor AI-gedreven groei en efficiëntie.\n\n---\n\n### Match 1: Derek Lampe – ABN AMRO\n📧 derek.lampe@nl.abnamro.com\n\n**Waarom deze match?**\n- ABN AMRO investeert actief in innovatie, ondernemerschap en digitale transformatie; Derek werkt\n  nauw samen met ondernemers die de potentie van AI vaak wél zien, maar nog geen concrete stappen\n  hebben gezet.\n- **De kans:** een doorverwijspartnerschap — Derek introduceert mkb'ers die in aanmerking komen voor\n  het gesubsidieerde AI-adoptieprogramma van Preneurz, en Preneurz geeft zijn klanten een\n  geloofwaardige, risicoarme eerste AI-stap.\n- **Hoe Preneurz versnelt:** student-teams bouwen AI-prototypes met masterclasses en hands-on\n  implementatiebegeleiding, zodat de ondernemers van ABN AMRO van \"AI-nieuwsgierig\" naar een werkende\n  pilot gaan — zonder grote investering vooraf.\n\n### Match 2: Britt Bleeker – WestCord Hotels\n📧 britt.bleeker@westcordhotels.nl\n\n**Waarom deze match?**\n- WestCord exploiteert 15 hotels en loopt doorlopend tegen vraagstukken aan rond gastbeleving,\n  marketing, personeelsplanning en operationele efficiëntie — een rijk speelveld voor praktische AI.\n- **De kans:** een zichtbare AI-pilot in hospitality (gastpersonalisatie of operatie) die na bewijs\n  opgeschaald kan worden over meerdere hotellocaties.\n- **Hoe Preneurz versnelt:** student-teams ontwikkelen het prototype en de pilot zonder groot\n  innovatiebudget vooraf, met masterclasses en implementatiebegeleiding om het in de organisatie te\n  verankeren.\n\n### Match 3: Ela Cuppen – J.P. Morgan\n📧 ela.cuppen@jpmorgan.com\n\n**Waarom deze match?**\n- J.P. Morgan opereert in een omgeving waarin AI, data-analyse en innovatie strategische\n  prioriteiten zijn, en Ela heeft toegang tot internationale corporates en scale-ups.\n- **De kans:** gesprekken over talentontwikkeling en AI-adoptie, met toegang tot internationale\n  bedrijven en scale-ups die AI willen implementeren.\n- **Hoe Preneurz versnelt:** een pijplijn van student-gedreven innovatie, prototype-ontwikkeling en\n  masterclasses die talent- en AI-adoptie-initiatieven in een corporate, internationale context\n  ondersteunt.\n\n---\n\n### Waarom dit de sterkste corporate matches zijn\nDeze drie organisaties vertegenwoordigen verschillende, maar zeer relevante ecosystemen:\n- **ABN AMRO →** toegang tot een breed netwerk van ondernemers en mkb'ers met AI-adoptie-uitdagingen.\n- **WestCord Hotels →** een directe, schaalbare AI-toepassing in hospitality en operatie.\n- **J.P. Morgan →** internationale corporate-omgeving met sterke innovatie- en groeipotentie.\n\n### Aanbevolen prioriteit\n1. **ABN AMRO** — hoogste potentie voor leadgeneratie en introducties naar AI-nieuwsgierige mkb'ers.\n2. **WestCord Hotels** — sterke kans op een zichtbare AI-pilot met meetbare impact.\n3. **J.P. Morgan** — strategische langetermijnrelatie met toegang tot internationale innovatienetwerken.\n\n---\n\n**SBIQ Matchmaking — MeerBusiness Amsterdam**\n",
+      "matches": [
+        {
+          "counterpart": {
+            "id": "p_012",
+            "name": "Derek Lampe",
+            "company": "ABN AMRO",
+            "tier": "bm",
+            "email": "derek.lampe@nl.abnamro.com"
+          },
+          "score": 0.97,
+          "relationship": [
+            "corporate_entry_point",
+            "innovation_partner"
+          ],
+          "rationale": "ABN AMRO invests in innovation and works with entrepreneurs who are AI-curious but haven't implemented — a referral channel for Preneurz's subsidised AI-adoption program."
+        },
+        {
+          "counterpart": {
+            "id": "p_006",
+            "name": "Britt Bleeker",
+            "company": "Westcord",
+            "tier": "sponsor",
+            "email": "britt.bleeker@westcordhotels.nl"
+          },
+          "score": 0.95,
+          "relationship": [
+            "sector_affinity",
+            "innovation_partner"
+          ],
+          "rationale": "WestCord (15 hotels) has clear AI opportunities in guest experience and operations; Preneurz can run student-led pilots without large upfront budget, scalable across locations."
+        },
+        {
+          "counterpart": {
+            "id": "p_015",
+            "name": "Ela Cuppen",
+            "company": "J.P. Morgan",
+            "tier": "non_member",
+            "email": "ela.cuppen@jpmorgan.com"
+          },
+          "score": 0.93,
+          "relationship": [
+            "corporate_entry_point",
+            "innovation_partner"
+          ],
+          "rationale": "J.P. Morgan operates where AI, data and innovation are strategic; opens talent-development and AI-adoption discussions and access to international scale-ups."
+        }
+      ]
+    },
+    {
+      "recipient": {
+        "id": "p_070",
+        "name": "Teun Blom",
+        "company": "Blenheim",
+        "tier": "sponsor",
+        "email": "teunblom@blenheim.nl"
+      },
+      "email_md": "**Teun Blom – Blenheim**\n**Sponsor | Full-service advocatuur — vastgoed, bouw, ondernemingsrecht & contracten**\n\nToegepaste matchcriteria: grote corporates & enterprises · senior beslissers · transacties die\ndaadwerkelijk juridische expertise vereisen · sterke doorverwijspotentie.\n\n---\n\n### Match 1: Britt Bleeker – WestCord Hotels\n📧 britt.bleeker@westcordhotels.nl\n\n**Waarom deze match?**\n- De vastgoedportefeuille van WestCord (15 hotels) raakt aan vastgoed, bouw, vergunningen en\n  commerciële contracten — precies de kernpraktijk van Blenheim.\n- **De kans:** dé juridische partner van WestCord worden voor vastgoed- en bouwzaken, plus\n  leveranciers- en eventcontracten binnen de groep.\n- **Hoe Blenheim hén helpt:** haalt risico uit vastgoeddeals en operatie en zorgt voor snellere,\n  schonere closings naarmate de groep investeert en uitbreidt.\n\n### Match 2: Derek Lampe – ABN AMRO\n📧 derek.lampe@nl.abnamro.com\n\n**Waarom deze match?**\n- ABN AMRO financiert vastgoed- en corporate-transacties die standaard vastgoed-/bouwrecht,\n  structurering en zekerheden vereisen.\n- **De kans:** een doorverwijsrelatie aan de financieringskant — Blenheim adviseert over de\n  transacties die ABN AMRO financiert, vóóraf in plaats van achteraf.\n- **Hoe Blenheim hén helpt:** juridische scherpte die het dealtempo van de bank versnelt en risico\n  uit de pijplijn haalt.\n\n### Match 3: Ela Cuppen – J.P. Morgan\n📧 ela.cuppen@jpmorgan.com\n\n**Waarom deze match?**\n- De private-bankingklanten van J.P. Morgan — ondernemers en corporates — hebben regelmatig\n  vastgoed- en ondernemingsrechtelijk advies nodig bij hun transacties en NL-investeringen.\n- **De kans:** een introductiekanaal naar hoogwaardige klanten die Blenheims expertise nodig hebben,\n  inclusief grensoverschrijdende vraagstukken.\n- **Hoe Blenheim hén helpt:** vertrouwd Nederlands vastgoed- en ondernemingsrechtadvies voor de\n  klanten van de bank die in Nederland investeren.\n\n---\n\n### Waarom dit de sterkste matches zijn\n- **WestCord →** een directe, terugkerende klant met een grote vastgoedportefeuille.\n- **ABN AMRO →** deal-flow aan de financieringsbron, met doorverwijzingen over en weer.\n- **J.P. Morgan →** toegang tot vermogende klanten die Nederlandse juridische expertise zoeken.\n\n### Aanbevolen prioriteit\n1. **WestCord Hotels** — direct, terugkerend vastgoed- en contractenwerk.\n2. **ABN AMRO** — duurzame deal-flow en doorverwijzingen aan de financieringskant.\n3. **J.P. Morgan** — hoogwaardige klantintroducties, langere salescyclus.\n\n---\n\n**SBIQ Matchmaking — MeerBusiness Amsterdam**\n",
+      "matches": [
+        {
+          "counterpart": {
+            "id": "p_006",
+            "name": "Britt Bleeker",
+            "company": "Westcord",
+            "tier": "sponsor",
+            "email": "britt.bleeker@westcordhotels.nl"
+          },
+          "score": 0.9,
+          "relationship": [
+            "strategic_partner"
+          ],
+          "rationale": "WestCord's 15-hotel property footprint involves vastgoed, bouw, vergunningen and contracts — Blenheim's core practice."
+        },
+        {
+          "counterpart": {
+            "id": "p_012",
+            "name": "Derek Lampe",
+            "company": "ABN AMRO",
+            "tier": "bm",
+            "email": "derek.lampe@nl.abnamro.com"
+          },
+          "score": 0.88,
+          "relationship": [
+            "potential_client"
+          ],
+          "rationale": "ABN AMRO finances real-estate/corporate deals that need real-estate and construction counsel — referrals at the financing side."
+        },
+        {
+          "counterpart": {
+            "id": "p_015",
+            "name": "Ela Cuppen",
+            "company": "J.P. Morgan",
+            "tier": "non_member",
+            "email": "ela.cuppen@jpmorgan.com"
+          },
+          "score": 0.86,
+          "relationship": [
+            "corporate_entry_point"
+          ],
+          "rationale": "J.P. Morgan's private-banking clients (entrepreneurs, corporates) regularly need Dutch real-estate and corporate legal advice."
+        }
+      ]
+    },
+    {
+      "recipient": {
+        "id": "p_071",
+        "name": "Erik Dercksen",
+        "company": "Event Culinair BV",
+        "tier": "sponsor",
+        "email": "erik@eventculinair.nl"
+      },
+      "email_md": "**Erik Dercksen – Event Culinair**\n**Sponsor | High-end concept-catering voor zakelijke events**\n\nToegepaste matchcriteria: grote corporates & enterprises die events organiseren · senior beslissers ·\nterugkerende corporate-hospitality-kansen.\n\n---\n\n### Match 1: Ela Cuppen – J.P. Morgan\n📧 ela.cuppen@jpmorgan.com\n\n**Waarom deze match?**\n- J.P. Morgan organiseert klantevents, recepties en corporate hospitality waarbij hoogwaardige\n  catering onderdeel is van de beleving.\n- **De kans:** een voorkeurscateraar-relatie voor de Amsterdamse klant- en partnerevents van de bank.\n- **Hoe Event Culinair hén helpt:** high-end concept-catering die de klantbeleving van de bank naar\n  een hoger niveau tilt en de event-hospitality volledig uit handen neemt.\n\n### Match 2: Teun Blom – Blenheim\n📧 teunblom@blenheim.nl\n\n**Waarom deze match?**\n- Blenheim is een advocatenkantoor met 50+ medewerkers dat klantseminars, partnerevents en\n  kantoorbijeenkomsten organiseert waarvoor professionele catering nodig is.\n- **De kans:** een cateringpartner voor de terugkerende events en corporate hospitality van het\n  kantoor.\n- **Hoe Event Culinair hén helpt:** turnkey premium catering voor events in de zakelijke\n  dienstverlening, met één betrouwbare partner.\n\n### Match 3: Britt Bleeker – WestCord Hotels\n📧 britt.bleeker@westcordhotels.nl\n\n**Waarom deze match?**\n- De hotels en eventruimtes van WestCord zijn locaties waar concept-catering het aanbod compleet\n  maakt, en u deelt dezelfde zakelijke eventklanten.\n- **De kans:** een locatie-cateringpartnerschap plus wederzijdse doorverwijzing van zakelijke events.\n- **Hoe Event Culinair hén helpt:** tilt het eventaanbod van WestCord op, zodat zij boekingen winnen\n  die ze anders op catering of beleving zouden mislopen.\n\n---\n\n### Waarom dit de sterkste matches zijn\n- **J.P. Morgan →** een high-end, terugkerende corporate-eventklant.\n- **WestCord →** een locatiepartnerschap met gedeelde corporate klanten, twee kanten op.\n- **Blenheim →** eventcatering in de zakelijke dienstverlening met stabiele vraag.\n\n### Aanbevolen prioriteit\n1. **J.P. Morgan** — premium, terugkerende corporate hospitality.\n2. **WestCord Hotels** — locatiepartnerschap en wederzijdse eventdoorverwijzing.\n3. **Blenheim** — events en bijeenkomsten in de zakelijke dienstverlening.\n\n---\n\n**SBIQ Matchmaking — MeerBusiness Amsterdam**\n",
+      "matches": [
+        {
+          "counterpart": {
+            "id": "p_015",
+            "name": "Ela Cuppen",
+            "company": "J.P. Morgan",
+            "tier": "non_member",
+            "email": "ela.cuppen@jpmorgan.com"
+          },
+          "score": 0.9,
+          "relationship": [
+            "potential_client"
+          ],
+          "rationale": "J.P. Morgan hosts client events and corporate hospitality where high-end catering is part of the experience — a preferred-caterer relationship."
+        },
+        {
+          "counterpart": {
+            "id": "p_070",
+            "name": "Teun Blom",
+            "company": "Blenheim",
+            "tier": "sponsor",
+            "email": "teunblom@blenheim.nl"
+          },
+          "score": 0.88,
+          "relationship": [
+            "potential_client"
+          ],
+          "rationale": "Blenheim (50+ staff) runs client seminars and firm events needing professional catering."
+        },
+        {
+          "counterpart": {
+            "id": "p_006",
+            "name": "Britt Bleeker",
+            "company": "Westcord",
+            "tier": "sponsor",
+            "email": "britt.bleeker@westcordhotels.nl"
+          },
+          "score": 0.86,
+          "relationship": [
+            "strategic_partner"
+          ],
+          "rationale": "WestCord's hotels and event spaces are venues where concept-catering completes the offering; shared corporate-event clients, both ways."
+        }
+      ]
+    },
+    {
+      "recipient": {
+        "id": "p_006",
+        "name": "Britt Bleeker",
+        "company": "Westcord",
+        "tier": "sponsor",
+        "email": "britt.bleeker@westcordhotels.nl"
+      },
+      "email_md": "**Britt Bleeker – WestCord Hotels**\n**Sponsor | Hospitality op schaal — 15 hotels, eventlocaties & zakelijke overnachtingen**\n\nToegepaste matchcriteria: grote corporates & enterprises · senior beslissers en business developers ·\nsubstantiële, terugkerende commerciële kansen.\n\n---\n\n### Match 1: Derek Lampe – ABN AMRO\n📧 derek.lampe@nl.abnamro.com\n\n**Waarom deze match?**\n- ABN AMRO is een grote corporate-bankpartner; een hotelgroep met 15 locaties heeft financiering,\n  betalingsverkeer en corporate banking op schaal nodig, zeker bij renovatie en uitbreiding.\n- **De kans:** een financieringsrelatie voor groei en werkkapitaal — plus de corporate klanten van\n  ABN AMRO als bron van MICE-, event- en overnachtingsboekingen.\n- **Hoe WestCord hén helpt:** een substantiële hospitality-klant met meerdere locaties én een\n  locatie-/overnachtingspartner voor de zakelijke events en bezoekende klanten van de bank.\n\n### Match 2: Marcel Gotje – Protect Eye Nederland\n📧 marcel@protecteye.eu\n\n**Waarom deze match?**\n- Protect Eye levert beveiliging en bewaking met hotel- en eventervaring — een directe operationele\n  behoefte op alle WestCord-locaties en grotere events.\n- **De kans:** een vast beveiligingspartnerschap voor hotels en events, in plaats van losse inhuur\n  per gelegenheid.\n- **Hoe WestCord hén helpt:** een terugkerende klant met meerdere locaties die kwaliteit en\n  gastbeleving voorop stelt.\n\n### Match 3: Huub Rijswijck – Ebicus (Salesforce/CRM)\n📧 h.vanrijswijck@ebicus.com\n\n**Waarom deze match?**\n- Ebicus levert Salesforce/CRM-implementatie en -optimalisatie; de gast-, boekings- en\n  sales-data van WestCord is precies waar CRM directe omzet oplevert.\n- **De kans:** een CRM-programma om gast- en corporate-klantdata over 15 hotels te bundelen en\n  directe boekingen en MICE-sales te verhogen.\n- **Hoe WestCord hén helpt:** een referentieklant met meerdere locaties voor het Salesforce-werk van\n  Ebicus.\n\n---\n\n### Waarom dit de sterkste matches zijn\n- **ABN AMRO →** kapitaal voor groei én een corporate pijplijn van event-/overnachtingsboekingen.\n- **Ebicus →** meetbare omzetstijging via beter gast-/corporate-CRM.\n- **Protect Eye →** een betrouwbare, terugkerende beveiligingspartner op alle locaties.\n\n### Aanbevolen prioriteit\n1. **ABN AMRO** — financiering plus een corporate boekingspijplijn.\n2. **Ebicus** — directe omzetimpact via CRM over de hele hotelgroep.\n3. **Protect Eye** — operationele beveiliging als vast partnerschap.\n\n---\n\n**SBIQ Matchmaking — MeerBusiness Amsterdam**\n",
+      "matches": [
+        {
+          "counterpart": {
+            "id": "p_012",
+            "name": "Derek Lampe",
+            "company": "ABN AMRO",
+            "tier": "bm",
+            "email": "derek.lampe@nl.abnamro.com"
+          },
+          "score": 0.9,
+          "relationship": [
+            "corporate_entry_point"
+          ],
+          "rationale": "ABN AMRO provides financing/corporate banking at scale for a 15-hotel group, plus corporate clients as a source of MICE and accommodation bookings."
+        },
+        {
+          "counterpart": {
+            "id": "p_039",
+            "name": "Marcel Gotje",
+            "company": "Protect Eye Nederland",
+            "tier": "bm",
+            "email": "marcel@protecteye.eu"
+          },
+          "score": 0.88,
+          "relationship": [
+            "potential_supplier"
+          ],
+          "rationale": "Protect Eye delivers hotel/event security — a direct operational need across WestCord's locations and events."
+        },
+        {
+          "counterpart": {
+            "id": "p_023",
+            "name": "Huub Rijswijck",
+            "company": "Huub van Rijswijck Beheer NV",
+            "tier": "bm",
+            "email": "h.vanrijswijck@ebicus.com"
+          },
+          "score": 0.86,
+          "relationship": [
+            "strategic_partner",
+            "innovation_partner"
+          ],
+          "rationale": "Ebicus (Salesforce/CRM) can unify guest and corporate-sales data across 15 hotels to lift direct bookings and MICE sales."
+        }
+      ]
+    },
+    {
+      "recipient": {
+        "id": "p_084",
+        "name": "Ingrid Claasen",
+        "company": "E=MC2 Totale Projectinrichting",
+        "tier": "sponsor",
+        "email": "Ingrid.claasen@eismc2.nl"
+      },
+      "email_md": "**Ingrid Claasen – E=MC2 Totale Projectinrichting**\n**Sponsor | Turnkey kantoorinrichting & projectinterieurs**\n\nToegepaste matchcriteria: substantiële, gevestigde organisaties · senior beslissers · projecten en\nklanten die turnkey-inrichting nodig hebben · sterke doorverwijspotentie.\n\n---\n\n### Match 1: Teun Blom – Blenheim\n📧 teunblom@blenheim.nl\n\n**Waarom deze match?**\n- De vastgoed- en bouwpraktijk van Blenheim en zijn ontwikkelaarsklanten overlappen direct met de\n  inrichtingsprojecten van E=MC2.\n- **De kans:** wederzijdse doorverwijzing op dezelfde vastgoedprojecten — Blenheims klanten hebben\n  inrichting nodig, en E=MC2's projecten hebben juridisch advies nodig.\n- **Hoe E=MC2 hén helpt:** een betrouwbare turnkey-leveringspartner die Blenheim aan zijn vastgoed-\n  en corporate-klanten kan aanbevelen.\n\n### Match 2: Marcel Gotje – Protect Eye Nederland\n📧 marcel@protecteye.eu\n\n**Waarom deze match?**\n- Beveiligingssystemen en interieurinrichting worden in dezelfde panden en projecten geïnstalleerd —\n  natuurlijke co-leveranciers op dezelfde locaties.\n- **De kans:** interieur en beveiliging bundelen voor kantoorprojecten en doorverwijzen op gedeelde\n  locaties.\n- **Hoe E=MC2 hén helpt:** coördineert de bouw zodat beveiliging naadloos in de inrichting integreert,\n  met één projectaanspreekpunt.\n\n### Match 3: Huub Rijswijck – Ebicus (Salesforce/CRM)\n📧 h.vanrijswijck@ebicus.com\n\n**Waarom deze match?**\n- Ebicus is een groeiend IT-bedrijf (50+), en groeiende of verhuizende bedrijven — inclusief Ebicus'\n  eigen Salesforce-klanten — zijn precies de inrichtingsmarkt van E=MC2.\n- **De kans:** de kantoren van Ebicus zelf én van zijn klanten inrichten, met een doorverwijsrelatie\n  rond opschalende bedrijven.\n- **Hoe E=MC2 hén helpt:** turnkey kantoorinterieurs voor een opschalend tech-bedrijf en de\n  klantenkring waarmee het werkt.\n\n---\n\n### Waarom dit de sterkste matches zijn\n- **Blenheim →** doorverwijzingen op dezelfde vastgoed- en ontwikkelaarsprojecten.\n- **Ebicus →** toegang tot opschalende bedrijven die verhuizen of verbouwen.\n- **Protect Eye →** co-leverancier op dezelfde bouwprojecten.\n\n### Aanbevolen prioriteit\n1. **Blenheim** — gedeelde vastgoed-/ontwikkelaarsprojecten met doorverwijzing over en weer.\n2. **Ebicus** — een pijplijn van opschalende bedrijven die inrichting nodig hebben.\n3. **Protect Eye** — co-levering en bundeling op gedeelde locaties.\n\n---\n\n**SBIQ Matchmaking — MeerBusiness Amsterdam**\n",
+      "matches": [
+        {
+          "counterpart": {
+            "id": "p_070",
+            "name": "Teun Blom",
+            "company": "Blenheim",
+            "tier": "sponsor",
+            "email": "teunblom@blenheim.nl"
+          },
+          "score": 0.9,
+          "relationship": [
+            "strategic_partner"
+          ],
+          "rationale": "Blenheim's real-estate/developer clients overlap with E=MC2's fit-out projects — mutual referrals on the same property deals."
+        },
+        {
+          "counterpart": {
+            "id": "p_039",
+            "name": "Marcel Gotje",
+            "company": "Protect Eye Nederland",
+            "tier": "bm",
+            "email": "marcel@protecteye.eu"
+          },
+          "score": 0.88,
+          "relationship": [
+            "strategic_partner"
+          ],
+          "rationale": "Security systems and interior fit-out are installed in the same projects — natural co-suppliers who cross-refer at shared sites."
+        },
+        {
+          "counterpart": {
+            "id": "p_023",
+            "name": "Huub Rijswijck",
+            "company": "Huub van Rijswijck Beheer NV",
+            "tier": "bm",
+            "email": "h.vanrijswijck@ebicus.com"
+          },
+          "score": 0.86,
+          "relationship": [
+            "potential_client",
+            "innovation_partner"
+          ],
+          "rationale": "Ebicus is a scaling IT firm; growing/relocating firms (and its Salesforce clients) are exactly E=MC2's fit-out market."
+        }
+      ]
+    },
+    {
+      "recipient": {
+        "id": "p_005",
+        "name": "i8Ambachtsheer",
+        "company": "Bitsing",
+        "tier": "pm",
+        "email": "bas@bitsing.nl"
+      },
+      "email_md": "**Onderwerp:** Uw SBIQ-matches voor MeerBusiness Amsterdam\n\nBeste Bas,\n\nOp basis van uw profiel en onze SBIQ-methodiek hebben wij voor Bitsing 2 match(es) geselecteerd op commerciële relevantie — niet op sectorgelijkenis, maar op concrete kansen voor omzet, partnerschap en toegang.\n\n---\n\n## Match: **Ned Fund Finance** — Laurens Bentein (COO / Partner)\n_Relevantie: 0.87 · potential_supplier_\n\n**Waarom wij deze match kozen.** Wij zien Ned Fund Finance als een leverancier die een concrete behoefte van u kan invullen. Ned Fund Finance can supply what Bitsing needs; innovation / AI collaboration. Laurens Bentein (COO / Partner) at Ned Fund Finance.\n\n**De kans.** Ned Fund Finance levert: Contract-based financing: draws forward future recurring revenue so as-a-Service vendors can invest and grow.\n\n**Hoe u zich positioneert.** Positioneer Bitsing rond uw kernaanbod: Groei.\n\n**Vragen om te stellen.**\n- Hoe ziet een typisch traject met Ned Fund Finance eruit, en welke resultaten boeken klanten?\n- Waar voegt u de meeste waarde toe voor een bedrijf zoals het onze?\n- Hoe zou een eerste pilot of project samen eruitzien?\n\n**Hoe u hén kunt helpen.** U kunt Laurens Bentein helpen met: Groei.\n\n**LinkedIn-introductie (kopieer & plak).**\n> Hoi Laurens, wij werden door SBIQ / MeerBusiness Amsterdam aan elkaar gekoppeld vanwege een concrete commerciële kans tussen Bitsing en Ned Fund Finance. Ik spreek graag kort af om te zien waar we elkaar kunnen versterken. Groet, Bas\n\n---\n\n## Match: **Jupiter** — Ronnie Veen (CEO)\n_Relevantie: 0.86 · potential_supplier_\n\n**Waarom wij deze match kozen.** Wij zien Jupiter als een leverancier die een concrete behoefte van u kan invullen. Jupiter can supply what Bitsing needs; innovation / AI collaboration. Ronnie Veen (CEO) at Jupiter.\n\n**De kans.** Jupiter levert: Real-estate financing & investment funds for entrepreneurs and private investors.\n\n**Hoe u zich positioneert.** Positioneer Bitsing rond uw kernaanbod: Groei.\n\n**Vragen om te stellen.**\n- Hoe ziet een typisch traject met Jupiter eruit, en welke resultaten boeken klanten?\n- Waar voegt u de meeste waarde toe voor een bedrijf zoals het onze?\n- Hoe zou een eerste pilot of project samen eruitzien?\n\n**Hoe u hén kunt helpen.** U kunt Ronnie Veen helpen met: Groei.\n\n**LinkedIn-introductie (kopieer & plak).**\n> Hoi Ronnie, wij werden door SBIQ / MeerBusiness Amsterdam aan elkaar gekoppeld vanwege een concrete commerciële kans tussen Bitsing en Jupiter. Ik spreek graag kort af om te zien waar we elkaar kunnen versterken. Groet, Bas\n\nMet vriendelijke groet,\n\n**SBIQ Matchmaking — MeerBusiness Amsterdam**\n",
+      "matches": [
+        {
+          "counterpart": {
+            "id": "p_034",
+            "name": "Laurens Bentein",
+            "company": "Ned Fund Finance",
+            "tier": "pm",
+            "email": "laurens.bentein@ned-fund.nl"
+          },
+          "score": 0.8674,
+          "relationship": [
+            "potential_supplier",
+            "innovation_partner"
+          ],
+          "rationale": "Ned Fund Finance can supply what Bitsing needs; innovation / AI collaboration. Laurens Bentein (COO / Partner) at Ned Fund Finance — Contract-based financing: draws forward future recurring revenue so as-a-Service"
+        },
+        {
+          "counterpart": {
+            "id": "p_061",
+            "name": "Ronnie Veen",
+            "company": "Jupiter",
+            "tier": "pm",
+            "email": "wendy.nijssen@jupitercapital.nl"
+          },
+          "score": 0.8586,
+          "relationship": [
+            "potential_supplier",
+            "innovation_partner"
+          ],
+          "rationale": "Jupiter can supply what Bitsing needs; innovation / AI collaboration. Ronnie Veen (CEO) at Jupiter — Real-estate financing & investment funds for entrepreneurs and private investors"
+        }
+      ]
+    },
+    {
+      "recipient": {
+        "id": "p_014",
+        "name": "Edwin Groenewoud",
+        "company": "Temis Luxury",
+        "tier": "pm",
+        "email": "egroenewoud@temisluxury.com"
+      },
+      "email_md": "**Onderwerp:** Uw SBIQ-matches voor MeerBusiness Amsterdam\n\nBeste Edwin,\n\nOp basis van uw profiel en onze SBIQ-methodiek hebben wij voor Temis Luxury 2 match(es) geselecteerd op commerciële relevantie — niet op sectorgelijkenis, maar op concrete kansen voor omzet, partnerschap en toegang.\n\n---\n\n## Match: **Jupiter Capital Management** — Vincent Berk (Partner)\n_Relevantie: 0.88 · corporate_entry_point_\n\n**Waarom wij deze match kozen.** Wij zien Jupiter Capital Management als een toegangspoort tot kapitaal en corporate toegang. Jupiter Capital Management offers corporate/capital access; innovation / AI collaboration. Vincent Berk (Partner) at Jupiter Capital Management.\n\n**De kans.** Jupiter Capital Management levert: Real-estate financing & investment funds; investor relations for private investors and family offices.\n\n**Hoe u zich positioneert.** Positioneer Temis Luxury rond uw kernaanbod: Exclusieve (waarde) transport oplossingen en premium home delivery services en daarnaast andere logistieke diensten die meer aandacht vereisen.\n\n**Vragen om te stellen.**\n- In welke kansen wil Jupiter Capital Management op dit moment investeren?\n- Wat wilt u zien voordat een gesprek serieus wordt?\n- Wie in uw netwerk zou ik nog meer moeten spreken?\n\n**Hoe u hén kunt helpen.** U kunt Vincent Berk helpen met: Exclusieve (waarde) transport oplossingen en premium home delivery services en daarnaast andere logistieke diensten die meer aandacht vereisen.\n\n**LinkedIn-introductie (kopieer & plak).**\n> Hoi Vincent, wij werden door SBIQ / MeerBusiness Amsterdam aan elkaar gekoppeld vanwege een concrete commerciële kans tussen Temis Luxury en Jupiter Capital Management. Ik spreek graag kort af om te zien waar we elkaar kunnen versterken. Groet, Edwin\n\n---\n\n## Match: **Ned Fund Finance** — Laurens Bentein (COO / Partner)\n_Relevantie: 0.86 · corporate_entry_point_\n\n**Waarom wij deze match kozen.** Wij zien Ned Fund Finance als een toegangspoort tot kapitaal en corporate toegang. Ned Fund Finance offers corporate/capital access; innovation / AI collaboration. Laurens Bentein (COO / Partner) at Ned Fund Finance.\n\n**De kans.** Ned Fund Finance levert: Contract-based financing: draws forward future recurring revenue so as-a-Service vendors can invest and grow.\n\n**Hoe u zich positioneert.** Positioneer Temis Luxury rond uw kernaanbod: Exclusieve (waarde) transport oplossingen en premium home delivery services en daarnaast andere logistieke diensten die meer aandacht vereisen.\n\n**Vragen om te stellen.**\n- In welke kansen wil Ned Fund Finance op dit moment investeren?\n- Wat wilt u zien voordat een gesprek serieus wordt?\n- Wie in uw netwerk zou ik nog meer moeten spreken?\n\n**Hoe u hén kunt helpen.** U kunt Laurens Bentein helpen met: Exclusieve (waarde) transport oplossingen en premium home delivery services en daarnaast andere logistieke diensten die meer aandacht vereisen.\n\n**LinkedIn-introductie (kopieer & plak).**\n> Hoi Laurens, wij werden door SBIQ / MeerBusiness Amsterdam aan elkaar gekoppeld vanwege een concrete commerciële kans tussen Temis Luxury en Ned Fund Finance. Ik spreek graag kort af om te zien waar we elkaar kunnen versterken. Groet, Edwin\n\nMet vriendelijke groet,\n\n**SBIQ Matchmaking — MeerBusiness Amsterdam**\n",
+      "matches": [
+        {
+          "counterpart": {
+            "id": "p_064",
+            "name": "Vincent Berk",
+            "company": "Jupiter Capital Management",
+            "tier": "pm",
+            "email": "wendy.nijssen@jupitercapital.nl"
+          },
+          "score": 0.8773,
+          "relationship": [
+            "corporate_entry_point",
+            "innovation_partner"
+          ],
+          "rationale": "Jupiter Capital Management offers corporate/capital access; innovation / AI collaboration. Vincent Berk (Partner) at Jupiter Capital Management — Real-estate financing & investment funds; investor relations for private investo"
+        },
+        {
+          "counterpart": {
+            "id": "p_034",
+            "name": "Laurens Bentein",
+            "company": "Ned Fund Finance",
+            "tier": "pm",
+            "email": "laurens.bentein@ned-fund.nl"
+          },
+          "score": 0.8641,
+          "relationship": [
+            "corporate_entry_point",
+            "innovation_partner"
+          ],
+          "rationale": "Ned Fund Finance offers corporate/capital access; innovation / AI collaboration. Laurens Bentein (COO / Partner) at Ned Fund Finance — Contract-based financing: draws forward future recurring revenue so as-a-Service"
+        }
+      ]
+    },
+    {
+      "recipient": {
+        "id": "p_016",
+        "name": "Evert Lassche",
+        "company": "LMI Noord-Holland",
+        "tier": "pm",
+        "email": "elassche@lmi-nl.com"
+      },
+      "email_md": "**Onderwerp:** Uw SBIQ-matches voor MeerBusiness Amsterdam\n\nBeste Evert,\n\nOp basis van uw profiel en onze SBIQ-methodiek hebben wij voor LMI Noord-Holland 2 match(es) geselecteerd op commerciële relevantie — niet op sectorgelijkenis, maar op concrete kansen voor omzet, partnerschap en toegang.\n\n---\n\n## Match: **Ned Fund Finance** — Laurens Bentein (COO / Partner)\n_Relevantie: 0.88 · corporate_entry_point_\n\n**Waarom wij deze match kozen.** Wij zien Ned Fund Finance als een toegangspoort tot kapitaal en corporate toegang. Ned Fund Finance offers corporate/capital access; innovation / AI collaboration. Laurens Bentein (COO / Partner) at Ned Fund Finance.\n\n**De kans.** Ned Fund Finance levert: Contract-based financing: draws forward future recurring revenue so as-a-Service vendors can invest and grow.\n\n**Hoe u zich positioneert.** Positioneer LMI Noord-Holland rond uw kernaanbod: leiderschap en organisatie vraagstukken.\n\n**Vragen om te stellen.**\n- In welke kansen wil Ned Fund Finance op dit moment investeren?\n- Wat wilt u zien voordat een gesprek serieus wordt?\n- Wie in uw netwerk zou ik nog meer moeten spreken?\n\n**Hoe u hén kunt helpen.** U kunt Laurens Bentein helpen met: leiderschap en organisatie vraagstukken.\n\n**LinkedIn-introductie (kopieer & plak).**\n> Hoi Laurens, wij werden door SBIQ / MeerBusiness Amsterdam aan elkaar gekoppeld vanwege een concrete commerciële kans tussen LMI Noord-Holland en Ned Fund Finance. Ik spreek graag kort af om te zien waar we elkaar kunnen versterken. Groet, Evert\n\n---\n\n## Match: **Jupiter** — Ronnie Veen (CEO)\n_Relevantie: 0.87 · corporate_entry_point_\n\n**Waarom wij deze match kozen.** Wij zien Jupiter als een toegangspoort tot kapitaal en corporate toegang. Jupiter offers corporate/capital access; innovation / AI collaboration. Ronnie Veen (CEO) at Jupiter.\n\n**De kans.** Jupiter levert: Real-estate financing & investment funds for entrepreneurs and private investors.\n\n**Hoe u zich positioneert.** Positioneer LMI Noord-Holland rond uw kernaanbod: leiderschap en organisatie vraagstukken.\n\n**Vragen om te stellen.**\n- In welke kansen wil Jupiter op dit moment investeren?\n- Wat wilt u zien voordat een gesprek serieus wordt?\n- Wie in uw netwerk zou ik nog meer moeten spreken?\n\n**Hoe u hén kunt helpen.** U kunt Ronnie Veen helpen met: leiderschap en organisatie vraagstukken.\n\n**LinkedIn-introductie (kopieer & plak).**\n> Hoi Ronnie, wij werden door SBIQ / MeerBusiness Amsterdam aan elkaar gekoppeld vanwege een concrete commerciële kans tussen LMI Noord-Holland en Jupiter. Ik spreek graag kort af om te zien waar we elkaar kunnen versterken. Groet, Evert\n\nMet vriendelijke groet,\n\n**SBIQ Matchmaking — MeerBusiness Amsterdam**\n",
+      "matches": [
+        {
+          "counterpart": {
+            "id": "p_034",
+            "name": "Laurens Bentein",
+            "company": "Ned Fund Finance",
+            "tier": "pm",
+            "email": "laurens.bentein@ned-fund.nl"
+          },
+          "score": 0.8795,
+          "relationship": [
+            "corporate_entry_point",
+            "innovation_partner"
+          ],
+          "rationale": "Ned Fund Finance offers corporate/capital access; innovation / AI collaboration. Laurens Bentein (COO / Partner) at Ned Fund Finance — Contract-based financing: draws forward future recurring revenue so as-a-Service"
+        },
+        {
+          "counterpart": {
+            "id": "p_061",
+            "name": "Ronnie Veen",
+            "company": "Jupiter",
+            "tier": "pm",
+            "email": "wendy.nijssen@jupitercapital.nl"
+          },
+          "score": 0.8707,
+          "relationship": [
+            "corporate_entry_point",
+            "innovation_partner"
+          ],
+          "rationale": "Jupiter offers corporate/capital access; innovation / AI collaboration. Ronnie Veen (CEO) at Jupiter — Real-estate financing & investment funds for entrepreneurs and private investors"
+        }
+      ]
+    },
+    {
+      "recipient": {
+        "id": "p_025",
+        "name": "Jan Peter van Diemen",
+        "company": "De Nieuwe Ondernemerslente",
+        "tier": "pm",
+        "email": "jp@janpetervandiemen.nl"
+      },
+      "email_md": "**Onderwerp:** Uw SBIQ-matches voor MeerBusiness Amsterdam\n\nBeste Jan Peter,\n\nOp basis van uw profiel en onze SBIQ-methodiek hebben wij voor De Nieuwe Ondernemerslente 2 match(es) geselecteerd op commerciële relevantie — niet op sectorgelijkenis, maar op concrete kansen voor omzet, partnerschap en toegang.\n\n---\n\n## Match: **Ticketkeeper BV** — Peter-Joost Post (Founder)\n_Relevantie: 0.87 · potential_client_\n\n**Waarom wij deze match kozen.** Wij zien Ticketkeeper BV als een potentiële klant voor uw aanbod. Ticketkeeper BV is a potential client for De Nieuwe Ondernemerslente; innovation / AI collaboration. Peter-Joost Post (Founder) at Ticketkeeper BV.\n\n**De kans.** Ticketkeeper BV levert: Kennis van events, ticketing.\n\n**Hoe u zich positioneert.** Positioneer De Nieuwe Ondernemerslente rond uw kernaanbod: Begeleiding van ondernemers in persoonlijke en zakelijke ontwikkeling.\n\n**Vragen om te stellen.**\n- Waar ligt de focus van Ticketkeeper BV de komende 6–12 maanden?\n- Waar zitten nu knelpunten die een externe partner kan oplossen?\n- Wie bij u zou over zo'n beslissing gaan?\n\n**Hoe u hén kunt helpen.** U kunt Peter-Joost Post helpen met: Begeleiding van ondernemers in persoonlijke en zakelijke ontwikkeling.\n\n**LinkedIn-introductie (kopieer & plak).**\n> Hoi Peter-Joost, wij werden door SBIQ / MeerBusiness Amsterdam aan elkaar gekoppeld vanwege een concrete commerciële kans tussen De Nieuwe Ondernemerslente en Ticketkeeper BV. Ik spreek graag kort af om te zien waar we elkaar kunnen versterken. Groet, Jan Peter\n\n---\n\n## Match: **Bolwork Investments BV** — Alfons Boltjes (chef)\n_Relevantie: 0.80 · corporate_entry_point_\n\n**Waarom wij deze match kozen.** Wij zien Bolwork Investments BV als een toegangspoort tot kapitaal en corporate toegang. Bolwork Investments BV offers corporate/capital access; innovation / AI collaboration. Alfons Boltjes (chef) at Bolwork Investments BV.\n\n**De kans.** Bolwork Investments BV levert: Venture capital / private-equity investment, esp. Series A and life sciences.\n\n**Hoe u zich positioneert.** Positioneer De Nieuwe Ondernemerslente rond uw kernaanbod: Begeleiding van ondernemers in persoonlijke en zakelijke ontwikkeling.\n\n**Vragen om te stellen.**\n- In welke kansen wil Bolwork Investments BV op dit moment investeren?\n- Wat wilt u zien voordat een gesprek serieus wordt?\n- Wie in uw netwerk zou ik nog meer moeten spreken?\n\n**Hoe u hén kunt helpen.** U kunt Alfons Boltjes helpen met: Begeleiding van ondernemers in persoonlijke en zakelijke ontwikkeling.\n\n**LinkedIn-introductie (kopieer & plak).**\n> Hoi Alfons, wij werden door SBIQ / MeerBusiness Amsterdam aan elkaar gekoppeld vanwege een concrete commerciële kans tussen De Nieuwe Ondernemerslente en Bolwork Investments BV. Ik spreek graag kort af om te zien waar we elkaar kunnen versterken. Groet, Jan Peter\n\nMet vriendelijke groet,\n\n**SBIQ Matchmaking — MeerBusiness Amsterdam**\n",
+      "matches": [
+        {
+          "counterpart": {
+            "id": "p_056",
+            "name": "Peter-Joost Post",
+            "company": "Ticketkeeper BV",
+            "tier": "pm",
+            "email": "pj@ticketkeeper.com"
+          },
+          "score": 0.8674,
+          "relationship": [
+            "potential_client",
+            "innovation_partner"
+          ],
+          "rationale": "Ticketkeeper BV is a potential client for De Nieuwe Ondernemerslente; innovation / AI collaboration. Peter-Joost Post (Founder) at Ticketkeeper BV — Kennis van events, ticketing"
+        },
+        {
+          "counterpart": {
+            "id": "p_004",
+            "name": "Alfons Boltjes",
+            "company": "Bolwork Investments BV",
+            "tier": "bm",
+            "email": "alfons@bolwork.com"
+          },
+          "score": 0.7975,
+          "relationship": [
+            "corporate_entry_point",
+            "innovation_partner"
+          ],
+          "rationale": "Bolwork Investments BV offers corporate/capital access; innovation / AI collaboration. Alfons Boltjes (chef) at Bolwork Investments BV — Venture capital / private-equity investment, esp. Series A and life sciences."
+        }
+      ]
+    },
+    {
+      "recipient": {
+        "id": "p_033",
+        "name": "Kristian Heck",
+        "company": "Kristian AI",
+        "tier": "pm",
+        "email": "k.heckinfo@gmail.com"
+      },
+      "email_md": "**Onderwerp:** Uw SBIQ-matches voor MeerBusiness Amsterdam\n\nBeste Kristian,\n\nOp basis van uw profiel en onze SBIQ-methodiek hebben wij voor Kristian AI 2 match(es) geselecteerd op commerciële relevantie — niet op sectorgelijkenis, maar op concrete kansen voor omzet, partnerschap en toegang.\n\n---\n\n## Match: **Bolwork Investments BV** — Alfons Boltjes (chef)\n_Relevantie: 0.80 · corporate_entry_point_\n\n**Waarom wij deze match kozen.** Wij zien Bolwork Investments BV als een toegangspoort tot kapitaal en corporate toegang. Bolwork Investments BV offers corporate/capital access; innovation / AI collaboration. Alfons Boltjes (chef) at Bolwork Investments BV.\n\n**De kans.** Bolwork Investments BV levert: Venture capital / private-equity investment, esp. Series A and life sciences.\n\n**Hoe u zich positioneert.** Positioneer Kristian AI rond uw kernaanbod: AI oplossingen.\n\n**Vragen om te stellen.**\n- In welke kansen wil Bolwork Investments BV op dit moment investeren?\n- Wat wilt u zien voordat een gesprek serieus wordt?\n- Wie in uw netwerk zou ik nog meer moeten spreken?\n\n**Hoe u hén kunt helpen.** U kunt Alfons Boltjes helpen met: AI oplossingen.\n\n**LinkedIn-introductie (kopieer & plak).**\n> Hoi Alfons, wij werden door SBIQ / MeerBusiness Amsterdam aan elkaar gekoppeld vanwege een concrete commerciële kans tussen Kristian AI en Bolwork Investments BV. Ik spreek graag kort af om te zien waar we elkaar kunnen versterken. Groet, Kristian\n\n---\n\n## Match: **lloff - facilitaire horeca specialisten** — Danny van Stiphout (Partner consultant)\n_Relevantie: 0.80 · potential_client_\n\n**Waarom wij deze match kozen.** Wij zien lloff - facilitaire horeca specialisten als een potentiële klant voor uw aanbod. lloff - facilitaire horeca specialisten is a potential client for Kristian AI; innovation / AI collaboration. Danny van Stiphout (Partner consultant) at lloff - facilitaire horeca specialisten.\n\n**De kans.** lloff - facilitaire horeca specialisten levert: Adviesdiensten die de werkplekcatering meer waarde voor bedrijfsdoelen bieden.\n\n**Hoe u zich positioneert.** Positioneer Kristian AI rond uw kernaanbod: AI oplossingen.\n\n**Vragen om te stellen.**\n- Waar ligt de focus van lloff - facilitaire horeca specialisten de komende 6–12 maanden?\n- Waar zitten nu knelpunten die een externe partner kan oplossen?\n- Wie bij u zou over zo'n beslissing gaan?\n\n**Hoe u hén kunt helpen.** U kunt Danny van Stiphout helpen met: AI oplossingen.\n\n**LinkedIn-introductie (kopieer & plak).**\n> Hoi Danny, wij werden door SBIQ / MeerBusiness Amsterdam aan elkaar gekoppeld vanwege een concrete commerciële kans tussen Kristian AI en lloff - facilitaire horeca specialisten. Ik spreek graag kort af om te zien waar we elkaar kunnen versterken. Groet, Kristian\n\nMet vriendelijke groet,\n\n**SBIQ Matchmaking — MeerBusiness Amsterdam**\n",
+      "matches": [
+        {
+          "counterpart": {
+            "id": "p_004",
+            "name": "Alfons Boltjes",
+            "company": "Bolwork Investments BV",
+            "tier": "bm",
+            "email": "alfons@bolwork.com"
+          },
+          "score": 0.7975,
+          "relationship": [
+            "corporate_entry_point",
+            "innovation_partner"
+          ],
+          "rationale": "Bolwork Investments BV offers corporate/capital access; innovation / AI collaboration. Alfons Boltjes (chef) at Bolwork Investments BV — Venture capital / private-equity investment, esp. Series A and life sciences."
+        },
+        {
+          "counterpart": {
+            "id": "p_011",
+            "name": "Danny van Stiphout",
+            "company": "lloff - facilitaire horeca specialisten",
+            "tier": "pm",
+            "email": "danny@lloff.nl"
+          },
+          "score": 0.7959,
+          "relationship": [
+            "potential_client",
+            "innovation_partner"
+          ],
+          "rationale": "lloff - facilitaire horeca specialisten is a potential client for Kristian AI; innovation / AI collaboration. Danny van Stiphout (Partner consultant) at lloff - facilitaire horeca specialisten — Adviesdiensten die de werkplekcatering meer waarde voor bedrijfsdoelen bieden."
+        }
+      ]
+    },
+    {
+      "recipient": {
+        "id": "p_055",
+        "name": "Peter Clercx",
+        "company": "TheBrandHotel",
+        "tier": "pm",
+        "email": "peterclercx@mac.com"
+      },
+      "email_md": "**Subject:** Your SBIQ matches for MeerBusiness Amsterdam\n\nDear Peter,\n\nBased on your profile and the SBIQ methodology, we selected 2 match(es) for TheBrandHotel on commercial relevance — not industry similarity, but concrete opportunities for revenue, partnership and access.\n\n---\n\n## Match: **Stomerij Collectief** — Marco van Barneveld (dga)\n_Relevance: 0.80 · potential_client_\n\n**Why we selected this match.** We see Stomerij Collectief as a potential client for your offering. Stomerij Collectief is a potential client for TheBrandHotel; innovation / AI collaboration. Marco van Barneveld (dga) at Stomerij Collectief.\n\n**The opportunity.** Stomerij Collectief offers: We reinigen werkkleding voor voedselverwerkers, hotels, klinieken, etc.\n\n**How to position yourself.** Position TheBrandHotel around your core offering: added values.\n\n**Questions to ask.**\n- What is Stomerij Collectief prioritising over the next 6–12 months?\n- Where are your current bottlenecks that an outside partner could solve?\n- Who on your side would own a decision like this?\n\n**How you can help them.** You can help Marco van Barneveld with: added values.\n\n**LinkedIn introduction (copy-paste).**\n> Hi Marco, SBIQ / MeerBusiness Amsterdam matched us around a concrete commercial opportunity between TheBrandHotel and Stomerij Collectief. I'd love a short chat to explore where we can add value to each other. Best, Peter\n\n---\n\n## Match: **Bolwork Investments BV** — Alfons Boltjes (chef)\n_Relevance: 0.80 · corporate_entry_point_\n\n**Why we selected this match.** We see Bolwork Investments BV as an entry point to capital and corporate access. Bolwork Investments BV offers corporate/capital access; innovation / AI collaboration. Alfons Boltjes (chef) at Bolwork Investments BV.\n\n**The opportunity.** Bolwork Investments BV offers: Venture capital / private-equity investment, esp. Series A and life sciences.\n\n**How to position yourself.** Position TheBrandHotel around your core offering: added values.\n\n**Questions to ask.**\n- What kind of opportunities is Bolwork Investments BV looking to back right now?\n- What do you need to see before a conversation becomes serious?\n- Who else in your network should I be speaking with?\n\n**How you can help them.** You can help Alfons Boltjes with: added values.\n\n**LinkedIn introduction (copy-paste).**\n> Hi Alfons, SBIQ / MeerBusiness Amsterdam matched us around a concrete commercial opportunity between TheBrandHotel and Bolwork Investments BV. I'd love a short chat to explore where we can add value to each other. Best, Peter\n\nWarm regards,\n\n**SBIQ Matchmaking — MeerBusiness Amsterdam**\n",
+      "matches": [
+        {
+          "counterpart": {
+            "id": "p_040",
+            "name": "Marco van Barneveld",
+            "company": "Stomerij Collectief",
+            "tier": "pm",
+            "email": "marco@stomerijcollectief.nl"
+          },
+          "score": 0.7981,
+          "relationship": [
+            "potential_client",
+            "innovation_partner"
+          ],
+          "rationale": "Stomerij Collectief is a potential client for TheBrandHotel; innovation / AI collaboration. Marco van Barneveld (dga) at Stomerij Collectief — We reinigen werkkleding voor voedselverwerkers, hotels, klinieken, etc."
+        },
+        {
+          "counterpart": {
+            "id": "p_004",
+            "name": "Alfons Boltjes",
+            "company": "Bolwork Investments BV",
+            "tier": "bm",
+            "email": "alfons@bolwork.com"
+          },
+          "score": 0.7975,
+          "relationship": [
+            "corporate_entry_point",
+            "innovation_partner"
+          ],
+          "rationale": "Bolwork Investments BV offers corporate/capital access; innovation / AI collaboration. Alfons Boltjes (chef) at Bolwork Investments BV — Venture capital / private-equity investment, esp. Series A and life sciences."
+        }
+      ]
+    },
+    {
+      "recipient": {
+        "id": "p_056",
+        "name": "Peter-Joost Post",
+        "company": "Ticketkeeper BV",
+        "tier": "pm",
+        "email": "pj@ticketkeeper.com"
+      },
+      "email_md": "**Onderwerp:** Uw SBIQ-matches voor MeerBusiness Amsterdam\n\nBeste Peter-Joost,\n\nOp basis van uw profiel en onze SBIQ-methodiek hebben wij voor Ticketkeeper BV 2 match(es) geselecteerd op commerciële relevantie — niet op sectorgelijkenis, maar op concrete kansen voor omzet, partnerschap en toegang.\n\n---\n\n## Match: **lloff - facilitaire horeca specialisten** — Danny van Stiphout (Partner consultant)\n_Relevantie: 0.81 · potential_supplier_\n\n**Waarom wij deze match kozen.** Wij zien lloff - facilitaire horeca specialisten als een leverancier die een concrete behoefte van u kan invullen. lloff - facilitaire horeca specialisten can supply what Ticketkeeper BV needs; innovation / AI collaboration. Danny van Stiphout (Partner consultant) at lloff - facilitaire horeca specialisten.\n\n**De kans.** lloff - facilitaire horeca specialisten levert: Adviesdiensten die de werkplekcatering meer waarde voor bedrijfsdoelen bieden.\n\n**Hoe u zich positioneert.** Positioneer Ticketkeeper BV rond uw kernaanbod: Kennis van events, ticketing.\n\n**Vragen om te stellen.**\n- Hoe ziet een typisch traject met lloff - facilitaire horeca specialisten eruit, en welke resultaten boeken klanten?\n- Waar voegt u de meeste waarde toe voor een bedrijf zoals het onze?\n- Hoe zou een eerste pilot of project samen eruitzien?\n\n**Hoe u hén kunt helpen.** U kunt Danny van Stiphout helpen met: Kennis van events, ticketing.\n\n**LinkedIn-introductie (kopieer & plak).**\n> Hoi Danny, wij werden door SBIQ / MeerBusiness Amsterdam aan elkaar gekoppeld vanwege een concrete commerciële kans tussen Ticketkeeper BV en lloff - facilitaire horeca specialisten. Ik spreek graag kort af om te zien waar we elkaar kunnen versterken. Groet, Peter-Joost\n\n---\n\n## Match: **Stomerij Collectief** — Marco van Barneveld (dga)\n_Relevantie: 0.78 · strategic_partner_\n\n**Waarom wij deze match kozen.** Wij zien Stomerij Collectief als een complementaire strategische partner. complementary strategic partnership; innovation / AI collaboration. Marco van Barneveld (dga) at Stomerij Collectief.\n\n**De kans.** Stomerij Collectief levert: We reinigen werkkleding voor voedselverwerkers, hotels, klinieken, etc.\n\n**Hoe u zich positioneert.** Positioneer Ticketkeeper BV rond uw kernaanbod: Kennis van events, ticketing.\n\n**Vragen om te stellen.**\n- Waar overlappen onze diensten, en waar zijn ze complementair?\n- Welke klanten kunnen we samen beter bedienen dan alleen?\n- Hoe zou een eenvoudig eerste gezamenlijk initiatief eruitzien?\n\n**Hoe u hén kunt helpen.** U kunt Marco van Barneveld helpen met: Kennis van events, ticketing.\n\n**LinkedIn-introductie (kopieer & plak).**\n> Hoi Marco, wij werden door SBIQ / MeerBusiness Amsterdam aan elkaar gekoppeld vanwege een concrete commerciële kans tussen Ticketkeeper BV en Stomerij Collectief. Ik spreek graag kort af om te zien waar we elkaar kunnen versterken. Groet, Peter-Joost\n\nMet vriendelijke groet,\n\n**SBIQ Matchmaking — MeerBusiness Amsterdam**\n",
+      "matches": [
+        {
+          "counterpart": {
+            "id": "p_011",
+            "name": "Danny van Stiphout",
+            "company": "lloff - facilitaire horeca specialisten",
+            "tier": "pm",
+            "email": "danny@lloff.nl"
+          },
+          "score": 0.8074,
+          "relationship": [
+            "potential_supplier",
+            "innovation_partner"
+          ],
+          "rationale": "lloff - facilitaire horeca specialisten can supply what Ticketkeeper BV needs; innovation / AI collaboration. Danny van Stiphout (Partner consultant) at lloff - facilitaire horeca specialisten — Adviesdiensten die de werkplekcatering meer waarde voor bedrijfsdoelen bieden."
+        },
+        {
+          "counterpart": {
+            "id": "p_040",
+            "name": "Marco van Barneveld",
+            "company": "Stomerij Collectief",
+            "tier": "pm",
+            "email": "marco@stomerijcollectief.nl"
+          },
+          "score": 0.7816,
+          "relationship": [
+            "strategic_partner",
+            "innovation_partner"
+          ],
+          "rationale": "complementary strategic partnership; innovation / AI collaboration. Marco van Barneveld (dga) at Stomerij Collectief — We reinigen werkkleding voor voedselverwerkers, hotels, klinieken, etc."
+        }
+      ]
+    },
+    {
+      "recipient": {
+        "id": "p_034",
+        "name": "Laurens Bentein",
+        "company": "Ned Fund Finance",
+        "tier": "pm",
+        "email": "laurens.bentein@ned-fund.nl"
+      },
+      "email_md": "**Subject:** Your SBIQ matches for MeerBusiness Amsterdam\n\nDear Laurens,\n\nBased on your profile and the SBIQ methodology, we selected 2 match(es) for Ned Fund Finance on commercial relevance — not industry similarity, but concrete opportunities for revenue, partnership and access.\n\n---\n\n## Match: **lloff - facilitaire horeca specialisten** — Danny van Stiphout (Partner consultant)\n_Relevance: 0.78 · strategic_partner_\n\n**Why we selected this match.** We see lloff - facilitaire horeca specialisten as a complementary strategic partner. complementary strategic partnership; innovation / AI collaboration. Danny van Stiphout (Partner consultant) at lloff - facilitaire horeca specialisten.\n\n**The opportunity.** lloff - facilitaire horeca specialisten offers: Adviesdiensten die de werkplekcatering meer waarde voor bedrijfsdoelen bieden.\n\n**How to position yourself.** Position Ned Fund Finance around your core offering: Contract-based financing: draws forward future recurring revenue so as-a-Service vendors can invest and grow.\n\n**Questions to ask.**\n- Where do our offerings overlap, and where are they complementary?\n- Which clients could we serve better together than alone?\n- What would a simple first joint initiative look like?\n\n**How you can help them.** You can help Danny van Stiphout with: Contract-based financing: draws forward future recurring revenue so as-a-Service vendors can invest and grow.\n\n**LinkedIn introduction (copy-paste).**\n> Hi Danny, SBIQ / MeerBusiness Amsterdam matched us around a concrete commercial opportunity between Ned Fund Finance and lloff - facilitaire horeca specialisten. I'd love a short chat to explore where we can add value to each other. Best, Laurens\n\n---\n\n## Match: **Protect Eye Nederland** — Marcel Gotje (Directeur)\n_Relevance: 0.76 · corporate_entry_point_\n\n**Why we selected this match.** We see Protect Eye Nederland as an entry point to capital and corporate access. Protect Eye Nederland offers corporate/capital access; innovation / AI collaboration. Marcel Gotje (Directeur) at Protect Eye Nederland.\n\n**The opportunity.** Protect Eye Nederland offers: Beveiliging en bewaking.\n\n**How to position yourself.** Position Ned Fund Finance around your core offering: Contract-based financing: draws forward future recurring revenue so as-a-Service vendors can invest and grow.\n\n**Questions to ask.**\n- What kind of opportunities is Protect Eye Nederland looking to back right now?\n- What do you need to see before a conversation becomes serious?\n- Who else in your network should I be speaking with?\n\n**How you can help them.** You can help Marcel Gotje with: Contract-based financing: draws forward future recurring revenue so as-a-Service vendors can invest and grow.\n\n**LinkedIn introduction (copy-paste).**\n> Hi Marcel, SBIQ / MeerBusiness Amsterdam matched us around a concrete commercial opportunity between Ned Fund Finance and Protect Eye Nederland. I'd love a short chat to explore where we can add value to each other. Best, Laurens\n\nWarm regards,\n\n**SBIQ Matchmaking — MeerBusiness Amsterdam**\n",
+      "matches": [
+        {
+          "counterpart": {
+            "id": "p_011",
+            "name": "Danny van Stiphout",
+            "company": "lloff - facilitaire horeca specialisten",
+            "tier": "pm",
+            "email": "danny@lloff.nl"
+          },
+          "score": 0.7794,
+          "relationship": [
+            "strategic_partner",
+            "innovation_partner"
+          ],
+          "rationale": "complementary strategic partnership; innovation / AI collaboration. Danny van Stiphout (Partner consultant) at lloff - facilitaire horeca specialisten — Adviesdiensten die de werkplekcatering meer waarde voor bedrijfsdoelen bieden."
+        },
+        {
+          "counterpart": {
+            "id": "p_039",
+            "name": "Marcel Gotje",
+            "company": "Protect Eye Nederland",
+            "tier": "bm",
+            "email": "marcel@protecteye.eu"
+          },
+          "score": 0.756,
+          "relationship": [
+            "corporate_entry_point",
+            "innovation_partner"
+          ],
+          "rationale": "Protect Eye Nederland offers corporate/capital access; innovation / AI collaboration. Marcel Gotje (Directeur) at Protect Eye Nederland — Beveiliging en bewaking"
+        }
+      ]
+    },
+    {
+      "recipient": {
+        "id": "p_040",
+        "name": "Marco van Barneveld",
+        "company": "Stomerij Collectief",
+        "tier": "pm",
+        "email": "marco@stomerijcollectief.nl"
+      },
+      "email_md": "**Onderwerp:** Uw SBIQ-matches voor MeerBusiness Amsterdam\n\nBeste Marco,\n\nOp basis van uw profiel en onze SBIQ-methodiek hebben wij voor Stomerij Collectief 2 match(es) geselecteerd op commerciële relevantie — niet op sectorgelijkenis, maar op concrete kansen voor omzet, partnerschap en toegang.\n\n---\n\n## Match: **M3 interieur** — Michel Melissen (directeur/eigenaar)\n_Relevantie: 0.74 · potential_supplier_\n\n**Waarom wij deze match kozen.** Wij zien M3 interieur als een leverancier die een concrete behoefte van u kan invullen. M3 interieur can supply what Stomerij Collectief needs; innovation / AI collaboration. Michel Melissen (directeur/eigenaar) at M3 interieur.\n\n**De kans.** M3 interieur levert: Turnkey custom office/project interiors: design, engineering, realisation, sustainable fit-out.\n\n**Hoe u zich positioneert.** Positioneer Stomerij Collectief rond uw kernaanbod: We reinigen werkkleding voor voedselverwerkers, hotels, klinieken, etc.\n\n**Vragen om te stellen.**\n- Hoe ziet een typisch traject met M3 interieur eruit, en welke resultaten boeken klanten?\n- Waar voegt u de meeste waarde toe voor een bedrijf zoals het onze?\n- Hoe zou een eerste pilot of project samen eruitzien?\n\n**Hoe u hén kunt helpen.** U kunt Michel Melissen helpen met: We reinigen werkkleding voor voedselverwerkers, hotels, klinieken, etc.\n\n**LinkedIn-introductie (kopieer & plak).**\n> Hoi Michel, wij werden door SBIQ / MeerBusiness Amsterdam aan elkaar gekoppeld vanwege een concrete commerciële kans tussen Stomerij Collectief en M3 interieur. Ik spreek graag kort af om te zien waar we elkaar kunnen versterken. Groet, Marco\n\n---\n\n## Match: **Onlinebetalen.nl** — Raymond Tournier (Owner)\n_Relevantie: 0.74 · corporate_entry_point_\n\n**Waarom wij deze match kozen.** Wij zien Onlinebetalen.nl als een toegangspoort tot kapitaal en corporate toegang. Onlinebetalen.nl offers corporate/capital access; innovation / AI collaboration. Raymond Tournier (Owner) at Onlinebetalen.nl.\n\n**De kans.** Onlinebetalen.nl levert: Onlinebetalen.nl: SaaS for credit management, debtor management and online payments (PSD2 portals, omnichannel reminders, payment arrangements).\n\n**Hoe u zich positioneert.** Positioneer Stomerij Collectief rond uw kernaanbod: We reinigen werkkleding voor voedselverwerkers, hotels, klinieken, etc.\n\n**Vragen om te stellen.**\n- In welke kansen wil Onlinebetalen.nl op dit moment investeren?\n- Wat wilt u zien voordat een gesprek serieus wordt?\n- Wie in uw netwerk zou ik nog meer moeten spreken?\n\n**Hoe u hén kunt helpen.** U kunt Raymond Tournier helpen met: We reinigen werkkleding voor voedselverwerkers, hotels, klinieken, etc.\n\n**LinkedIn-introductie (kopieer & plak).**\n> Hoi Raymond, wij werden door SBIQ / MeerBusiness Amsterdam aan elkaar gekoppeld vanwege een concrete commerciële kans tussen Stomerij Collectief en Onlinebetalen.nl. Ik spreek graag kort af om te zien waar we elkaar kunnen versterken. Groet, Marco\n\nMet vriendelijke groet,\n\n**SBIQ Matchmaking — MeerBusiness Amsterdam**\n",
+      "matches": [
+        {
+          "counterpart": {
+            "id": "p_043",
+            "name": "Michel Melissen",
+            "company": "M3 interieur",
+            "tier": "bm",
+            "email": "michel@m3interieur.nl"
+          },
+          "score": 0.7385,
+          "relationship": [
+            "potential_supplier",
+            "innovation_partner"
+          ],
+          "rationale": "M3 interieur can supply what Stomerij Collectief needs; innovation / AI collaboration. Michel Melissen (directeur/eigenaar) at M3 interieur — Turnkey custom office/project interiors: design, engineering, realisation, susta"
+        },
+        {
+          "counterpart": {
+            "id": "p_082",
+            "name": "Raymond Tournier",
+            "company": "Onlinebetalen.nl",
+            "tier": "non_member",
+            "email": "r.tournier@incassotool.net"
+          },
+          "score": 0.738,
+          "relationship": [
+            "corporate_entry_point",
+            "innovation_partner"
+          ],
+          "rationale": "Onlinebetalen.nl offers corporate/capital access; innovation / AI collaboration. Raymond Tournier (Owner) at Onlinebetalen.nl — Onlinebetalen.nl: SaaS for credit management, debtor management and online payme"
+        }
+      ]
+    },
+    {
+      "recipient": {
+        "id": "p_011",
+        "name": "Danny van Stiphout",
+        "company": "lloff - facilitaire horeca specialisten",
+        "tier": "pm",
+        "email": "danny@lloff.nl"
+      },
+      "email_md": "**Onderwerp:** Uw SBIQ-matches voor MeerBusiness Amsterdam\n\nBeste Danny,\n\nOp basis van uw profiel en onze SBIQ-methodiek hebben wij voor lloff - facilitaire horeca specialisten 2 match(es) geselecteerd op commerciële relevantie — niet op sectorgelijkenis, maar op concrete kansen voor omzet, partnerschap en toegang.\n\n---\n\n## Match: **TBH** — Peter Clercx (Creative Director)\n_Relevantie: 0.76 · strategic_partner_\n\n**Waarom wij deze match kozen.** Wij zien TBH als een complementaire strategische partner. complementary strategic partnership; innovation / AI collaboration. Peter Clercx (Creative Director) at TBH.\n\n**De kans.** TBH levert: Branding, creative communication and campaign development.\n\n**Hoe u zich positioneert.** Positioneer lloff - facilitaire horeca specialisten rond uw kernaanbod: Adviesdiensten die de werkplekcatering meer waarde voor bedrijfsdoelen bieden.\n\n**Vragen om te stellen.**\n- Waar overlappen onze diensten, en waar zijn ze complementair?\n- Welke klanten kunnen we samen beter bedienen dan alleen?\n- Hoe zou een eenvoudig eerste gezamenlijk initiatief eruitzien?\n\n**Hoe u hén kunt helpen.** U kunt Peter Clercx helpen met: Adviesdiensten die de werkplekcatering meer waarde voor bedrijfsdoelen bieden.\n\n**LinkedIn-introductie (kopieer & plak).**\n> Hoi Peter, wij werden door SBIQ / MeerBusiness Amsterdam aan elkaar gekoppeld vanwege een concrete commerciële kans tussen lloff - facilitaire horeca specialisten en TBH. Ik spreek graag kort af om te zien waar we elkaar kunnen versterken. Groet, Danny\n\n---\n\n## Match: **Topstad uitzend-en detachering BV** — Ozge Turfanda (HR manager)\n_Relevantie: 0.75 · corporate_entry_point_\n\n**Waarom wij deze match kozen.** Wij zien Topstad uitzend-en detachering BV als een toegangspoort tot kapitaal en corporate toegang. Topstad uitzend-en detachering BV offers corporate/capital access; innovation / AI collaboration. Ozge Turfanda (HR manager) at Topstad uitzend-en detachering BV.\n\n**De kans.** Topstad uitzend-en detachering BV levert: Temporary staffing, secondment and recruitment across many sectors.\n\n**Hoe u zich positioneert.** Positioneer lloff - facilitaire horeca specialisten rond uw kernaanbod: Adviesdiensten die de werkplekcatering meer waarde voor bedrijfsdoelen bieden.\n\n**Vragen om te stellen.**\n- In welke kansen wil Topstad uitzend-en detachering BV op dit moment investeren?\n- Wat wilt u zien voordat een gesprek serieus wordt?\n- Wie in uw netwerk zou ik nog meer moeten spreken?\n\n**Hoe u hén kunt helpen.** U kunt Ozge Turfanda helpen met: Adviesdiensten die de werkplekcatering meer waarde voor bedrijfsdoelen bieden.\n\n**LinkedIn-introductie (kopieer & plak).**\n> Hoi Ozge, wij werden door SBIQ / MeerBusiness Amsterdam aan elkaar gekoppeld vanwege een concrete commerciële kans tussen lloff - facilitaire horeca specialisten en Topstad uitzend-en detachering BV. Ik spreek graag kort af om te zien waar we elkaar kunnen versterken. Groet, Danny\n\nMet vriendelijke groet,\n\n**SBIQ Matchmaking — MeerBusiness Amsterdam**\n",
+      "matches": [
+        {
+          "counterpart": {
+            "id": "p_088",
+            "name": "Peter Clercx",
+            "company": "TBH",
+            "tier": "pm",
+            "email": "peterclercx@mac.com"
+          },
+          "score": 0.7552,
+          "relationship": [
+            "strategic_partner",
+            "innovation_partner"
+          ],
+          "rationale": "complementary strategic partnership; innovation / AI collaboration. Peter Clercx (Creative Director) at TBH — Branding, creative communication and campaign development."
+        },
+        {
+          "counterpart": {
+            "id": "p_095",
+            "name": "Ozge Turfanda",
+            "company": "Topstad uitzend-en detachering BV",
+            "tier": "bm",
+            "email": "info@topstadbv.nl"
+          },
+          "score": 0.7485,
+          "relationship": [
+            "corporate_entry_point",
+            "innovation_partner"
+          ],
+          "rationale": "Topstad uitzend-en detachering BV offers corporate/capital access; innovation / AI collaboration. Ozge Turfanda (HR manager) at Topstad uitzend-en detachering BV — Temporary staffing, secondment and recruitment across many sectors."
+        }
+      ]
+    },
+    {
+      "recipient": {
+        "id": "p_061",
+        "name": "Ronnie Veen",
+        "company": "Jupiter",
+        "tier": "pm",
+        "email": "wendy.nijssen@jupitercapital.nl"
+      },
+      "email_md": "**Subject:** Your SBIQ matches for MeerBusiness Amsterdam\n\nDear Ronnie,\n\nBased on your profile and the SBIQ methodology, we selected 2 match(es) for Jupiter on commercial relevance — not industry similarity, but concrete opportunities for revenue, partnership and access.\n\n---\n\n## Match: **Lumia Realty** — Doeman Shahrizadeh (Director)\n_Relevance: 0.80 · strategic_partner_\n\n**Why we selected this match.** We see Lumia Realty as a complementary strategic partner. Lumia Realty's Dubai property focus aligns directly with Jupiter's Dubai fund..\n\n**The opportunity.** Lumia Realty offers: Begeleiding bij de aankoop van vastgoed in Dubai, inclusief investeringsadvies, projectselectie, hypotheekbegeleiding, bedrijfsvestiging en Golden Visa ondersteuning.\n\n**How to position yourself.** Position Jupiter around your core offering: Real-estate financing & investment funds for entrepreneurs and private investors.\n\n**Questions to ask.**\n- Where do our offerings overlap, and where are they complementary?\n- Which clients could we serve better together than alone?\n- What would a simple first joint initiative look like?\n\n**How you can help them.** You can help Doeman Shahrizadeh with: Real-estate financing & investment funds for entrepreneurs and private investors.\n\n**LinkedIn introduction (copy-paste).**\n> Hi Doeman, SBIQ / MeerBusiness Amsterdam matched us around a concrete commercial opportunity between Jupiter and Lumia Realty. I'd love a short chat to explore where we can add value to each other. Best, Ronnie\n\n---\n\n## Match: **TBH** — Peter Clercx (Creative Director)\n_Relevance: 0.76 · strategic_partner_\n\n**Why we selected this match.** We see TBH as a complementary strategic partner. complementary strategic partnership; innovation / AI collaboration. Peter Clercx (Creative Director) at TBH.\n\n**The opportunity.** TBH offers: Branding, creative communication and campaign development.\n\n**How to position yourself.** Position Jupiter around your core offering: Real-estate financing & investment funds for entrepreneurs and private investors.\n\n**Questions to ask.**\n- Where do our offerings overlap, and where are they complementary?\n- Which clients could we serve better together than alone?\n- What would a simple first joint initiative look like?\n\n**How you can help them.** You can help Peter Clercx with: Real-estate financing & investment funds for entrepreneurs and private investors.\n\n**LinkedIn introduction (copy-paste).**\n> Hi Peter, SBIQ / MeerBusiness Amsterdam matched us around a concrete commercial opportunity between Jupiter and TBH. I'd love a short chat to explore where we can add value to each other. Best, Ronnie\n\nWarm regards,\n\n**SBIQ Matchmaking — MeerBusiness Amsterdam**\n",
+      "matches": [
+        {
+          "counterpart": {
+            "id": "p_091",
+            "name": "Doeman Shahrizadeh",
+            "company": "Lumia Realty",
+            "tier": "bm",
+            "email": "d.shahrizadeh@outlook.com"
+          },
+          "score": 0.8,
+          "relationship": [
+            "strategic_partner"
+          ],
+          "rationale": "Lumia Realty's Dubai property focus aligns directly with Jupiter's Dubai fund."
+        },
+        {
+          "counterpart": {
+            "id": "p_088",
+            "name": "Peter Clercx",
+            "company": "TBH",
+            "tier": "pm",
+            "email": "peterclercx@mac.com"
+          },
+          "score": 0.7552,
+          "relationship": [
+            "strategic_partner",
+            "innovation_partner"
+          ],
+          "rationale": "complementary strategic partnership; innovation / AI collaboration. Peter Clercx (Creative Director) at TBH — Branding, creative communication and campaign development."
+        }
+      ]
+    },
+    {
+      "recipient": {
+        "id": "p_094",
+        "name": "Joep Kroon",
+        "company": "Lume",
+        "tier": "pm",
+        "email": "Joep@lume.nl"
+      },
+      "email_md": "**Subject:** Your SBIQ matches for MeerBusiness Amsterdam\n\nDear Joep,\n\nBased on your profile and the SBIQ methodology, we selected 2 match(es) for Lume on commercial relevance — not industry similarity, but concrete opportunities for revenue, partnership and access.\n\n---\n\n## Match: **TBH** — Peter Clercx (Creative Director)\n_Relevance: 0.76 · potential_client_\n\n**Why we selected this match.** We see TBH as a potential client for your offering. TBH is a potential client for Lume; innovation / AI collaboration. Peter Clercx (Creative Director) at TBH.\n\n**The opportunity.** TBH offers: Branding, creative communication and campaign development.\n\n**How to position yourself.** Position Lume around your core offering: Recruitment and coaching of communication professionals/talent.\n\n**Questions to ask.**\n- What is TBH prioritising over the next 6–12 months?\n- Where are your current bottlenecks that an outside partner could solve?\n- Who on your side would own a decision like this?\n\n**How you can help them.** You can help Peter Clercx with: Recruitment and coaching of communication professionals/talent.\n\n**LinkedIn introduction (copy-paste).**\n> Hi Peter, SBIQ / MeerBusiness Amsterdam matched us around a concrete commercial opportunity between Lume and TBH. I'd love a short chat to explore where we can add value to each other. Best, Joep\n\n---\n\n## Match: **M3 interieur** — Michel Melissen (directeur/eigenaar)\n_Relevance: 0.72 · potential_client_\n\n**Why we selected this match.** We see M3 interieur as a potential client for your offering. M3 interieur is a potential client for Lume; innovation / AI collaboration. Michel Melissen (directeur/eigenaar) at M3 interieur.\n\n**The opportunity.** M3 interieur offers: Turnkey custom office/project interiors: design, engineering, realisation, sustainable fit-out.\n\n**How to position yourself.** Position Lume around your core offering: Recruitment and coaching of communication professionals/talent.\n\n**Questions to ask.**\n- What is M3 interieur prioritising over the next 6–12 months?\n- Where are your current bottlenecks that an outside partner could solve?\n- Who on your side would own a decision like this?\n\n**How you can help them.** You can help Michel Melissen with: Recruitment and coaching of communication professionals/talent.\n\n**LinkedIn introduction (copy-paste).**\n> Hi Michel, SBIQ / MeerBusiness Amsterdam matched us around a concrete commercial opportunity between Lume and M3 interieur. I'd love a short chat to explore where we can add value to each other. Best, Joep\n\nWarm regards,\n\n**SBIQ Matchmaking — MeerBusiness Amsterdam**\n",
+      "matches": [
+        {
+          "counterpart": {
+            "id": "p_088",
+            "name": "Peter Clercx",
+            "company": "TBH",
+            "tier": "pm",
+            "email": "peterclercx@mac.com"
+          },
+          "score": 0.7645,
+          "relationship": [
+            "potential_client",
+            "innovation_partner"
+          ],
+          "rationale": "TBH is a potential client for Lume; innovation / AI collaboration. Peter Clercx (Creative Director) at TBH — Branding, creative communication and campaign development."
+        },
+        {
+          "counterpart": {
+            "id": "p_043",
+            "name": "Michel Melissen",
+            "company": "M3 interieur",
+            "tier": "bm",
+            "email": "michel@m3interieur.nl"
+          },
+          "score": 0.7225,
+          "relationship": [
+            "potential_client",
+            "innovation_partner"
+          ],
+          "rationale": "M3 interieur is a potential client for Lume; innovation / AI collaboration. Michel Melissen (directeur/eigenaar) at M3 interieur — Turnkey custom office/project interiors: design, engineering, realisation, susta"
+        }
+      ]
+    },
+    {
+      "recipient": {
+        "id": "p_088",
+        "name": "Peter Clercx",
+        "company": "TBH",
+        "tier": "pm",
+        "email": "peterclercx@mac.com"
+      },
+      "email_md": "**Subject:** Your SBIQ matches for MeerBusiness Amsterdam\n\nDear Peter,\n\nBased on your profile and the SBIQ methodology, we selected 2 match(es) for TBH on commercial relevance — not industry similarity, but concrete opportunities for revenue, partnership and access.\n\n---\n\n## Match: **Lume** — Joep Kroon (projectleider)\n_Relevance: 0.76 · potential_client_\n\n**Why we selected this match.** We see Lume as a potential client for your offering. TBH is a potential client for Lume; innovation / AI collaboration. Peter Clercx (Creative Director) at TBH.\n\n**The opportunity.** Lume offers: Recruitment and coaching of communication professionals/talent.\n\n**How to position yourself.** Position TBH around your core offering: Branding, creative communication and campaign development.\n\n**Questions to ask.**\n- What is Lume prioritising over the next 6–12 months?\n- Where are your current bottlenecks that an outside partner could solve?\n- Who on your side would own a decision like this?\n\n**How you can help them.** You can help Joep Kroon with: Branding, creative communication and campaign development.\n\n**LinkedIn introduction (copy-paste).**\n> Hi Joep, SBIQ / MeerBusiness Amsterdam matched us around a concrete commercial opportunity between TBH and Lume. I'd love a short chat to explore where we can add value to each other. Best, Peter\n\n---\n\n## Match: **Jupiter** — Ronnie Veen (CEO)\n_Relevance: 0.76 · strategic_partner_\n\n**Why we selected this match.** We see Jupiter as a complementary strategic partner. complementary strategic partnership; innovation / AI collaboration. Peter Clercx (Creative Director) at TBH.\n\n**The opportunity.** Jupiter offers: Real-estate financing & investment funds for entrepreneurs and private investors.\n\n**How to position yourself.** Position TBH around your core offering: Branding, creative communication and campaign development.\n\n**Questions to ask.**\n- Where do our offerings overlap, and where are they complementary?\n- Which clients could we serve better together than alone?\n- What would a simple first joint initiative look like?\n\n**How you can help them.** You can help Ronnie Veen with: Branding, creative communication and campaign development.\n\n**LinkedIn introduction (copy-paste).**\n> Hi Ronnie, SBIQ / MeerBusiness Amsterdam matched us around a concrete commercial opportunity between TBH and Jupiter. I'd love a short chat to explore where we can add value to each other. Best, Peter\n\nWarm regards,\n\n**SBIQ Matchmaking — MeerBusiness Amsterdam**\n",
+      "matches": [
+        {
+          "counterpart": {
+            "id": "p_094",
+            "name": "Joep Kroon",
+            "company": "Lume",
+            "tier": "pm",
+            "email": "Joep@lume.nl"
+          },
+          "score": 0.7645,
+          "relationship": [
+            "potential_client",
+            "innovation_partner"
+          ],
+          "rationale": "TBH is a potential client for Lume; innovation / AI collaboration. Peter Clercx (Creative Director) at TBH — Branding, creative communication and campaign development."
+        },
+        {
+          "counterpart": {
+            "id": "p_061",
+            "name": "Ronnie Veen",
+            "company": "Jupiter",
+            "tier": "pm",
+            "email": "wendy.nijssen@jupitercapital.nl"
+          },
+          "score": 0.7552,
+          "relationship": [
+            "strategic_partner",
+            "innovation_partner"
+          ],
+          "rationale": "complementary strategic partnership; innovation / AI collaboration. Peter Clercx (Creative Director) at TBH — Branding, creative communication and campaign development."
+        }
+      ]
+    },
+    {
+      "recipient": {
+        "id": "p_064",
+        "name": "Vincent Berk",
+        "company": "Jupiter Capital Management",
+        "tier": "pm",
+        "email": "wendy.nijssen@jupitercapital.nl"
+      },
+      "email_md": "**Subject:** Your SBIQ matches for MeerBusiness Amsterdam\n\nDear Vincent,\n\nBased on your profile and the SBIQ methodology, we selected 1 match(es) for Jupiter Capital Management on commercial relevance — not industry similarity, but concrete opportunities for revenue, partnership and access.\n\n---\n\n## Match: **Temis Luxury** — Edwin Groenewoud (Commercial Director)\n_Relevance: 0.88 · corporate_entry_point_\n\n**Why we selected this match.** We see Temis Luxury as an entry point to capital and corporate access. Jupiter Capital Management offers corporate/capital access; innovation / AI collaboration. Vincent Berk (Partner) at Jupiter Capital Management.\n\n**The opportunity.** Temis Luxury offers: Exclusieve (waarde) transport oplossingen en premium home delivery services en daarnaast andere logistieke diensten die meer aandacht vereisen.\n\n**How to position yourself.** Position Jupiter Capital Management around your core offering: Real-estate financing & investment funds; investor relations for private investors and family offices.\n\n**Questions to ask.**\n- What kind of opportunities is Temis Luxury looking to back right now?\n- What do you need to see before a conversation becomes serious?\n- Who else in your network should I be speaking with?\n\n**How you can help them.** You can help Edwin Groenewoud with: Real-estate financing & investment funds; investor relations for private investors and family offices.\n\n**LinkedIn introduction (copy-paste).**\n> Hi Edwin, SBIQ / MeerBusiness Amsterdam matched us around a concrete commercial opportunity between Jupiter Capital Management and Temis Luxury. I'd love a short chat to explore where we can add value to each other. Best, Vincent\n\nWarm regards,\n\n**SBIQ Matchmaking — MeerBusiness Amsterdam**\n",
+      "matches": [
+        {
+          "counterpart": {
+            "id": "p_014",
+            "name": "Edwin Groenewoud",
+            "company": "Temis Luxury",
+            "tier": "pm",
+            "email": "egroenewoud@temisluxury.com"
+          },
+          "score": 0.8773,
+          "relationship": [
+            "corporate_entry_point",
+            "innovation_partner"
+          ],
+          "rationale": "Jupiter Capital Management offers corporate/capital access; innovation / AI collaboration. Vincent Berk (Partner) at Jupiter Capital Management — Real-estate financing & investment funds; investor relations for private investo"
+        }
+      ]
+    },
+    {
+      "recipient": {
+        "id": "p_018",
+        "name": "Frank Soonius",
+        "company": "FrankSoonius/Dream-Driver",
+        "tier": "bm",
+        "email": "info@franksoonius.com"
+      },
+      "email_md": "**Onderwerp:** Uw SBIQ-matches voor MeerBusiness Amsterdam\n\nBeste Frank,\n\nOp basis van uw profiel en onze SBIQ-methodiek hebben wij voor FrankSoonius/Dream-Driver 1 match(es) geselecteerd op commerciële relevantie — niet op sectorgelijkenis, maar op concrete kansen voor omzet, partnerschap en toegang.\n\n---\n\n## Match: **Topstad uitzend-en detachering BV** — Ozge Turfanda (HR manager)\n_Relevantie: 0.74 · corporate_entry_point_\n\n**Waarom wij deze match kozen.** Wij zien Topstad uitzend-en detachering BV als een toegangspoort tot kapitaal en corporate toegang. Topstad uitzend-en detachering BV offers corporate/capital access. Ozge Turfanda (HR manager) at Topstad uitzend-en detachering BV.\n\n**De kans.** Topstad uitzend-en detachering BV levert: Temporary staffing, secondment and recruitment across many sectors.\n\n**Hoe u zich positioneert.** Positioneer FrankSoonius/Dream-Driver rond uw kernaanbod: inspirerende lezingen, en een mooi film script, dus ook een mooi boek wat dus verfilmd gaat worden.\n\n**Vragen om te stellen.**\n- In welke kansen wil Topstad uitzend-en detachering BV op dit moment investeren?\n- Wat wilt u zien voordat een gesprek serieus wordt?\n- Wie in uw netwerk zou ik nog meer moeten spreken?\n\n**Hoe u hén kunt helpen.** U kunt Ozge Turfanda helpen met: inspirerende lezingen, en een mooi film script, dus ook een mooi boek wat dus verfilmd gaat worden.\n\n**LinkedIn-introductie (kopieer & plak).**\n> Hoi Ozge, wij werden door SBIQ / MeerBusiness Amsterdam aan elkaar gekoppeld vanwege een concrete commerciële kans tussen FrankSoonius/Dream-Driver en Topstad uitzend-en detachering BV. Ik spreek graag kort af om te zien waar we elkaar kunnen versterken. Groet, Frank\n\nMet vriendelijke groet,\n\n**SBIQ Matchmaking — MeerBusiness Amsterdam**\n",
+      "matches": [
+        {
+          "counterpart": {
+            "id": "p_095",
+            "name": "Ozge Turfanda",
+            "company": "Topstad uitzend-en detachering BV",
+            "tier": "bm",
+            "email": "info@topstadbv.nl"
+          },
+          "score": 0.7405,
+          "relationship": [
+            "corporate_entry_point"
+          ],
+          "rationale": "Topstad uitzend-en detachering BV offers corporate/capital access. Ozge Turfanda (HR manager) at Topstad uitzend-en detachering BV — Temporary staffing, secondment and recruitment across many sectors."
+        }
+      ]
+    },
+    {
+      "recipient": {
+        "id": "p_019",
+        "name": "Frans Razoux Schultz",
+        "company": "Opex",
+        "tier": "bm",
+        "email": "frazoux@yahoo.com"
+      },
+      "email_md": "**Onderwerp:** Uw SBIQ-matches voor MeerBusiness Amsterdam\n\nBeste Frans,\n\nOp basis van uw profiel en onze SBIQ-methodiek hebben wij voor Opex 1 match(es) geselecteerd op commerciële relevantie — niet op sectorgelijkenis, maar op concrete kansen voor omzet, partnerschap en toegang.\n\n---\n\n## Match: **Topstad uitzend-en detachering BV** — Ozge Turfanda (HR manager)\n_Relevantie: 0.75 · corporate_entry_point_\n\n**Waarom wij deze match kozen.** Wij zien Topstad uitzend-en detachering BV als een toegangspoort tot kapitaal en corporate toegang. Topstad uitzend-en detachering BV offers corporate/capital access; innovation / AI collaboration. Ozge Turfanda (HR manager) at Topstad uitzend-en detachering BV.\n\n**De kans.** Topstad uitzend-en detachering BV levert: Temporary staffing, secondment and recruitment across many sectors.\n\n**Hoe u zich positioneert.** Positioneer Opex rond uw kernaanbod: Mentorship incl help to get funding and result driven GTM strategy.\n\n**Vragen om te stellen.**\n- In welke kansen wil Topstad uitzend-en detachering BV op dit moment investeren?\n- Wat wilt u zien voordat een gesprek serieus wordt?\n- Wie in uw netwerk zou ik nog meer moeten spreken?\n\n**Hoe u hén kunt helpen.** U kunt Ozge Turfanda helpen met: Mentorship incl help to get funding and result driven GTM strategy.\n\n**LinkedIn-introductie (kopieer & plak).**\n> Hoi Ozge, wij werden door SBIQ / MeerBusiness Amsterdam aan elkaar gekoppeld vanwege een concrete commerciële kans tussen Opex en Topstad uitzend-en detachering BV. Ik spreek graag kort af om te zien waar we elkaar kunnen versterken. Groet, Frans\n\nMet vriendelijke groet,\n\n**SBIQ Matchmaking — MeerBusiness Amsterdam**\n",
+      "matches": [
+        {
+          "counterpart": {
+            "id": "p_095",
+            "name": "Ozge Turfanda",
+            "company": "Topstad uitzend-en detachering BV",
+            "tier": "bm",
+            "email": "info@topstadbv.nl"
+          },
+          "score": 0.7485,
+          "relationship": [
+            "corporate_entry_point",
+            "innovation_partner"
+          ],
+          "rationale": "Topstad uitzend-en detachering BV offers corporate/capital access; innovation / AI collaboration. Ozge Turfanda (HR manager) at Topstad uitzend-en detachering BV — Temporary staffing, secondment and recruitment across many sectors."
+        }
+      ]
+    },
+    {
+      "recipient": {
+        "id": "p_024",
+        "name": "Jan de Vries",
+        "company": "Stijg Coaching en Therapie",
+        "tier": "bm",
+        "email": "info@stijg.eu"
+      },
+      "email_md": "**Onderwerp:** Uw SBIQ-matches voor MeerBusiness Amsterdam\n\nBeste Jan,\n\nOp basis van uw profiel en onze SBIQ-methodiek hebben wij voor Stijg Coaching en Therapie 1 match(es) geselecteerd op commerciële relevantie — niet op sectorgelijkenis, maar op concrete kansen voor omzet, partnerschap en toegang.\n\n---\n\n## Match: **Onlinebetalen.nl** — Raymond Tournier (Owner)\n_Relevantie: 0.73 · corporate_entry_point_\n\n**Waarom wij deze match kozen.** Wij zien Onlinebetalen.nl als een toegangspoort tot kapitaal en corporate toegang. Onlinebetalen.nl offers corporate/capital access; innovation / AI collaboration. Raymond Tournier (Owner) at Onlinebetalen.nl.\n\n**De kans.** Onlinebetalen.nl levert: Onlinebetalen.nl: SaaS for credit management, debtor management and online payments (PSD2 portals, omnichannel reminders, payment arrangements).\n\n**Hoe u zich positioneert.** Positioneer Stijg Coaching en Therapie rond uw kernaanbod: Psycho Sociaal Therapie.\n\n**Vragen om te stellen.**\n- In welke kansen wil Onlinebetalen.nl op dit moment investeren?\n- Wat wilt u zien voordat een gesprek serieus wordt?\n- Wie in uw netwerk zou ik nog meer moeten spreken?\n\n**Hoe u hén kunt helpen.** U kunt Raymond Tournier helpen met: Psycho Sociaal Therapie.\n\n**LinkedIn-introductie (kopieer & plak).**\n> Hoi Raymond, wij werden door SBIQ / MeerBusiness Amsterdam aan elkaar gekoppeld vanwege een concrete commerciële kans tussen Stijg Coaching en Therapie en Onlinebetalen.nl. Ik spreek graag kort af om te zien waar we elkaar kunnen versterken. Groet, Jan\n\nMet vriendelijke groet,\n\n**SBIQ Matchmaking — MeerBusiness Amsterdam**\n",
+      "matches": [
+        {
+          "counterpart": {
+            "id": "p_082",
+            "name": "Raymond Tournier",
+            "company": "Onlinebetalen.nl",
+            "tier": "non_member",
+            "email": "r.tournier@incassotool.net"
+          },
+          "score": 0.73,
+          "relationship": [
+            "corporate_entry_point",
+            "innovation_partner"
+          ],
+          "rationale": "Onlinebetalen.nl offers corporate/capital access; innovation / AI collaboration. Raymond Tournier (Owner) at Onlinebetalen.nl — Onlinebetalen.nl: SaaS for credit management, debtor management and online payme"
+        }
+      ]
+    },
+    {
+      "recipient": {
+        "id": "p_027",
+        "name": "Jeroen de Rijk",
+        "company": "Baileo Music Productions",
+        "tier": "bm",
+        "email": "jeroen@baileo.nl"
+      },
+      "email_md": "**Onderwerp:** Uw SBIQ-matches voor MeerBusiness Amsterdam\n\nBeste Jeroen,\n\nOp basis van uw profiel en onze SBIQ-methodiek hebben wij voor Baileo Music Productions 1 match(es) geselecteerd op commerciële relevantie — niet op sectorgelijkenis, maar op concrete kansen voor omzet, partnerschap en toegang.\n\n---\n\n## Match: **Onlinebetalen.nl** — Raymond Tournier (Owner)\n_Relevantie: 0.73 · corporate_entry_point_\n\n**Waarom wij deze match kozen.** Wij zien Onlinebetalen.nl als een toegangspoort tot kapitaal en corporate toegang. Onlinebetalen.nl offers corporate/capital access; innovation / AI collaboration. Raymond Tournier (Owner) at Onlinebetalen.nl.\n\n**De kans.** Onlinebetalen.nl levert: Onlinebetalen.nl: SaaS for credit management, debtor management and online payments (PSD2 portals, omnichannel reminders, payment arrangements).\n\n**Hoe u zich positioneert.** Positioneer Baileo Music Productions rond uw kernaanbod: 45 jaar ervaring op het gebied van live en/of opgenomen muziek.\n\n**Vragen om te stellen.**\n- In welke kansen wil Onlinebetalen.nl op dit moment investeren?\n- Wat wilt u zien voordat een gesprek serieus wordt?\n- Wie in uw netwerk zou ik nog meer moeten spreken?\n\n**Hoe u hén kunt helpen.** U kunt Raymond Tournier helpen met: 45 jaar ervaring op het gebied van live en/of opgenomen muziek.\n\n**LinkedIn-introductie (kopieer & plak).**\n> Hoi Raymond, wij werden door SBIQ / MeerBusiness Amsterdam aan elkaar gekoppeld vanwege een concrete commerciële kans tussen Baileo Music Productions en Onlinebetalen.nl. Ik spreek graag kort af om te zien waar we elkaar kunnen versterken. Groet, Jeroen\n\nMet vriendelijke groet,\n\n**SBIQ Matchmaking — MeerBusiness Amsterdam**\n",
+      "matches": [
+        {
+          "counterpart": {
+            "id": "p_082",
+            "name": "Raymond Tournier",
+            "company": "Onlinebetalen.nl",
+            "tier": "non_member",
+            "email": "r.tournier@incassotool.net"
+          },
+          "score": 0.73,
+          "relationship": [
+            "corporate_entry_point",
+            "innovation_partner"
+          ],
+          "rationale": "Onlinebetalen.nl offers corporate/capital access; innovation / AI collaboration. Raymond Tournier (Owner) at Onlinebetalen.nl — Onlinebetalen.nl: SaaS for credit management, debtor management and online payme"
+        }
+      ]
+    },
+    {
+      "recipient": {
+        "id": "p_039",
+        "name": "Marcel Gotje",
+        "company": "Protect Eye Nederland",
+        "tier": "bm",
+        "email": "marcel@protecteye.eu"
+      },
+      "email_md": "**Onderwerp:** Uw SBIQ-matches voor MeerBusiness Amsterdam\n\nBeste Marcel,\n\nOp basis van uw profiel en onze SBIQ-methodiek hebben wij voor Protect Eye Nederland 1 match(es) geselecteerd op commerciële relevantie — niet op sectorgelijkenis, maar op concrete kansen voor omzet, partnerschap en toegang.\n\n---\n\n## Match: **Specsavers** — Mahdi Alimirzaei (Sales manager)\n_Relevantie: 0.72 · strategic_partner_\n\n**Waarom wij deze match kozen.** Wij zien Specsavers als een complementaire strategische partner. complementary strategic partnership; innovation / AI collaboration. Mahdi Alimirzaei (Sales manager) at Specsavers.\n\n**De kans.** Specsavers levert: Specsavers: optical retail chain — glasses, contact lenses and eye/hearing care (NL store operations).\n\n**Hoe u zich positioneert.** Positioneer Protect Eye Nederland rond uw kernaanbod: Beveiliging en bewaking.\n\n**Vragen om te stellen.**\n- Waar overlappen onze diensten, en waar zijn ze complementair?\n- Welke klanten kunnen we samen beter bedienen dan alleen?\n- Hoe zou een eenvoudig eerste gezamenlijk initiatief eruitzien?\n\n**Hoe u hén kunt helpen.** U kunt Mahdi Alimirzaei helpen met: Beveiliging en bewaking.\n\n**LinkedIn-introductie (kopieer & plak).**\n> Hoi Mahdi, wij werden door SBIQ / MeerBusiness Amsterdam aan elkaar gekoppeld vanwege een concrete commerciële kans tussen Protect Eye Nederland en Specsavers. Ik spreek graag kort af om te zien waar we elkaar kunnen versterken. Groet, Marcel\n\nMet vriendelijke groet,\n\n**SBIQ Matchmaking — MeerBusiness Amsterdam**\n",
+      "matches": [
+        {
+          "counterpart": {
+            "id": "p_101",
+            "name": "Mahdi Alimirzaei",
+            "company": "Specsavers",
+            "tier": "non_member",
+            "email": "aryanmirzaei492@gmail.com"
+          },
+          "score": 0.721,
+          "relationship": [
+            "strategic_partner",
+            "innovation_partner"
+          ],
+          "rationale": "complementary strategic partnership; innovation / AI collaboration. Mahdi Alimirzaei (Sales manager) at Specsavers — Specsavers: optical retail chain — glasses, contact lenses and eye/hearing care"
+        }
+      ]
+    },
+    {
+      "recipient": {
+        "id": "p_044",
+        "name": "Mirella Bosch",
+        "company": "Miraqel.com",
+        "tier": "bm",
+        "email": "contact@miraqel.com"
+      },
+      "email_md": "**Onderwerp:** Uw SBIQ-matches voor MeerBusiness Amsterdam\n\nBeste Mirella,\n\nOp basis van uw profiel en onze SBIQ-methodiek hebben wij voor Miraqel.com 1 match(es) geselecteerd op commerciële relevantie — niet op sectorgelijkenis, maar op concrete kansen voor omzet, partnerschap en toegang.\n\n---\n\n## Match: **M3 interieur** — Michel Melissen (directeur/eigenaar)\n_Relevantie: 0.74 · potential_supplier_\n\n**Waarom wij deze match kozen.** Wij zien M3 interieur als een leverancier die een concrete behoefte van u kan invullen. M3 interieur can supply what Miraqel.com needs; innovation / AI collaboration. Michel Melissen (directeur/eigenaar) at M3 interieur.\n\n**De kans.** M3 interieur levert: Turnkey custom office/project interiors: design, engineering, realisation, sustainable fit-out.\n\n**Hoe u zich positioneert.** Positioneer Miraqel.com rond uw kernaanbod: Wat ik aanbied, zijn gemakkelijk toepasbare orthomoleculaire adviezen en persoonlijke coaching, gericht op meer energie, focus, balans en vitaliteit. Op een praktische en toegankelijke manier help ik mensen om hun gezondheid duurzaam te ondersteunen en zich fitter en sterker te voelen in het dagelijks leven.\n\n**Vragen om te stellen.**\n- Hoe ziet een typisch traject met M3 interieur eruit, en welke resultaten boeken klanten?\n- Waar voegt u de meeste waarde toe voor een bedrijf zoals het onze?\n- Hoe zou een eerste pilot of project samen eruitzien?\n\n**Hoe u hén kunt helpen.** U kunt Michel Melissen helpen met: Wat ik aanbied, zijn gemakkelijk toepasbare orthomoleculaire adviezen en persoonlijke coaching, gericht op meer energie, focus, balans en vitaliteit. Op een praktische en toegankelijke manier help ik mensen om hun gezondheid duurzaam te ondersteunen en zich fitter en sterker te voelen in het dagelijks leven.\n\n**LinkedIn-introductie (kopieer & plak).**\n> Hoi Michel, wij werden door SBIQ / MeerBusiness Amsterdam aan elkaar gekoppeld vanwege een concrete commerciële kans tussen Miraqel.com en M3 interieur. Ik spreek graag kort af om te zien waar we elkaar kunnen versterken. Groet, Mirella\n\nMet vriendelijke groet,\n\n**SBIQ Matchmaking — MeerBusiness Amsterdam**\n",
+      "matches": [
+        {
+          "counterpart": {
+            "id": "p_043",
+            "name": "Michel Melissen",
+            "company": "M3 interieur",
+            "tier": "bm",
+            "email": "michel@m3interieur.nl"
+          },
+          "score": 0.7439,
+          "relationship": [
+            "potential_supplier",
+            "innovation_partner"
+          ],
+          "rationale": "M3 interieur can supply what Miraqel.com needs; innovation / AI collaboration. Michel Melissen (directeur/eigenaar) at M3 interieur — Turnkey custom office/project interiors: design, engineering, realisation, susta"
+        }
+      ]
+    },
+    {
+      "recipient": {
+        "id": "p_053",
+        "name": "Oscar Niezen",
+        "company": "CoHort Consulting",
+        "tier": "bm",
+        "email": "cohortconsulting@xs4all.nl"
+      },
+      "email_md": "**Onderwerp:** Uw SBIQ-matches voor MeerBusiness Amsterdam\n\nBeste Oscar,\n\nOp basis van uw profiel en onze SBIQ-methodiek hebben wij voor CoHort Consulting 1 match(es) geselecteerd op commerciële relevantie — niet op sectorgelijkenis, maar op concrete kansen voor omzet, partnerschap en toegang.\n\n---\n\n## Match: **Leeps** — Jelle Roggeveen (Business Development Manager)\n_Relevantie: 0.72 · potential_client_\n\n**Waarom wij deze match kozen.** Wij zien Leeps als een potentiële klant voor uw aanbod. Leeps is a potential client for CoHort Consulting; innovation / AI collaboration. Jelle Roggeveen (Business Development Manager) at Leeps.\n\n**De kans.** Leeps levert: Design, delivery and monitoring of network infrastructure; IT/connectivity advisory.\n\n**Hoe u zich positioneert.** Positioneer CoHort Consulting rond uw kernaanbod: Netwerk in Oost- en Zuid-Oost Azië,  kennis en ervaring NL/Europa, goede ingangen bij overheid en subsidietrajecten.\n\n**Vragen om te stellen.**\n- Waar ligt de focus van Leeps de komende 6–12 maanden?\n- Waar zitten nu knelpunten die een externe partner kan oplossen?\n- Wie bij u zou over zo'n beslissing gaan?\n\n**Hoe u hén kunt helpen.** U kunt Jelle Roggeveen helpen met: Netwerk in Oost- en Zuid-Oost Azië,  kennis en ervaring NL/Europa, goede ingangen bij overheid en subsidietrajecten.\n\n**LinkedIn-introductie (kopieer & plak).**\n> Hoi Jelle, wij werden door SBIQ / MeerBusiness Amsterdam aan elkaar gekoppeld vanwege een concrete commerciële kans tussen CoHort Consulting en Leeps. Ik spreek graag kort af om te zien waar we elkaar kunnen versterken. Groet, Oscar\n\nMet vriendelijke groet,\n\n**SBIQ Matchmaking — MeerBusiness Amsterdam**\n",
+      "matches": [
+        {
+          "counterpart": {
+            "id": "p_026",
+            "name": "Jelle Roggeveen",
+            "company": "Leeps",
+            "tier": "bm",
+            "email": "jelle@leeps.nl"
+          },
+          "score": 0.7215,
+          "relationship": [
+            "potential_client",
+            "innovation_partner"
+          ],
+          "rationale": "Leeps is a potential client for CoHort Consulting; innovation / AI collaboration. Jelle Roggeveen (Business Development Manager) at Leeps — Design, delivery and monitoring of network infrastructure; IT/connectivity advis"
+        }
+      ]
+    },
+    {
+      "recipient": {
+        "id": "p_062",
+        "name": "Salomon Engelsman",
+        "company": "Sunice",
+        "tier": "bm",
+        "email": "info@sunice.nl"
+      },
+      "email_md": "**Onderwerp:** Uw SBIQ-matches voor MeerBusiness Amsterdam\n\nBeste Salomon,\n\nOp basis van uw profiel en onze SBIQ-methodiek hebben wij voor Sunice 1 match(es) geselecteerd op commerciële relevantie — niet op sectorgelijkenis, maar op concrete kansen voor omzet, partnerschap en toegang.\n\n---\n\n## Match: **Flowently** — Anja Vreeburg (Director - Founder)\n_Relevantie: 0.71 · potential_client_\n\n**Waarom wij deze match kozen.** Wij zien Flowently als een potentiële klant voor uw aanbod. Flowently is a potential client for Sunice; innovation / AI collaboration. Anja Vreeburg (Director - Founder) at Flowently.\n\n**De kans.** Flowently levert: Taaltraining, Nederlands, Business Engels, Frans, Duits en andere talen.\n\n**Hoe u zich positioneert.** Positioneer Sunice rond uw kernaanbod: Mooie films.\n\n**Vragen om te stellen.**\n- Waar ligt de focus van Flowently de komende 6–12 maanden?\n- Waar zitten nu knelpunten die een externe partner kan oplossen?\n- Wie bij u zou over zo'n beslissing gaan?\n\n**Hoe u hén kunt helpen.** U kunt Anja Vreeburg helpen met: Mooie films.\n\n**LinkedIn-introductie (kopieer & plak).**\n> Hoi Anja, wij werden door SBIQ / MeerBusiness Amsterdam aan elkaar gekoppeld vanwege een concrete commerciële kans tussen Sunice en Flowently. Ik spreek graag kort af om te zien waar we elkaar kunnen versterken. Groet, Salomon\n\nMet vriendelijke groet,\n\n**SBIQ Matchmaking — MeerBusiness Amsterdam**\n",
+      "matches": [
+        {
+          "counterpart": {
+            "id": "p_075",
+            "name": "Anja Vreeburg",
+            "company": "Flowently",
+            "tier": "bm",
+            "email": "anja@flowently.com"
+          },
+          "score": 0.7142,
+          "relationship": [
+            "potential_client",
+            "innovation_partner"
+          ],
+          "rationale": "Flowently is a potential client for Sunice; innovation / AI collaboration. Anja Vreeburg (Director - Founder) at Flowently — Taaltraining, Nederlands, Business Engels, Frans, Duits en andere talen"
+        }
+      ]
+    },
+    {
+      "recipient": {
+        "id": "p_063",
+        "name": "Santiago Varela",
+        "company": "DIEGUEZ legal",
+        "tier": "bm",
+        "email": "santiago.vareladieguez@hotmail.com"
+      },
+      "email_md": "**Onderwerp:** Uw SBIQ-matches voor MeerBusiness Amsterdam\n\nBeste Santiago,\n\nOp basis van uw profiel en onze SBIQ-methodiek hebben wij voor DIEGUEZ legal 1 match(es) geselecteerd op commerciële relevantie — niet op sectorgelijkenis, maar op concrete kansen voor omzet, partnerschap en toegang.\n\n---\n\n## Match: **De Jong Business Consultancy BV** — Edward de Jong (Algemeen Directeur)\n_Relevantie: 0.73 · potential_client_\n\n**Waarom wij deze match kozen.** Wij zien De Jong Business Consultancy BV als een potentiële klant voor uw aanbod. De Jong Business Consultancy BV is a potential client for DIEGUEZ legal. Edward de Jong (Algemeen Directeur) at De Jong Business Consultancy BV.\n\n**De kans.** De Jong Business Consultancy BV levert: Project management, risk and planning advice for civil-engineering, infra and construction projects.\n\n**Hoe u zich positioneert.** Positioneer DIEGUEZ legal rond uw kernaanbod: Full service arbeidsrecht van buitengerechtelijk advies tot procederen.\n\n**Vragen om te stellen.**\n- Waar ligt de focus van De Jong Business Consultancy BV de komende 6–12 maanden?\n- Waar zitten nu knelpunten die een externe partner kan oplossen?\n- Wie bij u zou over zo'n beslissing gaan?\n\n**Hoe u hén kunt helpen.** U kunt Edward de Jong helpen met: Full service arbeidsrecht van buitengerechtelijk advies tot procederen.\n\n**LinkedIn-introductie (kopieer & plak).**\n> Hoi Edward, wij werden door SBIQ / MeerBusiness Amsterdam aan elkaar gekoppeld vanwege een concrete commerciële kans tussen DIEGUEZ legal en De Jong Business Consultancy BV. Ik spreek graag kort af om te zien waar we elkaar kunnen versterken. Groet, Santiago\n\nMet vriendelijke groet,\n\n**SBIQ Matchmaking — MeerBusiness Amsterdam**\n",
+      "matches": [
+        {
+          "counterpart": {
+            "id": "p_013",
+            "name": "Edward de Jong",
+            "company": "De Jong Business Consultancy BV",
+            "tier": "bm",
+            "email": "e.dejong@jbcbv.eu"
+          },
+          "score": 0.7265,
+          "relationship": [
+            "potential_client"
+          ],
+          "rationale": "De Jong Business Consultancy BV is a potential client for DIEGUEZ legal. Edward de Jong (Algemeen Directeur) at De Jong Business Consultancy BV — Project management, risk and planning advice for civil-engineering, infra and co"
+        }
+      ]
+    },
+    {
+      "recipient": {
+        "id": "p_072",
+        "name": "Walter van Gent",
+        "company": "Aston Analytics B.V.",
+        "tier": "bm",
+        "email": "AstonAnalytics@Planet.nl"
+      },
+      "email_md": "**Onderwerp:** Uw SBIQ-matches voor MeerBusiness Amsterdam\n\nBeste Walter,\n\nOp basis van uw profiel en onze SBIQ-methodiek hebben wij voor Aston Analytics B.V. 1 match(es) geselecteerd op commerciële relevantie — niet op sectorgelijkenis, maar op concrete kansen voor omzet, partnerschap en toegang.\n\n---\n\n## Match: **CHAUDHRY CONSTRUCTION COMPANY** — Muhammad Sufyan (CEO)\n_Relevantie: 0.72 · corporate_entry_point_\n\n**Waarom wij deze match kozen.** Wij zien CHAUDHRY CONSTRUCTION COMPANY als een toegangspoort tot kapitaal en corporate toegang. CHAUDHRY CONSTRUCTION COMPANY offers corporate/capital access. Muhammad Sufyan (CEO) at CHAUDHRY CONSTRUCTION COMPANY.\n\n**De kans.** CHAUDHRY CONSTRUCTION COMPANY levert: Chaudhry Construction Company: general contractor — civil, structural, mechanical and electrical works and infrastructure development.\n\n**Hoe u zich positioneert.** Positioneer Aston Analytics B.V. rond uw kernaanbod: Kennis, kansen, netwerk, passing inkomen, stabiel rendement.\n\n**Vragen om te stellen.**\n- In welke kansen wil CHAUDHRY CONSTRUCTION COMPANY op dit moment investeren?\n- Wat wilt u zien voordat een gesprek serieus wordt?\n- Wie in uw netwerk zou ik nog meer moeten spreken?\n\n**Hoe u hén kunt helpen.** U kunt Muhammad Sufyan helpen met: Kennis, kansen, netwerk, passing inkomen, stabiel rendement.\n\n**LinkedIn-introductie (kopieer & plak).**\n> Hoi Muhammad, wij werden door SBIQ / MeerBusiness Amsterdam aan elkaar gekoppeld vanwege een concrete commerciële kans tussen Aston Analytics B.V. en CHAUDHRY CONSTRUCTION COMPANY. Ik spreek graag kort af om te zien waar we elkaar kunnen versterken. Groet, Walter\n\nMet vriendelijke groet,\n\n**SBIQ Matchmaking — MeerBusiness Amsterdam**\n",
+      "matches": [
+        {
+          "counterpart": {
+            "id": "p_048",
+            "name": "Muhammad Sufyan",
+            "company": "CHAUDHRY CONSTRUCTION COMPANY",
+            "tier": "non_member",
+            "email": "info.apt.study@gmail.com"
+          },
+          "score": 0.724,
+          "relationship": [
+            "corporate_entry_point"
+          ],
+          "rationale": "CHAUDHRY CONSTRUCTION COMPANY offers corporate/capital access. Muhammad Sufyan (CEO) at CHAUDHRY CONSTRUCTION COMPANY — Chaudhry Construction Company: general contractor — civil, structural, mechanica"
+        }
+      ]
+    },
+    {
+      "recipient": {
+        "id": "p_073",
+        "name": "Solomon Floyd",
+        "company": "Fur Family Flights",
+        "tier": "bm",
+        "email": "Solomon@KodiakCapitalAdvisory.com"
+      },
+      "email_md": "**Subject:** Your SBIQ matches for MeerBusiness Amsterdam\n\nDear Solomon,\n\nBased on your profile and the SBIQ methodology, we selected 1 match(es) for Fur Family Flights on commercial relevance — not industry similarity, but concrete opportunities for revenue, partnership and access.\n\n---\n\n## Match: **Leeps** — Jelle Roggeveen (Business Development Manager)\n_Relevance: 0.74 · potential_client_\n\n**Why we selected this match.** We see Leeps as a potential client for your offering. Leeps is a potential client for Fur Family Flights; innovation / AI collaboration. Jelle Roggeveen (Business Development Manager) at Leeps.\n\n**The opportunity.** Leeps offers: Design, delivery and monitoring of network infrastructure; IT/connectivity advisory.\n\n**How to position yourself.** Position Fur Family Flights around your core offering: I own several companies and have exited several others. My companies focus on the development of properties related to aviation as well as run several air charter businesses. I have opportunities within my companies for hiring full time employees and interns.\n\n**Questions to ask.**\n- What is Leeps prioritising over the next 6–12 months?\n- Where are your current bottlenecks that an outside partner could solve?\n- Who on your side would own a decision like this?\n\n**How you can help them.** You can help Jelle Roggeveen with: I own several companies and have exited several others. My companies focus on the development of properties related to aviation as well as run several air charter businesses. I have opportunities within my companies for hiring full time employees and interns.\n\n**LinkedIn introduction (copy-paste).**\n> Hi Jelle, SBIQ / MeerBusiness Amsterdam matched us around a concrete commercial opportunity between Fur Family Flights and Leeps. I'd love a short chat to explore where we can add value to each other. Best, Solomon\n\nWarm regards,\n\n**SBIQ Matchmaking — MeerBusiness Amsterdam**\n",
+      "matches": [
+        {
+          "counterpart": {
+            "id": "p_026",
+            "name": "Jelle Roggeveen",
+            "company": "Leeps",
+            "tier": "bm",
+            "email": "jelle@leeps.nl"
+          },
+          "score": 0.7373,
+          "relationship": [
+            "potential_client",
+            "innovation_partner"
+          ],
+          "rationale": "Leeps is a potential client for Fur Family Flights; innovation / AI collaboration. Jelle Roggeveen (Business Development Manager) at Leeps — Design, delivery and monitoring of network infrastructure; IT/connectivity advis"
+        }
+      ]
+    },
+    {
+      "recipient": {
+        "id": "p_075",
+        "name": "Anja Vreeburg",
+        "company": "Flowently",
+        "tier": "bm",
+        "email": "anja@flowently.com"
+      },
+      "email_md": "**Onderwerp:** Uw SBIQ-matches voor MeerBusiness Amsterdam\n\nBeste Anja,\n\nOp basis van uw profiel en onze SBIQ-methodiek hebben wij voor Flowently 1 match(es) geselecteerd op commerciële relevantie — niet op sectorgelijkenis, maar op concrete kansen voor omzet, partnerschap en toegang.\n\n---\n\n## Match: **CHAUDHRY CONSTRUCTION COMPANY** — Muhammad Sufyan (CEO)\n_Relevantie: 0.73 · corporate_entry_point_\n\n**Waarom wij deze match kozen.** Wij zien CHAUDHRY CONSTRUCTION COMPANY als een toegangspoort tot kapitaal en corporate toegang. CHAUDHRY CONSTRUCTION COMPANY offers corporate/capital access; innovation / AI collaboration. Muhammad Sufyan (CEO) at CHAUDHRY CONSTRUCTION COMPANY.\n\n**De kans.** CHAUDHRY CONSTRUCTION COMPANY levert: Chaudhry Construction Company: general contractor — civil, structural, mechanical and electrical works and infrastructure development.\n\n**Hoe u zich positioneert.** Positioneer Flowently rond uw kernaanbod: Taaltraining, Nederlands, Business Engels, Frans, Duits en andere talen.\n\n**Vragen om te stellen.**\n- In welke kansen wil CHAUDHRY CONSTRUCTION COMPANY op dit moment investeren?\n- Wat wilt u zien voordat een gesprek serieus wordt?\n- Wie in uw netwerk zou ik nog meer moeten spreken?\n\n**Hoe u hén kunt helpen.** U kunt Muhammad Sufyan helpen met: Taaltraining, Nederlands, Business Engels, Frans, Duits en andere talen.\n\n**LinkedIn-introductie (kopieer & plak).**\n> Hoi Muhammad, wij werden door SBIQ / MeerBusiness Amsterdam aan elkaar gekoppeld vanwege een concrete commerciële kans tussen Flowently en CHAUDHRY CONSTRUCTION COMPANY. Ik spreek graag kort af om te zien waar we elkaar kunnen versterken. Groet, Anja\n\nMet vriendelijke groet,\n\n**SBIQ Matchmaking — MeerBusiness Amsterdam**\n",
+      "matches": [
+        {
+          "counterpart": {
+            "id": "p_048",
+            "name": "Muhammad Sufyan",
+            "company": "CHAUDHRY CONSTRUCTION COMPANY",
+            "tier": "non_member",
+            "email": "info.apt.study@gmail.com"
+          },
+          "score": 0.73,
+          "relationship": [
+            "corporate_entry_point",
+            "innovation_partner"
+          ],
+          "rationale": "CHAUDHRY CONSTRUCTION COMPANY offers corporate/capital access; innovation / AI collaboration. Muhammad Sufyan (CEO) at CHAUDHRY CONSTRUCTION COMPANY — Chaudhry Construction Company: general contractor — civil, structural, mechanica"
+        }
+      ]
+    },
+    {
+      "recipient": {
+        "id": "p_076",
+        "name": "Geoffrey Burgh",
+        "company": "VDB SalesConsultancy",
+        "tier": "bm",
+        "email": "geoffrey@vdbsalesconsultancy.nl"
+      },
+      "email_md": "**Onderwerp:** Uw SBIQ-matches voor MeerBusiness Amsterdam\n\nBeste Geoffrey,\n\nOp basis van uw profiel en onze SBIQ-methodiek hebben wij voor VDB SalesConsultancy 1 match(es) geselecteerd op commerciële relevantie — niet op sectorgelijkenis, maar op concrete kansen voor omzet, partnerschap en toegang.\n\n---\n\n## Match: **Leeps** — Jelle Roggeveen (Business Development Manager)\n_Relevantie: 0.71 · potential_client_\n\n**Waarom wij deze match kozen.** Wij zien Leeps als een potentiële klant voor uw aanbod. Leeps is a potential client for VDB SalesConsultancy; innovation / AI collaboration. Jelle Roggeveen (Business Development Manager) at Leeps.\n\n**De kans.** Leeps levert: Design, delivery and monitoring of network infrastructure; IT/connectivity advisory.\n\n**Hoe u zich positioneert.** Positioneer VDB SalesConsultancy rond uw kernaanbod: B2B leadgeneratie/afspraken planning MKB / MKB + via cold calling.\n\n**Vragen om te stellen.**\n- Waar ligt de focus van Leeps de komende 6–12 maanden?\n- Waar zitten nu knelpunten die een externe partner kan oplossen?\n- Wie bij u zou over zo'n beslissing gaan?\n\n**Hoe u hén kunt helpen.** U kunt Jelle Roggeveen helpen met: B2B leadgeneratie/afspraken planning MKB / MKB + via cold calling.\n\n**LinkedIn-introductie (kopieer & plak).**\n> Hoi Jelle, wij werden door SBIQ / MeerBusiness Amsterdam aan elkaar gekoppeld vanwege een concrete commerciële kans tussen VDB SalesConsultancy en Leeps. Ik spreek graag kort af om te zien waar we elkaar kunnen versterken. Groet, Geoffrey\n\nMet vriendelijke groet,\n\n**SBIQ Matchmaking — MeerBusiness Amsterdam**\n",
+      "matches": [
+        {
+          "counterpart": {
+            "id": "p_026",
+            "name": "Jelle Roggeveen",
+            "company": "Leeps",
+            "tier": "bm",
+            "email": "jelle@leeps.nl"
+          },
+          "score": 0.7135,
+          "relationship": [
+            "potential_client",
+            "innovation_partner"
+          ],
+          "rationale": "Leeps is a potential client for VDB SalesConsultancy; innovation / AI collaboration. Jelle Roggeveen (Business Development Manager) at Leeps — Design, delivery and monitoring of network infrastructure; IT/connectivity advis"
+        }
+      ]
+    },
+    {
+      "recipient": {
+        "id": "p_091",
+        "name": "Doeman Shahrizadeh",
+        "company": "Lumia Realty",
+        "tier": "bm",
+        "email": "d.shahrizadeh@outlook.com"
+      },
+      "email_md": "**Onderwerp:** Uw SBIQ-matches voor MeerBusiness Amsterdam\n\nBeste Doeman,\n\nOp basis van uw profiel en onze SBIQ-methodiek hebben wij voor Lumia Realty 1 match(es) geselecteerd op commerciële relevantie — niet op sectorgelijkenis, maar op concrete kansen voor omzet, partnerschap en toegang.\n\n---\n\n## Match: **Goedemensen projectprofessionals** — Arthur Beemster (DGA)\n_Relevantie: 0.72 · corporate_entry_point_\n\n**Waarom wij deze match kozen.** Wij zien Goedemensen projectprofessionals als een toegangspoort tot kapitaal en corporate toegang. Goedemensen projectprofessionals offers corporate/capital access; innovation / AI collaboration. Arthur Beemster (DGA) at Goedemensen projectprofessionals.\n\n**De kans.** Goedemensen projectprofessionals levert: Goedemensen projectprofessionals: interim professionals, consulting and custom AI tools for procurement, finance and contract management.\n\n**Hoe u zich positioneert.** Positioneer Lumia Realty rond uw kernaanbod: Begeleiding bij de aankoop van vastgoed in Dubai, inclusief investeringsadvies, projectselectie, hypotheekbegeleiding, bedrijfsvestiging en Golden Visa ondersteuning.\n\n**Vragen om te stellen.**\n- In welke kansen wil Goedemensen projectprofessionals op dit moment investeren?\n- Wat wilt u zien voordat een gesprek serieus wordt?\n- Wie in uw netwerk zou ik nog meer moeten spreken?\n\n**Hoe u hén kunt helpen.** U kunt Arthur Beemster helpen met: Begeleiding bij de aankoop van vastgoed in Dubai, inclusief investeringsadvies, projectselectie, hypotheekbegeleiding, bedrijfsvestiging en Golden Visa ondersteuning.\n\n**LinkedIn-introductie (kopieer & plak).**\n> Hoi Arthur, wij werden door SBIQ / MeerBusiness Amsterdam aan elkaar gekoppeld vanwege een concrete commerciële kans tussen Lumia Realty en Goedemensen projectprofessionals. Ik spreek graag kort af om te zien waar we elkaar kunnen versterken. Groet, Doeman\n\nMet vriendelijke groet,\n\n**SBIQ Matchmaking — MeerBusiness Amsterdam**\n",
+      "matches": [
+        {
+          "counterpart": {
+            "id": "p_066",
+            "name": "Arthur Beemster",
+            "company": "Goedemensen projectprofessionals",
+            "tier": "non_member",
+            "email": "a.beemster@goedemensen.nu"
+          },
+          "score": 0.724,
+          "relationship": [
+            "corporate_entry_point",
+            "innovation_partner"
+          ],
+          "rationale": "Goedemensen projectprofessionals offers corporate/capital access; innovation / AI collaboration. Arthur Beemster (DGA) at Goedemensen projectprofessionals — Goedemensen projectprofessionals: interim professionals, consulting and custom A"
+        }
+      ]
+    },
+    {
+      "recipient": {
+        "id": "p_020",
+        "name": "Giwanni Schaap",
+        "company": "Invisible Airco",
+        "tier": "bm",
+        "email": "giwanni@invisibleairco.com"
+      },
+      "email_md": "**Onderwerp:** Uw SBIQ-matches voor MeerBusiness Amsterdam\n\nBeste Giwanni,\n\nOp basis van uw profiel en onze SBIQ-methodiek hebben wij voor Invisible Airco 1 match(es) geselecteerd op commerciële relevantie — niet op sectorgelijkenis, maar op concrete kansen voor omzet, partnerschap en toegang.\n\n---\n\n## Match: **CHAUDHRY CONSTRUCTION COMPANY** — Muhammad Sufyan (CEO)\n_Relevantie: 0.72 · corporate_entry_point_\n\n**Waarom wij deze match kozen.** Wij zien CHAUDHRY CONSTRUCTION COMPANY als een toegangspoort tot kapitaal en corporate toegang. CHAUDHRY CONSTRUCTION COMPANY offers corporate/capital access; innovation / AI collaboration. Muhammad Sufyan (CEO) at CHAUDHRY CONSTRUCTION COMPANY.\n\n**De kans.** CHAUDHRY CONSTRUCTION COMPANY levert: Chaudhry Construction Company: general contractor — civil, structural, mechanical and electrical works and infrastructure development.\n\n**Hoe u zich positioneert.** Positioneer Invisible Airco rond uw kernaanbod: Airco zonder buitenunit.\n\n**Vragen om te stellen.**\n- In welke kansen wil CHAUDHRY CONSTRUCTION COMPANY op dit moment investeren?\n- Wat wilt u zien voordat een gesprek serieus wordt?\n- Wie in uw netwerk zou ik nog meer moeten spreken?\n\n**Hoe u hén kunt helpen.** U kunt Muhammad Sufyan helpen met: Airco zonder buitenunit.\n\n**LinkedIn-introductie (kopieer & plak).**\n> Hoi Muhammad, wij werden door SBIQ / MeerBusiness Amsterdam aan elkaar gekoppeld vanwege een concrete commerciële kans tussen Invisible Airco en CHAUDHRY CONSTRUCTION COMPANY. Ik spreek graag kort af om te zien waar we elkaar kunnen versterken. Groet, Giwanni\n\nMet vriendelijke groet,\n\n**SBIQ Matchmaking — MeerBusiness Amsterdam**\n",
+      "matches": [
+        {
+          "counterpart": {
+            "id": "p_048",
+            "name": "Muhammad Sufyan",
+            "company": "CHAUDHRY CONSTRUCTION COMPANY",
+            "tier": "non_member",
+            "email": "info.apt.study@gmail.com"
+          },
+          "score": 0.724,
+          "relationship": [
+            "corporate_entry_point",
+            "innovation_partner"
+          ],
+          "rationale": "CHAUDHRY CONSTRUCTION COMPANY offers corporate/capital access; innovation / AI collaboration. Muhammad Sufyan (CEO) at CHAUDHRY CONSTRUCTION COMPANY — Chaudhry Construction Company: general contractor — civil, structural, mechanica"
+        }
+      ]
+    },
+    {
+      "recipient": {
+        "id": "p_026",
+        "name": "Jelle Roggeveen",
+        "company": "Leeps",
+        "tier": "bm",
+        "email": "jelle@leeps.nl"
+      },
+      "email_md": "**Subject:** Your SBIQ matches for MeerBusiness Amsterdam\n\nDear Jelle,\n\nBased on your profile and the SBIQ methodology, we selected 1 match(es) for Leeps on commercial relevance — not industry similarity, but concrete opportunities for revenue, partnership and access.\n\n---\n\n## Match: **Specsavers** — Mahdi Alimirzaei (Sales manager)\n_Relevance: 0.72 · potential_supplier_\n\n**Why we selected this match.** We see Specsavers as a supplier who can solve a real need for you. Specsavers can supply what Leeps needs; innovation / AI collaboration. Mahdi Alimirzaei (Sales manager) at Specsavers.\n\n**The opportunity.** Specsavers offers: Specsavers: optical retail chain — glasses, contact lenses and eye/hearing care (NL store operations).\n\n**How to position yourself.** Position Leeps around your core offering: Design, delivery and monitoring of network infrastructure; IT/connectivity advisory.\n\n**Questions to ask.**\n- What does a typical engagement with Specsavers look like, and what results do clients see?\n- Where do you add the most value for a company like ours?\n- What would a first pilot or project together look like?\n\n**How you can help them.** You can help Mahdi Alimirzaei with: Design, delivery and monitoring of network infrastructure; IT/connectivity advisory.\n\n**LinkedIn introduction (copy-paste).**\n> Hi Mahdi, SBIQ / MeerBusiness Amsterdam matched us around a concrete commercial opportunity between Leeps and Specsavers. I'd love a short chat to explore where we can add value to each other. Best, Jelle\n\nWarm regards,\n\n**SBIQ Matchmaking — MeerBusiness Amsterdam**\n",
+      "matches": [
+        {
+          "counterpart": {
+            "id": "p_101",
+            "name": "Mahdi Alimirzaei",
+            "company": "Specsavers",
+            "tier": "non_member",
+            "email": "aryanmirzaei492@gmail.com"
+          },
+          "score": 0.7245,
+          "relationship": [
+            "potential_supplier",
+            "innovation_partner"
+          ],
+          "rationale": "Specsavers can supply what Leeps needs; innovation / AI collaboration. Mahdi Alimirzaei (Sales manager) at Specsavers — Specsavers: optical retail chain — glasses, contact lenses and eye/hearing care"
+        }
+      ]
+    },
+    {
+      "recipient": {
+        "id": "p_043",
+        "name": "Michel Melissen",
+        "company": "M3 interieur",
+        "tier": "bm",
+        "email": "michel@m3interieur.nl"
+      },
+      "email_md": "**Subject:** Your SBIQ matches for MeerBusiness Amsterdam\n\nDear Michel,\n\nBased on your profile and the SBIQ methodology, we selected 1 match(es) for M3 interieur on commercial relevance — not industry similarity, but concrete opportunities for revenue, partnership and access.\n\n---\n\n## Match: **Goedemensen projectprofessionals** — Arthur Beemster (DGA)\n_Relevance: 0.72 · corporate_entry_point_\n\n**Why we selected this match.** We see Goedemensen projectprofessionals as an entry point to capital and corporate access. Goedemensen projectprofessionals offers corporate/capital access; innovation / AI collaboration. Arthur Beemster (DGA) at Goedemensen projectprofessionals.\n\n**The opportunity.** Goedemensen projectprofessionals offers: Goedemensen projectprofessionals: interim professionals, consulting and custom AI tools for procurement, finance and contract management.\n\n**How to position yourself.** Position M3 interieur around your core offering: Turnkey custom office/project interiors: design, engineering, realisation, sustainable fit-out.\n\n**Questions to ask.**\n- What kind of opportunities is Goedemensen projectprofessionals looking to back right now?\n- What do you need to see before a conversation becomes serious?\n- Who else in your network should I be speaking with?\n\n**How you can help them.** You can help Arthur Beemster with: Turnkey custom office/project interiors: design, engineering, realisation, sustainable fit-out.\n\n**LinkedIn introduction (copy-paste).**\n> Hi Arthur, SBIQ / MeerBusiness Amsterdam matched us around a concrete commercial opportunity between M3 interieur and Goedemensen projectprofessionals. I'd love a short chat to explore where we can add value to each other. Best, Michel\n\nWarm regards,\n\n**SBIQ Matchmaking — MeerBusiness Amsterdam**\n",
+      "matches": [
+        {
+          "counterpart": {
+            "id": "p_066",
+            "name": "Arthur Beemster",
+            "company": "Goedemensen projectprofessionals",
+            "tier": "non_member",
+            "email": "a.beemster@goedemensen.nu"
+          },
+          "score": 0.724,
+          "relationship": [
+            "corporate_entry_point",
+            "innovation_partner"
+          ],
+          "rationale": "Goedemensen projectprofessionals offers corporate/capital access; innovation / AI collaboration. Arthur Beemster (DGA) at Goedemensen projectprofessionals — Goedemensen projectprofessionals: interim professionals, consulting and custom A"
+        }
+      ]
+    },
+    {
+      "recipient": {
+        "id": "p_095",
+        "name": "Ozge Turfanda",
+        "company": "Topstad uitzend-en detachering BV",
+        "tier": "bm",
+        "email": "info@topstadbv.nl"
+      },
+      "email_md": "**Subject:** Your SBIQ matches for MeerBusiness Amsterdam\n\nDear Ozge,\n\nBased on your profile and the SBIQ methodology, we selected 1 match(es) for Topstad uitzend-en detachering BV on commercial relevance — not industry similarity, but concrete opportunities for revenue, partnership and access.\n\n---\n\n## Match: **NonVerbaaltje** — Isabelle van de Nadort (Lichaamstaal deskundige)\n_Relevance: 0.72 · potential_client_\n\n**Why we selected this match.** We see NonVerbaaltje as a potential client for your offering. NonVerbaaltje is a potential client for Topstad uitzend-en detachering BV; innovation / AI collaboration. Isabelle van de Nadort (Lichaamstaal deskundige) at NonVerbaaltje.\n\n**The opportunity.** NonVerbaaltje offers: Lichaamstaal.\n\n**How to position yourself.** Position Topstad uitzend-en detachering BV around your core offering: Temporary staffing, secondment and recruitment across many sectors.\n\n**Questions to ask.**\n- What is NonVerbaaltje prioritising over the next 6–12 months?\n- Where are your current bottlenecks that an outside partner could solve?\n- Who on your side would own a decision like this?\n\n**How you can help them.** You can help Isabelle van de Nadort with: Temporary staffing, secondment and recruitment across many sectors.\n\n**LinkedIn introduction (copy-paste).**\n> Hi Isabelle, SBIQ / MeerBusiness Amsterdam matched us around a concrete commercial opportunity between Topstad uitzend-en detachering BV and NonVerbaaltje. I'd love a short chat to explore where we can add value to each other. Best, Ozge\n\nWarm regards,\n\n**SBIQ Matchmaking — MeerBusiness Amsterdam**\n",
+      "matches": [
+        {
+          "counterpart": {
+            "id": "p_090",
+            "name": "Isabelle van de Nadort",
+            "company": "NonVerbaaltje",
+            "tier": "bm",
+            "email": "nonverbaaltje@gmail.com"
+          },
+          "score": 0.7243,
+          "relationship": [
+            "potential_client",
+            "innovation_partner"
+          ],
+          "rationale": "NonVerbaaltje is a potential client for Topstad uitzend-en detachering BV; innovation / AI collaboration. Isabelle van de Nadort (Lichaamstaal deskundige) at NonVerbaaltje — Lichaamstaal"
+        }
+      ]
+    },
+    {
+      "recipient": {
+        "id": "p_029",
+        "name": "Jitske Koeleman",
+        "company": "Helder Kijken",
+        "tier": "bm",
+        "email": "jitske@helderkijken.com"
+      },
+      "email_md": "**Subject:** Your SBIQ matches for MeerBusiness Amsterdam\n\nDear Jitske,\n\nBased on your profile and the SBIQ methodology, we selected 1 match(es) for Helder Kijken on commercial relevance — not industry similarity, but concrete opportunities for revenue, partnership and access.\n\n---\n\n## Match: **Done deal** — Odette Grijpma (Founder)\n_Relevance: 0.72 · potential_supplier_\n\n**Why we selected this match.** We see Done deal as a supplier who can solve a real need for you. Done deal can supply what Helder Kijken needs; innovation / AI collaboration. Odette Grijpma (Founder) at Done deal.\n\n**The opportunity.** Done deal offers: A Done Deal: events and communication/support agency — event organization and outsourced PA/coordination.\n\n**How to position yourself.** Position Helder Kijken around your core offering: Non-verbal communication training, analysis and keynotes for professionals and teams.\n\n**Questions to ask.**\n- What does a typical engagement with Done deal look like, and what results do clients see?\n- Where do you add the most value for a company like ours?\n- What would a first pilot or project together look like?\n\n**How you can help them.** You can help Odette Grijpma with: Non-verbal communication training, analysis and keynotes for professionals and teams.\n\n**LinkedIn introduction (copy-paste).**\n> Hi Odette, SBIQ / MeerBusiness Amsterdam matched us around a concrete commercial opportunity between Helder Kijken and Done deal. I'd love a short chat to explore where we can add value to each other. Best, Jitske\n\nWarm regards,\n\n**SBIQ Matchmaking — MeerBusiness Amsterdam**\n",
+      "matches": [
+        {
+          "counterpart": {
+            "id": "p_106",
+            "name": "Odette Grijpma",
+            "company": "Done deal",
+            "tier": "prospect",
+            "email": "info@done-deal.nl"
+          },
+          "score": 0.7232,
+          "relationship": [
+            "potential_supplier",
+            "innovation_partner"
+          ],
+          "rationale": "Done deal can supply what Helder Kijken needs; innovation / AI collaboration. Odette Grijpma (Founder) at Done deal — A Done Deal: events and communication/support agency — event organization and ou"
+        }
+      ]
+    },
+    {
+      "recipient": {
+        "id": "p_090",
+        "name": "Isabelle van de Nadort",
+        "company": "NonVerbaaltje",
+        "tier": "bm",
+        "email": "nonverbaaltje@gmail.com"
+      },
+      "email_md": "**Subject:** Your SBIQ matches for MeerBusiness Amsterdam\n\nDear Isabelle,\n\nBased on your profile and the SBIQ methodology, we selected 1 match(es) for NonVerbaaltje on commercial relevance — not industry similarity, but concrete opportunities for revenue, partnership and access.\n\n---\n\n## Match: **Mon Bladi** — Steffi Hamacher (Managing Director)\n_Relevance: 0.72 · corporate_entry_point_\n\n**Why we selected this match.** We see Mon Bladi as an entry point to capital and corporate access. Mon Bladi offers corporate/capital access; innovation / AI collaboration. Steffi Hamacher (Managing Director) at Mon Bladi.\n\n**The opportunity.** Mon Bladi offers: Mon Bladi: food producer of authentic Moroccan products (baghrir, msemen mixes); owner also active in real estate and investment.\n\n**How to position yourself.** Position NonVerbaaltje around your core offering: Lichaamstaal.\n\n**Questions to ask.**\n- What kind of opportunities is Mon Bladi looking to back right now?\n- What do you need to see before a conversation becomes serious?\n- Who else in your network should I be speaking with?\n\n**How you can help them.** You can help Steffi Hamacher with: Lichaamstaal.\n\n**LinkedIn introduction (copy-paste).**\n> Hi Steffi, SBIQ / MeerBusiness Amsterdam matched us around a concrete commercial opportunity between NonVerbaaltje and Mon Bladi. I'd love a short chat to explore where we can add value to each other. Best, Isabelle\n\nWarm regards,\n\n**SBIQ Matchmaking — MeerBusiness Amsterdam**\n",
+      "matches": [
+        {
+          "counterpart": {
+            "id": "p_079",
+            "name": "Steffi Hamacher",
+            "company": "Mon Bladi",
+            "tier": "non_member",
+            "email": "info@monbladi.nl"
+          },
+          "score": 0.722,
+          "relationship": [
+            "corporate_entry_point",
+            "innovation_partner"
+          ],
+          "rationale": "Mon Bladi offers corporate/capital access; innovation / AI collaboration. Steffi Hamacher (Managing Director) at Mon Bladi — Mon Bladi: food producer of authentic Moroccan products (baghrir, msemen mixes);"
+        }
+      ]
+    },
+    {
+      "recipient": {
+        "id": "p_004",
+        "name": "Alfons Boltjes",
+        "company": "Bolwork Investments BV",
+        "tier": "bm",
+        "email": "alfons@bolwork.com"
+      },
+      "email_md": "**Subject:** Your SBIQ matches for MeerBusiness Amsterdam\n\nDear Alfons,\n\nBased on your profile and the SBIQ methodology, we selected 1 match(es) for Bolwork Investments BV on commercial relevance — not industry similarity, but concrete opportunities for revenue, partnership and access.\n\n---\n\n## Match: **UXClimb** — Ainat Sagie (Founder & Fractional UX Director)\n_Relevance: 0.74 · potential_supplier_\n\n**Why we selected this match.** We see UXClimb as a supplier who can solve a real need for you. UXClimb can supply what Bolwork Investments BV needs; innovation / AI collaboration. Ainat Sagie (Founder & Fractional UX Director) at UXClimb.\n\n**The opportunity.** UXClimb offers: UXClimb: fractional UX leadership for startups and scale-ups — UX strategy, audits, design-team mentorship.\n\n**How to position yourself.** Position Bolwork Investments BV around your core offering: Venture capital / private-equity investment, esp. Series A and life sciences.\n\n**Questions to ask.**\n- What does a typical engagement with UXClimb look like, and what results do clients see?\n- Where do you add the most value for a company like ours?\n- What would a first pilot or project together look like?\n\n**How you can help them.** You can help Ainat Sagie with: Venture capital / private-equity investment, esp. Series A and life sciences.\n\n**LinkedIn introduction (copy-paste).**\n> Hi Ainat, SBIQ / MeerBusiness Amsterdam matched us around a concrete commercial opportunity between Bolwork Investments BV and UXClimb. I'd love a short chat to explore where we can add value to each other. Best, Alfons\n\nWarm regards,\n\n**SBIQ Matchmaking — MeerBusiness Amsterdam**\n",
+      "matches": [
+        {
+          "counterpart": {
+            "id": "p_003",
+            "name": "Ainat Sagie",
+            "company": "UXClimb",
+            "tier": "non_member",
+            "email": "ainat@uxclimb.com"
+          },
+          "score": 0.7392,
+          "relationship": [
+            "potential_supplier",
+            "innovation_partner"
+          ],
+          "rationale": "UXClimb can supply what Bolwork Investments BV needs; innovation / AI collaboration. Ainat Sagie (Founder & Fractional UX Director) at UXClimb — UXClimb: fractional UX leadership for startups and scale-ups — UX strategy, audi"
+        }
+      ]
+    },
+    {
+      "recipient": {
+        "id": "p_008",
+        "name": "Coen Splinter",
+        "company": "Aandachtig Leiderschap",
+        "tier": "bm",
+        "email": "coen@aandachtigleiderschap.nl"
+      },
+      "email_md": "**Onderwerp:** Uw SBIQ-matches voor MeerBusiness Amsterdam\n\nBeste Coen,\n\nOp basis van uw profiel en onze SBIQ-methodiek hebben wij voor Aandachtig Leiderschap 1 match(es) geselecteerd op commerciële relevantie — niet op sectorgelijkenis, maar op concrete kansen voor omzet, partnerschap en toegang.\n\n---\n\n## Match: **UXClimb** — Ainat Sagie (Founder & Fractional UX Director)\n_Relevantie: 0.70 · potential_client_\n\n**Waarom wij deze match kozen.** Wij zien UXClimb als een potentiële klant voor uw aanbod. UXClimb is a potential client for Aandachtig Leiderschap; innovation / AI collaboration. Ainat Sagie (Founder & Fractional UX Director) at UXClimb.\n\n**De kans.** UXClimb levert: UXClimb: fractional UX leadership for startups and scale-ups — UX strategy, audits, design-team mentorship.\n\n**Hoe u zich positioneert.** Positioneer Aandachtig Leiderschap rond uw kernaanbod: Coaching persoonlijk leiderschap.\n\n**Vragen om te stellen.**\n- Waar ligt de focus van UXClimb de komende 6–12 maanden?\n- Waar zitten nu knelpunten die een externe partner kan oplossen?\n- Wie bij u zou over zo'n beslissing gaan?\n\n**Hoe u hén kunt helpen.** U kunt Ainat Sagie helpen met: Coaching persoonlijk leiderschap.\n\n**LinkedIn-introductie (kopieer & plak).**\n> Hoi Ainat, wij werden door SBIQ / MeerBusiness Amsterdam aan elkaar gekoppeld vanwege een concrete commerciële kans tussen Aandachtig Leiderschap en UXClimb. Ik spreek graag kort af om te zien waar we elkaar kunnen versterken. Groet, Coen\n\nMet vriendelijke groet,\n\n**SBIQ Matchmaking — MeerBusiness Amsterdam**\n",
+      "matches": [
+        {
+          "counterpart": {
+            "id": "p_003",
+            "name": "Ainat Sagie",
+            "company": "UXClimb",
+            "tier": "non_member",
+            "email": "ainat@uxclimb.com"
+          },
+          "score": 0.703,
+          "relationship": [
+            "potential_client",
+            "innovation_partner"
+          ],
+          "rationale": "UXClimb is a potential client for Aandachtig Leiderschap; innovation / AI collaboration. Ainat Sagie (Founder & Fractional UX Director) at UXClimb — UXClimb: fractional UX leadership for startups and scale-ups — UX strategy, audi"
+        }
+      ]
+    },
+    {
+      "recipient": {
+        "id": "p_021",
+        "name": "Harald de Jong",
+        "company": "Kortelijn",
+        "tier": "bm",
+        "email": "harald@kortelijn.com"
+      },
+      "email_md": "**Subject:** Your SBIQ matches for MeerBusiness Amsterdam\n\nDear Harald,\n\nBased on your profile and the SBIQ methodology, we selected 1 match(es) for Kortelijn on commercial relevance — not industry similarity, but concrete opportunities for revenue, partnership and access.\n\n---\n\n## Match: **Mon Bladi** — Steffi Hamacher (Managing Director)\n_Relevance: 0.72 · corporate_entry_point_\n\n**Why we selected this match.** We see Mon Bladi as an entry point to capital and corporate access. Mon Bladi offers corporate/capital access; innovation / AI collaboration. Steffi Hamacher (Managing Director) at Mon Bladi.\n\n**The opportunity.** Mon Bladi offers: Mon Bladi: food producer of authentic Moroccan products (baghrir, msemen mixes); owner also active in real estate and investment.\n\n**How to position yourself.** Position Kortelijn around your core offering: Custom e-learning and digital training for companies (onboarding, compliance, product training).\n\n**Questions to ask.**\n- What kind of opportunities is Mon Bladi looking to back right now?\n- What do you need to see before a conversation becomes serious?\n- Who else in your network should I be speaking with?\n\n**How you can help them.** You can help Steffi Hamacher with: Custom e-learning and digital training for companies (onboarding, compliance, product training).\n\n**LinkedIn introduction (copy-paste).**\n> Hi Steffi, SBIQ / MeerBusiness Amsterdam matched us around a concrete commercial opportunity between Kortelijn and Mon Bladi. I'd love a short chat to explore where we can add value to each other. Best, Harald\n\nWarm regards,\n\n**SBIQ Matchmaking — MeerBusiness Amsterdam**\n",
+      "matches": [
+        {
+          "counterpart": {
+            "id": "p_079",
+            "name": "Steffi Hamacher",
+            "company": "Mon Bladi",
+            "tier": "non_member",
+            "email": "info@monbladi.nl"
+          },
+          "score": 0.722,
+          "relationship": [
+            "corporate_entry_point",
+            "innovation_partner"
+          ],
+          "rationale": "Mon Bladi offers corporate/capital access; innovation / AI collaboration. Steffi Hamacher (Managing Director) at Mon Bladi — Mon Bladi: food producer of authentic Moroccan products (baghrir, msemen mixes);"
+        }
+      ]
+    },
+    {
+      "recipient": {
+        "id": "p_107",
+        "name": "Loleila Owers",
+        "company": "FineryTreasures",
+        "tier": "bm",
+        "email": "info@finerytreasures.com"
+      },
+      "email_md": "**Onderwerp:** Uw SBIQ-matches voor MeerBusiness Amsterdam\n\nBeste Loleila,\n\nOp basis van uw profiel en onze SBIQ-methodiek hebben wij voor FineryTreasures 1 match(es) geselecteerd op commerciële relevantie — niet op sectorgelijkenis, maar op concrete kansen voor omzet, partnerschap en toegang.\n\n---\n\n## Match: **Mon Bladi** — Steffi Hamacher (Managing Director)\n_Relevantie: 0.72 · corporate_entry_point_\n\n**Waarom wij deze match kozen.** Wij zien Mon Bladi als een toegangspoort tot kapitaal en corporate toegang. Mon Bladi offers corporate/capital access; innovation / AI collaboration. Steffi Hamacher (Managing Director) at Mon Bladi.\n\n**De kans.** Mon Bladi levert: Mon Bladi: food producer of authentic Moroccan products (baghrir, msemen mixes); owner also active in real estate and investment.\n\n**Hoe u zich positioneert.** Positioneer FineryTreasures rond uw kernaanbod: Business development, sales.\n\n**Vragen om te stellen.**\n- In welke kansen wil Mon Bladi op dit moment investeren?\n- Wat wilt u zien voordat een gesprek serieus wordt?\n- Wie in uw netwerk zou ik nog meer moeten spreken?\n\n**Hoe u hén kunt helpen.** U kunt Steffi Hamacher helpen met: Business development, sales.\n\n**LinkedIn-introductie (kopieer & plak).**\n> Hoi Steffi, wij werden door SBIQ / MeerBusiness Amsterdam aan elkaar gekoppeld vanwege een concrete commerciële kans tussen FineryTreasures en Mon Bladi. Ik spreek graag kort af om te zien waar we elkaar kunnen versterken. Groet, Loleila\n\nMet vriendelijke groet,\n\n**SBIQ Matchmaking — MeerBusiness Amsterdam**\n",
+      "matches": [
+        {
+          "counterpart": {
+            "id": "p_079",
+            "name": "Steffi Hamacher",
+            "company": "Mon Bladi",
+            "tier": "non_member",
+            "email": "info@monbladi.nl"
+          },
+          "score": 0.722,
+          "relationship": [
+            "corporate_entry_point",
+            "innovation_partner"
+          ],
+          "rationale": "Mon Bladi offers corporate/capital access; innovation / AI collaboration. Steffi Hamacher (Managing Director) at Mon Bladi — Mon Bladi: food producer of authentic Moroccan products (baghrir, msemen mixes);"
+        }
+      ]
+    },
+    {
+      "recipient": {
+        "id": "p_013",
+        "name": "Edward de Jong",
+        "company": "De Jong Business Consultancy BV",
+        "tier": "bm",
+        "email": "e.dejong@jbcbv.eu"
+      },
+      "email_md": "**Subject:** Your SBIQ matches for MeerBusiness Amsterdam\n\nDear Edward,\n\nBased on your profile and the SBIQ methodology, we selected 1 match(es) for De Jong Business Consultancy BV on commercial relevance — not industry similarity, but concrete opportunities for revenue, partnership and access.\n\n---\n\n## Match: **Bridged** — Frederik Berg (Founder)\n_Relevance: 0.71 · corporate_entry_point_\n\n**Why we selected this match.** We see Bridged as an entry point to capital and corporate access. Bridged offers corporate/capital access; innovation / AI collaboration. Frederik Berg (Founder) at Bridged.\n\n**The opportunity.** Bridged offers: Bridged: NFC-enabled digital business cards (ESG-friendly, CRM-integrated) for contactless networking; founder also invests.\n\n**How to position yourself.** Position De Jong Business Consultancy BV around your core offering: Project management, risk and planning advice for civil-engineering, infra and construction projects.\n\n**Questions to ask.**\n- What kind of opportunities is Bridged looking to back right now?\n- What do you need to see before a conversation becomes serious?\n- Who else in your network should I be speaking with?\n\n**How you can help them.** You can help Frederik Berg with: Project management, risk and planning advice for civil-engineering, infra and construction projects.\n\n**LinkedIn introduction (copy-paste).**\n> Hi Frederik, SBIQ / MeerBusiness Amsterdam matched us around a concrete commercial opportunity between De Jong Business Consultancy BV and Bridged. I'd love a short chat to explore where we can add value to each other. Best, Edward\n\nWarm regards,\n\n**SBIQ Matchmaking — MeerBusiness Amsterdam**\n",
+      "matches": [
+        {
+          "counterpart": {
+            "id": "p_104",
+            "name": "Frederik Berg",
+            "company": "Bridged",
+            "tier": "non_member",
+            "email": "info@bridgedesign.nl"
+          },
+          "score": 0.714,
+          "relationship": [
+            "corporate_entry_point",
+            "innovation_partner"
+          ],
+          "rationale": "Bridged offers corporate/capital access; innovation / AI collaboration. Frederik Berg (Founder) at Bridged — Bridged: NFC-enabled digital business cards (ESG-friendly, CRM-integrated) for c"
+        }
+      ]
+    },
+    {
+      "recipient": {
+        "id": "p_023",
+        "name": "Huub Rijswijck",
+        "company": "Huub van Rijswijck Beheer NV",
+        "tier": "bm",
+        "email": "h.vanrijswijck@ebicus.com"
+      },
+      "email_md": "**Subject:** Your SBIQ matches for MeerBusiness Amsterdam\n\nDear Huub,\n\nBased on your profile and the SBIQ methodology, we selected 1 match(es) for Huub van Rijswijck Beheer NV on commercial relevance — not industry similarity, but concrete opportunities for revenue, partnership and access.\n\n---\n\n## Match: **Specsavers** — Mahdi Alimirzaei (Sales manager)\n_Relevance: 0.73 · potential_client_\n\n**Why we selected this match.** We see Specsavers as a potential client for your offering. Specsavers is a potential client for Huub van Rijswijck Beheer NV; innovation / AI collaboration. Mahdi Alimirzaei (Sales manager) at Specsavers.\n\n**The opportunity.** Specsavers offers: Specsavers: optical retail chain — glasses, contact lenses and eye/hearing care (NL store operations).\n\n**How to position yourself.** Position Huub van Rijswijck Beheer NV around your core offering: Salesforce/CRM managed services: implementation, optimisation and innovation.\n\n**Questions to ask.**\n- What is Specsavers prioritising over the next 6–12 months?\n- Where are your current bottlenecks that an outside partner could solve?\n- Who on your side would own a decision like this?\n\n**How you can help them.** You can help Mahdi Alimirzaei with: Salesforce/CRM managed services: implementation, optimisation and innovation.\n\n**LinkedIn introduction (copy-paste).**\n> Hi Mahdi, SBIQ / MeerBusiness Amsterdam matched us around a concrete commercial opportunity between Huub van Rijswijck Beheer NV and Specsavers. I'd love a short chat to explore where we can add value to each other. Best, Huub\n\nWarm regards,\n\n**SBIQ Matchmaking — MeerBusiness Amsterdam**\n",
+      "matches": [
+        {
+          "counterpart": {
+            "id": "p_101",
+            "name": "Mahdi Alimirzaei",
+            "company": "Specsavers",
+            "tier": "non_member",
+            "email": "aryanmirzaei492@gmail.com"
+          },
+          "score": 0.728,
+          "relationship": [
+            "potential_client",
+            "innovation_partner"
+          ],
+          "rationale": "Specsavers is a potential client for Huub van Rijswijck Beheer NV; innovation / AI collaboration. Mahdi Alimirzaei (Sales manager) at Specsavers — Specsavers: optical retail chain — glasses, contact lenses and eye/hearing care"
+        }
+      ]
+    },
+    {
+      "recipient": {
+        "id": "p_012",
+        "name": "Derek Lampe",
+        "company": "ABN AMRO",
+        "tier": "bm",
+        "email": "derek.lampe@nl.abnamro.com"
+      },
+      "email_md": "**Subject:** Your SBIQ matches for MeerBusiness Amsterdam\n\nDear Derek,\n\nBased on your profile and the SBIQ methodology, we selected 1 match(es) for ABN AMRO on commercial relevance — not industry similarity, but concrete opportunities for revenue, partnership and access.\n\n---\n\n## Match: **RTL** — Jessica Bhawani (Account manager)\n_Relevance: 0.72 · strategic_partner_\n\n**Why we selected this match.** We see RTL as a complementary strategic partner. complementary strategic partnership; innovation / AI collaboration. Jessica Bhawani (Account manager) at RTL.\n\n**The opportunity.** RTL offers: RTL (AdAlliance): premium cross-media advertising inventory — TV, BVOD/CTV, online video, audio and print — with international reach.\n\n**How to position yourself.** Position ABN AMRO around your core offering: Business banking: financing, payments and corporate banking services for companies.\n\n**Questions to ask.**\n- Where do our offerings overlap, and where are they complementary?\n- Which clients could we serve better together than alone?\n- What would a simple first joint initiative look like?\n\n**How you can help them.** You can help Jessica Bhawani with: Business banking: financing, payments and corporate banking services for companies.\n\n**LinkedIn introduction (copy-paste).**\n> Hi Jessica, SBIQ / MeerBusiness Amsterdam matched us around a concrete commercial opportunity between ABN AMRO and RTL. I'd love a short chat to explore where we can add value to each other. Best, Derek\n\nWarm regards,\n\n**SBIQ Matchmaking — MeerBusiness Amsterdam**\n",
+      "matches": [
+        {
+          "counterpart": {
+            "id": "p_098",
+            "name": "Jessica Bhawani",
+            "company": "RTL",
+            "tier": "non_member",
+            "email": "deborahub@hotmail.nl"
+          },
+          "score": 0.717,
+          "relationship": [
+            "strategic_partner",
+            "innovation_partner"
+          ],
+          "rationale": "complementary strategic partnership; innovation / AI collaboration. Jessica Bhawani (Account manager) at RTL — RTL (AdAlliance): premium cross-media advertising inventory — TV, BVOD/CTV, onli"
+        }
+      ]
+    },
+    {
+      "recipient": {
+        "id": "p_065",
+        "name": "Yasmin van Cassel",
+        "company": "Goed en Welzijn coaching",
+        "tier": "bm",
+        "email": "yasminvancassel@gmail.com"
+      },
+      "email_md": "**Subject:** Your SBIQ matches for MeerBusiness Amsterdam\n\nDear Yasmin,\n\nBased on your profile and the SBIQ methodology, we selected 1 match(es) for Goed en Welzijn coaching on commercial relevance — not industry similarity, but concrete opportunities for revenue, partnership and access.\n\n---\n\n## Match: **Gallery on the Edge** — Reina van Zwoll (Gallery On the Edge)\n_Relevance: 0.72 · potential_client_\n\n**Why we selected this match.** We see Gallery on the Edge as a potential client for your offering. Gallery on the Edge is a potential client for Goed en Welzijn coaching; innovation / AI collaboration. Reina van Zwoll (Gallery On the Edge) at Gallery on the Edge.\n\n**The opportunity.** Gallery on the Edge offers: Gallery on the Edge: Amsterdam art gallery presenting magic-realist and mythological oil paintings.\n\n**How to position yourself.** Position Goed en Welzijn coaching around your core offering: Empowerment & wellbeing training and programs for organisations.\n\n**Questions to ask.**\n- What is Gallery on the Edge prioritising over the next 6–12 months?\n- Where are your current bottlenecks that an outside partner could solve?\n- Who on your side would own a decision like this?\n\n**How you can help them.** You can help Reina van Zwoll with: Empowerment & wellbeing training and programs for organisations.\n\n**LinkedIn introduction (copy-paste).**\n> Hi Reina, SBIQ / MeerBusiness Amsterdam matched us around a concrete commercial opportunity between Goed en Welzijn coaching and Gallery on the Edge. I'd love a short chat to explore where we can add value to each other. Best, Yasmin\n\nWarm regards,\n\n**SBIQ Matchmaking — MeerBusiness Amsterdam**\n",
+      "matches": [
+        {
+          "counterpart": {
+            "id": "p_057",
+            "name": "Reina van Zwoll",
+            "company": "Gallery on the Edge",
+            "tier": "non_member",
+            "email": "reinavanzwoll@hotmail.com"
+          },
+          "score": 0.719,
+          "relationship": [
+            "potential_client",
+            "innovation_partner"
+          ],
+          "rationale": "Gallery on the Edge is a potential client for Goed en Welzijn coaching; innovation / AI collaboration. Reina van Zwoll (Gallery On the Edge) at Gallery on the Edge — Gallery on the Edge: Amsterdam art gallery presenting magic-realist and mytholog"
+        }
+      ]
+    },
+    {
+      "recipient": {
+        "id": "p_074",
+        "name": "Kody Tehr",
+        "company": "ICCXX",
+        "tier": "bm",
+        "email": "info@iccxx.nl"
+      },
+      "email_md": "**Subject:** Your SBIQ matches for MeerBusiness Amsterdam\n\nDear Kody,\n\nBased on your profile and the SBIQ methodology, we selected 1 match(es) for ICCXX on commercial relevance — not industry similarity, but concrete opportunities for revenue, partnership and access.\n\n---\n\n## Match: **Goedemensen projectprofessionals** — Arthur Beemster (DGA)\n_Relevance: 0.72 · corporate_entry_point_\n\n**Why we selected this match.** We see Goedemensen projectprofessionals as an entry point to capital and corporate access. Goedemensen projectprofessionals offers corporate/capital access; innovation / AI collaboration. Arthur Beemster (DGA) at Goedemensen projectprofessionals.\n\n**The opportunity.** Goedemensen projectprofessionals offers: Goedemensen projectprofessionals: interim professionals, consulting and custom AI tools for procurement, finance and contract management.\n\n**How to position yourself.** Position ICCXX around your core offering: On-demand powerbank rental (stations/units) — useful at events and venues.\n\n**Questions to ask.**\n- What kind of opportunities is Goedemensen projectprofessionals looking to back right now?\n- What do you need to see before a conversation becomes serious?\n- Who else in your network should I be speaking with?\n\n**How you can help them.** You can help Arthur Beemster with: On-demand powerbank rental (stations/units) — useful at events and venues.\n\n**LinkedIn introduction (copy-paste).**\n> Hi Arthur, SBIQ / MeerBusiness Amsterdam matched us around a concrete commercial opportunity between ICCXX and Goedemensen projectprofessionals. I'd love a short chat to explore where we can add value to each other. Best, Kody\n\nWarm regards,\n\n**SBIQ Matchmaking — MeerBusiness Amsterdam**\n",
+      "matches": [
+        {
+          "counterpart": {
+            "id": "p_066",
+            "name": "Arthur Beemster",
+            "company": "Goedemensen projectprofessionals",
+            "tier": "non_member",
+            "email": "a.beemster@goedemensen.nu"
+          },
+          "score": 0.724,
+          "relationship": [
+            "corporate_entry_point",
+            "innovation_partner"
+          ],
+          "rationale": "Goedemensen projectprofessionals offers corporate/capital access; innovation / AI collaboration. Arthur Beemster (DGA) at Goedemensen projectprofessionals — Goedemensen projectprofessionals: interim professionals, consulting and custom A"
+        }
+      ]
+    },
+    {
+      "recipient": {
+        "id": "p_059",
+        "name": "Rob Vermeulen",
+        "company": "Mr. R.M. Vermeulen B.V.",
+        "tier": "bm",
+        "email": "rob.vermeulen@moscus.nl"
+      },
+      "email_md": "**Onderwerp:** Uw SBIQ-matches voor MeerBusiness Amsterdam\n\nBeste Rob,\n\nOp basis van uw profiel en onze SBIQ-methodiek hebben wij voor Mr. R.M. Vermeulen B.V. 1 match(es) geselecteerd op commerciële relevantie — niet op sectorgelijkenis, maar op concrete kansen voor omzet, partnerschap en toegang.\n\n---\n\n## Match: **Dorien Franken** — Dorien Franken (Oprichter)\n_Relevantie: 0.70 · strategic_partner_\n\n**Waarom wij deze match kozen.** Wij zien Dorien Franken als een complementaire strategische partner. complementary strategic partnership; innovation / AI collaboration. Dorien Franken (Oprichter) at Dorien Franken.\n\n**De kans.** Dorien Franken levert: Studio Dorien Franken: brand design studio — brand strategy, visual identity, editorial/campaign and AI-assisted design for purpose-driven organizations.\n\n**Hoe u zich positioneert.** Positioneer Mr. R.M. Vermeulen B.V. rond uw kernaanbod: uw aanbod.\n\n**Vragen om te stellen.**\n- Waar overlappen onze diensten, en waar zijn ze complementair?\n- Welke klanten kunnen we samen beter bedienen dan alleen?\n- Hoe zou een eenvoudig eerste gezamenlijk initiatief eruitzien?\n\n**Hoe u hén kunt helpen.** U kunt Dorien Franken helpen met: uw aanbod.\n\n**LinkedIn-introductie (kopieer & plak).**\n> Hoi Dorien, wij werden door SBIQ / MeerBusiness Amsterdam aan elkaar gekoppeld vanwege een concrete commerciële kans tussen Mr. R.M. Vermeulen B.V. en Dorien Franken. Ik spreek graag kort af om te zien waar we elkaar kunnen versterken. Groet, Rob\n\nMet vriendelijke groet,\n\n**SBIQ Matchmaking — MeerBusiness Amsterdam**\n",
+      "matches": [
+        {
+          "counterpart": {
+            "id": "p_086",
+            "name": "Dorien Franken",
+            "company": "Dorien Franken",
+            "tier": "non_member",
+            "email": "hello@openup.world"
+          },
+          "score": 0.704,
+          "relationship": [
+            "strategic_partner",
+            "innovation_partner"
+          ],
+          "rationale": "complementary strategic partnership; innovation / AI collaboration. Dorien Franken (Oprichter) at Dorien Franken — Studio Dorien Franken: brand design studio — brand strategy, visual identity, ed"
+        }
+      ]
+    }
+  ],
+  "review": {
+    "decisions": {
+      "p_093": "approve",
+      "p_018": "approve",
+      "p_034": "approve",
+      "p_070": "approve",
+      "p_071": "approve",
+      "p_006": "approve",
+      "p_084": "approve",
+      "p_005": "approve",
+      "p_014": "approve",
+      "p_016": "approve",
+      "p_025": "approve",
+      "p_033": "approve",
+      "p_055": "approve",
+      "p_056": "approve",
+      "p_040": "approve",
+      "p_011": "approve",
+      "p_061": "approve",
+      "p_094": "approve",
+      "p_088": "approve",
+      "p_064": "approve",
+      "p_019": "approve",
+      "p_024": "approve",
+      "p_027": "approve",
+      "p_039": "approve",
+      "p_044": "approve",
+      "p_053": "approve",
+      "p_062": "approve",
+      "p_063": "approve",
+      "p_072": "approve",
+      "p_073": "approve",
+      "p_075": "approve",
+      "p_076": "approve",
+      "p_091": "approve",
+      "p_020": "approve",
+      "p_026": "approve",
+      "p_043": "approve",
+      "p_095": "approve",
+      "p_029": "approve",
+      "p_090": "approve",
+      "p_004": "approve",
+      "p_008": "approve",
+      "p_021": "approve",
+      "p_107": "approve",
+      "p_013": "approve",
+      "p_023": "approve",
+      "p_012": "approve",
+      "p_065": "approve",
+      "p_074": "approve",
+      "p_059": "approve"
+    },
+    "edits": {},
+    "by": "Meer Business",
+    "approved_at": "2026-06-25T17:26:30.230515+00:00"
+  }
+}
