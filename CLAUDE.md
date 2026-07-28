@@ -143,6 +143,8 @@ Deterministic scoring on top of similarity results narrows to **5–10 candidate
 - Token overlap: `looking_for` ↔ `offers`
 - Sector alignment score
 - Company size compatibility ratio
+- Ecosystem-role adjacency: is each participant's classified role (Direct Buyer/Seller, Investor, Corporate Entry Point, etc. — see `docs/CLIENT_FEEDBACK_GAP_ANALYSIS.md`, Item 2) complementary to the other's, not just similar — the dominant factor in the composite, since pure similarity was empirically shown to miss valuable but dissimilar pairs
+- Decision authority score: seniority of `designation` (e.g. CEO/Founder/Director vs. Manager)
 - Duplicate pair prevention (A→B = B→A counted once)
 - Priority-weighted ranking (Sponsors processed first)
 

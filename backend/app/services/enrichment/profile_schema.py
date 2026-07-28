@@ -30,3 +30,9 @@ class CompanyProfile(BaseModel):
 class StructuredProfile(BaseModel):
     person: PersonProfile
     company: CompanyProfile
+    # Which role this participant plays in the business ecosystem (access,
+    # influence, capital, deal flow, network reach) - not what they sell.
+    # One of app.services.matching.ecosystem_role.ECOSYSTEM_ROLES, or None if
+    # the LLM couldn't confidently classify it. See
+    # docs/CLIENT_FEEDBACK_GAP_ANALYSIS.md, Item 2.
+    ecosystem_role: str | None = None

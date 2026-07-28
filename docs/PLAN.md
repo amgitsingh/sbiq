@@ -580,6 +580,40 @@ engine -> LLM reasoning -> bidirectional match storage -> cost-gated trigger,
 all live-verified against real Postgres, Redis, OpenAI, and Celery - nothing
 in this phase was verified against mocks alone.
 
+> **Added outside the 40-task list: ecosystem-role adjacency + decision
+> authority in the rule-engine pre-filter** (see
+> `docs/CLIENT_FEEDBACK_GAP_ANALYSIS.md`, Item 2, and
+> `docs/PREFILTER_COST_ANALYSIS.md`). A prior attempt fixed only the final
+> scoring formula while leaving the existing similarity-based pre-filter
+> (vector search + token-overlap/sector/size rule engine) untouched, and was
+> reverted after proving empirically that a client-approved reference run's
+> real matches for two real participants never survive that pre-filter at
+> all - both scored near-zero on every existing dimension, regardless of
+> pool size. Root cause: the pre-filter only measures similarity, and the
+> client's own methodology (docx, "Proposed SBIQ Rule") explicitly argues
+> similarity is often the wrong signal - a participant's *ecosystem role*
+> (Direct Buyer, Investor, Corporate Entry Point, etc. - an 11-item taxonomy
+> taken verbatim from the docx) and whether two roles are *complementary*
+> matters more than whether two profiles read alike. New
+> `app/services/matching/ecosystem_role.py` classifies each participant into
+> one of the 11 roles (added to the existing per-participant enrichment LLM
+> call in `llm_normalizer.py` - no new LLM call, ~10-20 extra output tokens)
+> and scores role-adjacency via a static lookup table (same pattern as the
+> existing `SECTOR_ADJACENCY`) - deliberately binary and never rewarding
+> identical roles, since two participants competing for the same
+> counterparts isn't a complementary match. `decision_authority.py`
+> (seniority of `designation`) was also re-added. Both are cheap, O(1)-per-
+> pair signals - no LLM call per candidate pair, so this avoids the O(N²)
+> cost blowout of simply removing the pre-filter (quantified in
+> `docs/PREFILTER_COST_ANALYSIS.md`). Rule-engine composite weights
+> rebalanced: role adjacency 0.40 (now the dominant factor), token overlap
+> 0.25, sector 0.15, size 0.10, decision authority 0.10. Scope deliberately
+> narrow - `llm_matcher.py`, `match_schema.py`, `match_writer.py`, the
+> `Match` model, and `matching_tasks.py` are all untouched; `Match.score`
+> stays exactly the rule engine's composite, same as before. This pass is
+> only about getting the right candidates into the LLM's shortlist in the
+> first place.
+
 ---
 
 ## Phase 6 — Match Output

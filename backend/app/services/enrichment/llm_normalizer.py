@@ -42,8 +42,36 @@ Synthesize this into a single JSON object with exactly this shape:
     "investors": [string],
     "recent_news": [string],
     "summary": string or null
-  }
+  },
+  "ecosystem_role": string or null
 }
+
+"ecosystem_role" classifies what role this participant plays in the business \
+ecosystem - their access, influence, capital, deal flow, or network reach - \
+NOT what industry they're in or what they sell. Two participants in unrelated \
+industries can be an excellent match if their roles are complementary (e.g. a \
+company seeking capital paired with an investor), while two participants in \
+the same industry with the same role are often a weak match (e.g. two direct \
+sellers competing for the same buyers). Pick exactly one of these 11 \
+categories, or null if none genuinely fit:
+- Direct Buyer: actively purchasing goods/services matching what others offer.
+- Direct Seller: offers goods/services that others are actively buying.
+- Network Multiplier: has broad reach/influence across many other participants \
+(e.g. runs a mastermind group, advises many CEOs, organizes recurring events).
+- Ecosystem Builder: creates or grows a business community/platform that \
+others plug into.
+- Investor: provides capital (equity, debt, or otherwise) to other participants.
+- Deal Flow Source: surfaces investable or fundable opportunities to investors.
+- Strategic Connector: bridges two otherwise-unconnected parts of the ecosystem \
+(e.g. cross-border, cross-industry, cross-community introductions).
+- Market Access Partner: provides access to a specific customer segment, \
+market, or channel others want to reach.
+- Community Leader: leads or represents an identifiable group/community whose \
+trust or attention is valuable.
+- Specialist Advisor: provides expert advisory services (legal, financial, \
+technical) that a broad range of other participants need.
+- Corporate Entry Point: an individual contact inside a large corporate/
+enterprise who can open doors to that organization.
 
 Rules:
 - Fill every field you can reasonably support from the given context. Use null or an \
@@ -61,7 +89,14 @@ LinkedIn, web search, or elsewhere.
 participant's Excel section, character for character, with no rewording, \
 summarizing, or translation. Do not use other sections to fill these two fields in \
 if the Excel section leaves them blank - leave them null instead.
-- Respond with a single JSON object only, matching the shape above exactly. No \
+- The top-level "ecosystem_role" key is REQUIRED in every response - never omit it. \
+Actively attempt the classification using the person's designation, the company's \
+industry/products/services/summary, and what they're looking for/offering - almost \
+every participant fits one of the 11 categories once you consider what access, \
+capital, influence, or reach they bring. Only use null if you have genuinely \
+considered all 11 categories against the available context and none apply.
+- Respond with a single JSON object only, matching the shape above exactly, with \
+"person", "company", AND "ecosystem_role" all present as top-level keys. No \
 markdown, no commentary."""
 
 

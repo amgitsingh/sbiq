@@ -3,15 +3,25 @@ from __future__ import annotations
 from sqlalchemy.orm import Session
 
 from app.models.participant import MembershipTier, Participant, ParticipantStatus
+from app.services.matching.decision_authority import decision_authority_score
+from app.services.matching.ecosystem_role import role_adjacency_score
 from app.services.matching.sector_size import company_size_score, sector_alignment_score
 from app.services.matching.token_overlap import token_overlap_score
 from app.services.similarity_search import find_similar_participants
 
-# Composite weights per CLAUDE.md's confirmed formula:
-# score = (token_overlap x 0.5) + (sector x 0.3) + (size x 0.2)
-TOKEN_OVERLAP_WEIGHT = 0.5
-SECTOR_WEIGHT = 0.3
-SIZE_WEIGHT = 0.2
+# Composite weights - role adjacency is the dominant factor, since it's the
+# one signal that catches complementary-but-dissimilar pairs (a luxury
+# logistics company paired with a capital-access firm, a hotel group paired
+# with a bank) that token_overlap/sector/size structurally miss - confirmed
+# empirically against real client-approved matches that scored near-zero on
+# the old 3-factor formula. See docs/CLIENT_FEEDBACK_GAP_ANALYSIS.md, Item 2.
+# The original three are de-weighted, not zeroed - still real signal for
+# genuinely similar-and-compatible pairs.
+ROLE_ADJACENCY_WEIGHT = 0.40
+TOKEN_OVERLAP_WEIGHT = 0.25
+SECTOR_WEIGHT = 0.15
+SIZE_WEIGHT = 0.10
+DECISION_AUTHORITY_WEIGHT = 0.10
 
 SIMILARITY_POOL_SIZE = 20  # Task 24's initial vector-search candidate pool
 RESULT_TOP_N = 10  # narrowed shortlist size, per CLAUDE.md's "5-10 candidates"
@@ -30,6 +40,10 @@ TIER_PROCESSING_ORDER = [
 
 def _normalize_company(name: str | None) -> str:
     return (name or "").strip().lower()
+
+
+def _ecosystem_role(p: Participant) -> str | None:
+    return (p.structured_profile or {}).get("ecosystem_role")
 
 
 def score_pair(a: Participant, b: Participant) -> dict:
@@ -55,13 +69,23 @@ def score_pair(a: Participant, b: Participant) -> dict:
     )
     sector = sector_alignment_score(a.sector, b.sector)
     size = company_size_score(a.company_size, b.company_size)
-    composite = overlap * TOKEN_OVERLAP_WEIGHT + sector * SECTOR_WEIGHT + size * SIZE_WEIGHT
+    role_adjacency = role_adjacency_score(_ecosystem_role(a), _ecosystem_role(b))
+    decision_authority = decision_authority_score(a.designation, b.designation)
+    composite = (
+        overlap * TOKEN_OVERLAP_WEIGHT
+        + sector * SECTOR_WEIGHT
+        + size * SIZE_WEIGHT
+        + role_adjacency * ROLE_ADJACENCY_WEIGHT
+        + decision_authority * DECISION_AUTHORITY_WEIGHT
+    )
 
     return {
         "composite_score": composite,
         "token_overlap": overlap,
         "sector_score": sector,
         "size_score": size,
+        "role_adjacency_score": role_adjacency,
+        "decision_authority_score": decision_authority,
         "excluded_same_company": False,
     }
 
