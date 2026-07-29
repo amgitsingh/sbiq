@@ -6,7 +6,7 @@ import logging
 from app.services.enrichment.cache import cache_get, cache_set
 from app.services.enrichment.crunchbase_client import get_company_info
 from app.services.enrichment.tavily_news_search import search_company_news
-from app.services.enrichment.tavily_web_search import search_person_and_company
+from app.services.enrichment.tavily_web_search import search_company
 from app.services.enrichment.website_scraper import scrape_company_website
 
 logger = logging.getLogger(__name__)
@@ -64,9 +64,13 @@ def get_company_enrichment(company_name: str | None, event_id: int, website_url:
 
 
 def _run_sources(company_name: str | None, website_url: str | None) -> dict:
+    tavily_web = search_company(company_name)
+    tavily_news = search_company_news(company_name)
     return {
         "website": scrape_company_website(website_url or ""),
-        "tavily_web": search_person_and_company(None, company_name),
-        "tavily_news": search_company_news(company_name),
+        "tavily_web": tavily_web["snippets"],
+        "tavily_web_sources": tavily_web["sources"],
+        "tavily_news": tavily_news["snippets"],
+        "tavily_news_sources": tavily_news["sources"],
         "crunchbase": get_company_info(company_name),
     }

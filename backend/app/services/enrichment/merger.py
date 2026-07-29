@@ -14,6 +14,7 @@ def build_enrichment_context(
     biggest_opportunity: str | None = None,
     company_enrichment: dict[str, Any],
     linkedin_profile: dict[str, str] | None,
+    person_tavily: dict[str, Any] | None = None,
 ) -> str:
     """Combine one participant's Excel fields + all 5 enrichment sources into
     a single labeled text block - the input to Task 19's LLM normalization.
@@ -39,6 +40,11 @@ def build_enrichment_context(
     the LLM to infer from prose - live testing surfaced a real failure mode
     without it: for a participant with no "Company: ..." line, the LLM
     misread the "=== TAVILY ===" section header itself as the company name.
+
+    person_tavily is the uncached, per-participant Tavily search result
+    (tavily_web_search.search_person), kept separate from company_enrichment's
+    cached company-level tavily_web - it's never shared across colleagues at
+    the same company, so it can't go through that cache.
     """
     sections = [
         _participant_section(
@@ -56,7 +62,12 @@ def build_enrichment_context(
         sections.append(f"=== WEBSITE ===\n{website}")
 
     if tavily_web := company_enrichment.get("tavily_web"):
-        sections.append(f"=== TAVILY ===\n{tavily_web}")
+        web_text = "\n".join(f"- {snippet}" for snippet in tavily_web)
+        sections.append(f"=== TAVILY (COMPANY) ===\n{web_text}")
+
+    if person_tavily and (person_snippets := person_tavily.get("snippets")):
+        person_text = "\n".join(f"- {snippet}" for snippet in person_snippets)
+        sections.append(f"=== TAVILY (PERSON) ===\n{person_text}")
 
     if tavily_news := company_enrichment.get("tavily_news"):
         news_text = "\n".join(f"- {snippet}" for snippet in tavily_news)

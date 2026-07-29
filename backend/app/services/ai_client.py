@@ -64,7 +64,9 @@ def chat_json_with_usage(system_prompt: str, user_prompt: str, *, max_tokens: in
     return response.choices[0].message.content or "{}", token_usage
 
 
-def chat_json_web_search(system_prompt: str, user_prompt: str, *, max_tokens: int) -> str:
+def chat_json_web_search(
+    system_prompt: str, user_prompt: str, *, max_tokens: int, force_tool_use: bool = False
+) -> str:
     """Like chat_json, but lets the model autonomously search the web via
     OpenAI's Responses API hosted `web_search` tool - one call does both the
     search (OpenAI runs it, not us) and the final synthesis.
@@ -74,6 +76,13 @@ def chat_json_web_search(system_prompt: str, user_prompt: str, *, max_tokens: in
     settings.ENABLE_LLM_WEB_SEARCH so a non-OpenAI AI_BASE_URL can fall back
     to chat_json instead.
 
+    force_tool_use=True passes tool_choice="required", forcing at least one
+    tool call - unambiguous here since `web_search` is the only tool in the
+    array. Without it, the model may skip searching entirely even when the
+    prompt asks it to (observed: prompt-only instructions were too easy to
+    skip whenever the merged context already looked superficially complete).
+    Defaults to False so existing callers are unaffected.
+
     No server-enforced JSON mode here (uncertain this composes cleanly with
     the web_search tool) - relies on the prompt instructing JSON-only output,
     same as the caller's existing json.loads + schema validation + retry-once
@@ -82,6 +91,9 @@ def chat_json_web_search(system_prompt: str, user_prompt: str, *, max_tokens: in
     Raises on any API-level failure, same as chat_json.
     """
     client = get_client()
+    kwargs: dict = {}
+    if force_tool_use:
+        kwargs["tool_choice"] = "required"
     response = client.responses.create(
         model=settings.AI_MODEL,
         input=[
@@ -90,6 +102,7 @@ def chat_json_web_search(system_prompt: str, user_prompt: str, *, max_tokens: in
         ],
         tools=[{"type": "web_search"}],
         max_output_tokens=max_tokens,
+        **kwargs,
     )
     return response.output_text or "{}"
 

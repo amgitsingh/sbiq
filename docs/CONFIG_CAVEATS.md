@@ -30,8 +30,14 @@ similar hidden dependency, add it here.
   behavior today — don't mistake it for a working throttle.
 - **The per-call token cap is a separate, hardcoded constant, not an env var.**
   `llm_normalizer.MAX_RESPONSE_TOKENS = 1_500` controls the actual per-call limit
-  for normalization; it is not sourced from `.env`. Changing `AI_MAX_TOKENS_PER_RUN`
-  will not touch it.
+  for normalization when `ENABLE_LLM_WEB_SEARCH=false`; it is not sourced from
+  `.env`. Changing `AI_MAX_TOKENS_PER_RUN` will not touch it. When
+  `ENABLE_LLM_WEB_SEARCH=true`, a separate, higher constant applies instead —
+  `llm_normalizer.MAX_RESPONSE_TOKENS_WEB_SEARCH = 6_000` — because the hosted
+  `web_search` tool's search/tool-call rounds share `max_output_tokens` with the
+  final JSON answer, so the plain path's tighter budget would silently starve the
+  model of search rounds before it ever writes a response. Also hardcoded, same
+  convention.
 - **`openai` SDK version matters.** `ENABLE_LLM_WEB_SEARCH` requires
   `client.responses` to exist — added well after `1.57.0` (originally pinned;
   bumped to `1.109.1`). Downgrading the `openai` package would silently break this
@@ -55,7 +61,7 @@ similar hidden dependency, add it here.
   never updates it. Both need a manual code update whenever either model changes,
   not just an `.env` edit.
 
-## Enrichment source toggles (`ENABLE_WEBSITE_SCRAPER`, `ENABLE_TAVILY_WEB_SEARCH`, `ENABLE_TAVILY_NEWS_SEARCH`, `ENABLE_CRUNCHBASE`, `ENABLE_LINKEDIN_SCRAPER`)
+## Enrichment source toggles (`ENABLE_WEBSITE_SCRAPER`, `ENABLE_TAVILY_WEB_SEARCH`, `ENABLE_TAVILY_PERSON_SEARCH`, `ENABLE_TAVILY_NEWS_SEARCH`, `ENABLE_CRUNCHBASE`, `ENABLE_LINKEDIN_SCRAPER`)
 
 - **Disabling a source doesn't just skip it — it returns a specific typed empty
   value** (`None`/`[]`/`{}`, set per-source via `@toggleable(..., empty_value=...)`
@@ -63,6 +69,13 @@ similar hidden dependency, add it here.
   these exact empty-value types (e.g. `if website := ...` truthiness checks). A new
   source added without matching this convention could silently break the merger's
   "omit empty sections" logic.
+- **`ENABLE_TAVILY_PERSON_SEARCH` is a separate toggle from `ENABLE_TAVILY_WEB_SEARCH`
+  on purpose, and is *not* deduplicated by `company_enrichment.py`'s 24-hour Redis
+  cache.** `tavily_web_search.search_person` runs once per participant, uncached —
+  unlike `search_company` (the `ENABLE_TAVILY_WEB_SEARCH`-gated function, shared
+  across every colleague from the same company via the cache), its cost scales
+  with participant count, not company count. Disabling it removes person-specific
+  Tavily context but leaves the cached company-level search untouched.
 - **`ENABLE_CRUNCHBASE=true` needs `CRUNCHBASE_API_KEY` set, and the field mapping
   in `crunchbase_client.py` (`FIELD_IDS`, `_map_entity`) was never verified against
   a live account** (Task 15 — built against documented API shape only, no key was

@@ -17,6 +17,7 @@ if TYPE_CHECKING:
 class EnrichmentSource(str, enum.Enum):
     website = "website"
     tavily_web = "tavily_web"
+    tavily_person = "tavily_person"
     tavily_news = "tavily_news"
     crunchbase = "crunchbase"
     linkedin = "linkedin"

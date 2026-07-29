@@ -1,0 +1,77 @@
+{
+    "id": "p_070",
+    "tier": "sponsor",
+    "flags": [],
+    "person": {
+        "name": "Teun Blom",
+        "title": "Partner & Advocaat",
+        "decision_authority": "owner",
+        "linkedin_url": "https://nl.linkedin.com/in/teun-blom"
+    },
+    "email": "teunblom@blenheim.nl",
+    "phone": "0642525446",
+    "company": {
+        "name": "Blenheim",
+        "website": "https://www.blenheim.nl",
+        "classification": "sme",
+        "employees": 100,
+        "market_position": "Independent Amsterdam law firm (~24 lawyers) at Westerdoksdijk; member of Lawyers Associated Worldwide. Strong in real estate, construction and public administration.",
+        "commercial_proposition": "Full-service legal: real estate & construction law, permits/Bibob, commercial contracts, litigation, corporate advisory.",
+        "needs": "Clients with real-estate, construction, permits or commercial-contract matters; referral relationships with developers and corporates.",
+        "ideal_counterpart": "Real-estate developers, construction & fit-out firms, hospitality operators and corporates needing legal counsel.",
+        "amsterdam_visibility": "high",
+        "estimated_budget_band": "50-250k",
+        "existing_partnerships": [
+            "Lawyers Associated Worldwide (LAW)"
+        ]
+    },
+    "enrichment": {
+        "confidence": 0.85,
+        "research_confidence": 0.85,
+        "notes": "Teun Blom is partner in Real Estate & Public Administration. High corporate-access value; natural match with real-estate developers and fit-out firms (e.g. E=MC2) in this participant pool.",
+        "sources": [
+            "https://www.blenheim.nl/en/lawyers/teun-blom/",
+            "https://zoekeenadvocaat.advocatenorde.nl/kantoren/amsterdam/advocatenkantoor-blenheim/26643782396",
+            "https://nl.linkedin.com/company/blenheim"
+        ]
+    }
+}
+
+{
+    "id": "p_071",
+    "tier": "sponsor",
+    "flags": [],
+    "person": {
+        "name": "Erik Dercksen",
+        "title": "dga",
+        "decision_authority": "owner",
+        "linkedin_url": ""
+    },
+    "email": "erik@eventculinair.nl",
+    "phone": "0611381539",
+    "company": {
+        "name": "Event Culinair BV",
+        "website": "https://www.eventculinair.nl",
+        "classification": "sme",
+        "employees": 30,
+        "market_position": "Premium concept-catering company (25+ yrs) serving unique Amsterdam venues; partner of Unique Venues of Amsterdam. Own production kitchen and chef pool.",
+        "commercial_proposition": "High-end event catering: concept catering, conferences, sit-down/walking dinners, cocktail parties at unique locations.",
+        "needs": "Event bookings; access to corporate event organizers, venues and companies hosting events.",
+        "ideal_counterpart": "Corporate event planners, event agencies, venues, hospitality operators and member companies running events (incl. MeerBusiness events).",
+        "amsterdam_visibility": "medium",
+        "estimated_budget_band": "10-50k",
+        "existing_partnerships": [
+            "Unique Venues of Amsterdam"
+        ]
+    },
+    "enrichment": {
+        "confidence": 0.78,
+        "research_confidence": 0.78,
+        "notes": "Erik Dercksen is adviser/ambassador (company owned by his wife Corina); 25 yrs in Amsterdam events. Strong hospitality-opportunity node for the event/venue cluster.",
+        "sources": [
+            "https://www.eventculinair.nl/",
+            "https://uniquevenuesofamsterdam.com/en/partner/event-culinair/",
+            "https://www.events.nl/nieuws/erik-dercksen-verlaat-na-25-jaar-event-department"
+        ]
+    }
+}

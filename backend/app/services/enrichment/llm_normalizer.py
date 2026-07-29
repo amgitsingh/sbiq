@@ -11,6 +11,12 @@ from app.services.json_utils import strip_markdown_fence
 logger = logging.getLogger(__name__)
 
 MAX_RESPONSE_TOKENS = 1_500
+# Higher budget for the ENABLE_LLM_WEB_SEARCH path specifically: the hosted
+# web_search tool's search/tool-call rounds share max_output_tokens with the
+# final JSON answer, so a tight budget silently starves the model of search
+# rounds before it ever gets to write the response. The plain chat_json path
+# has no tool-call-token-sharing problem, so it keeps the lower constant.
+MAX_RESPONSE_TOKENS_WEB_SEARCH = 6_000
 MAX_ATTEMPTS = 2
 
 SYSTEM_PROMPT = """You are a data normalization assistant for an event matchmaking \
@@ -76,10 +82,7 @@ enterprise who can open doors to that organization.
 Rules:
 - Fill every field you can reasonably support from the given context. Use null or an \
 empty list for anything not mentioned anywhere - never invent facts.
-- If the given context is too thin to fill in important company fields (industry, \
-products, services, summary, etc.), and you have web search available, search the \
-web for the company (and person, if that helps) to fill the gaps. Prefer the given \
-context over search results whenever they overlap or conflict.
+- Prefer the given context over search results whenever they overlap or conflict.
 - "company.summary" should be a short synthesis of everything known about the \
 company, in your own words.
 - Prefer the participant's own Excel-submitted values for "person.name", \
@@ -99,13 +102,35 @@ considered all 11 categories against the available context and none apply.
 "person", "company", AND "ecosystem_role" all present as top-level keys. No \
 markdown, no commentary."""
 
+# Appended to SYSTEM_PROMPT only for the chat_json_web_search call (paired with
+# force_tool_use=True) - a plain "search if context looks thin" instruction was
+# too easy to skip whenever the merged context already had *something* in every
+# field, even if shallow. This makes searching mandatory and pushes for multiple
+# angles instead of one generic query, closing the gap against richer reference
+# enrichment output that clearly came from several targeted searches per
+# participant (specific directory/partnership/news pages, not generic snippets).
+WEB_SEARCH_ADDENDUM = """You have a live web_search tool and MUST use it for this \
+participant, even if the context above already looks complete. Run at least 3 \
+distinct, differently-angled searches before answering, for example: (1) the \
+company's general profile/products/services, (2) the company's partnerships, \
+memberships, or professional/industry directory listings, (3) the named \
+individual's role or bio. Prefer specific, niche, authoritative sources - \
+professional/chamber/bar-association directory pages, partner or member pages, \
+local business news - over generic aggregator results. Use these searches to fill \
+every field you can support and to write a substantive company.summary; do not \
+stop after one search just because other context already had some data."""
+
 
 class ProfileNormalizationError(Exception):
     """Raised when the LLM never produced a schema-valid profile after retrying."""
 
 
 def normalize_participant_profile(
-    merged_context: str, *, looking_for: str | None, offerings: str | None
+    merged_context: str,
+    *,
+    looking_for: str | None,
+    offerings: str | None,
+    source_urls: list[str] | None = None,
 ) -> dict:
     """Send one participant's merged enrichment context (Task 18's output) to the
     LLM and return CLAUDE.md's structured JSON profile as a plain dict.
@@ -116,6 +141,12 @@ def normalize_participant_profile(
     LLM not to touch them, but per the confirmed architecture decision that these
     two fields must never be modified, that instruction alone isn't a strong
     enough guarantee.
+
+    source_urls are the real URLs the enrichment pipeline actually fetched data
+    from (Tavily results) - stamped into the result the same deterministic way as
+    looking_for/offerings, never asked of or reported by the LLM itself. This
+    avoids hallucinated citations entirely: the model never sees or produces this
+    field, so there's nothing for it to fabricate.
 
     Retries once on any failure (invalid JSON, schema validation failure, or an
     ai_client API error) - a transient failure deserves the same one retry a bad
@@ -128,7 +159,12 @@ def normalize_participant_profile(
     for attempt in range(1, MAX_ATTEMPTS + 1):
         try:
             if settings.ENABLE_LLM_WEB_SEARCH:
-                raw = chat_json_web_search(SYSTEM_PROMPT, merged_context, max_tokens=MAX_RESPONSE_TOKENS)
+                raw = chat_json_web_search(
+                    SYSTEM_PROMPT + "\n\n" + WEB_SEARCH_ADDENDUM,
+                    merged_context,
+                    max_tokens=MAX_RESPONSE_TOKENS_WEB_SEARCH,
+                    force_tool_use=True,
+                )
             else:
                 raw = chat_json(SYSTEM_PROMPT, merged_context, max_tokens=MAX_RESPONSE_TOKENS)
             parsed = json.loads(strip_markdown_fence(raw))
@@ -141,6 +177,7 @@ def normalize_participant_profile(
         result = profile.model_dump()
         result["person"]["looking_for"] = looking_for
         result["person"]["offerings"] = offerings
+        result["research_sources"] = sorted(set(source_urls or []))
         return result
 
     raise ProfileNormalizationError(

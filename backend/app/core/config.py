@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     # changes (e.g. Crunchbase off until a paid API key is purchased).
     ENABLE_WEBSITE_SCRAPER: bool = True
     ENABLE_TAVILY_WEB_SEARCH: bool = True
+    ENABLE_TAVILY_PERSON_SEARCH: bool = True
     ENABLE_TAVILY_NEWS_SEARCH: bool = True
     ENABLE_CRUNCHBASE: bool = False
     ENABLE_LINKEDIN_SCRAPER: bool = True

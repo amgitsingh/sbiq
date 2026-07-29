@@ -16,41 +16,61 @@ MAX_RESULTS = 5
 # default of 3 days is too narrow and misses real hits a wider window finds.
 NEWS_DAYS = 90
 
+# Two differently-angled queries instead of one - the funding/partnership
+# template alone misses smaller companies' press releases and award/
+# recognition news that a second query template surfaces.
+NEWS_QUERY_TEMPLATES = [
+    "{company} news funding partnership product launch",
+    "{company} press release announcement award",
+]
 
-@toggleable("ENABLE_TAVILY_NEWS_SEARCH", empty_value=[])
-def search_company_news(company_name: str | None) -> list[str]:
-    """Tavily news-topic search for a company. Never raises — returns an
-    empty list on missing config, API errors, quota exhaustion, or network
-    failures, so one failed lookup never blocks the rest of the pipeline.
+_EMPTY_RESULT = {"snippets": [], "sources": []}
+
+
+@toggleable("ENABLE_TAVILY_NEWS_SEARCH", empty_value=_EMPTY_RESULT)
+def search_company_news(company_name: str | None) -> dict:
+    """Tavily news-topic search for a company, across NEWS_QUERY_TEMPLATES,
+    merged and deduped by URL. Never raises — returns _EMPTY_RESULT on
+    missing config, API errors, quota exhaustion, or network failures, so
+    one failed lookup never blocks the rest of the pipeline.
     """
     if not settings.TAVILY_API_KEY:
         logger.warning("TAVILY_API_KEY not configured - skipping Tavily news search")
-        return []
+        return dict(_EMPTY_RESULT)
 
     company_name = (company_name or "").strip()
     if not company_name:
-        return []
+        return dict(_EMPTY_RESULT)
 
-    query = f"{company_name} news funding partnership product launch"
+    client = TavilyClient(api_key=settings.TAVILY_API_KEY)
+    snippets, sources = [], []
+    seen_urls: set[str] = set()
 
-    try:
-        client = TavilyClient(api_key=settings.TAVILY_API_KEY)
-        response = client.search(query=query, topic="news", days=NEWS_DAYS, max_results=MAX_RESULTS)
-    except Exception as e:
-        logger.warning(f"Tavily news search failed for query {query!r}: {e}")
-        return []
+    for template in NEWS_QUERY_TEMPLATES:
+        query = template.format(company=company_name)
+        try:
+            response = client.search(query=query, topic="news", days=NEWS_DAYS, max_results=MAX_RESULTS)
+        except Exception as e:
+            logger.warning(f"Tavily news search failed for query {query!r}: {e}")
+            continue
 
-    results = response.get("results") or []
-    relevant = _filter_relevant(results, company_name)
-    if not relevant:
+        for content, url in _filter_relevant(response.get("results") or [], company_name):
+            if url and url in seen_urls:
+                continue
+            snippets.append(content)
+            if url:
+                sources.append(url)
+                seen_urls.add(url)
+
+    if not snippets:
         logger.info(f"No relevant Tavily news results for {company_name!r}")
-        return []
+        return dict(_EMPTY_RESULT)
 
-    return _cap_snippets(relevant, MAX_CHARS)
+    return {"snippets": _cap_snippets(snippets, MAX_CHARS), "sources": sources}
 
 
-def _filter_relevant(results: list[dict], company_name: str) -> list[str]:
-    """Keep only snippets that actually mention the company.
+def _filter_relevant(results: list[dict], company_name: str) -> list[tuple[str, str]]:
+    """Keep only (content, url) pairs that actually mention the company.
 
     Tavily's news search frequently returns keyword-matched but
     company-irrelevant articles for smaller/less-covered companies
@@ -58,15 +78,16 @@ def _filter_relevant(results: list[dict], company_name: str) -> list[str]:
     pulls in noise whenever no real company-specific news exists.
     """
     needle = company_name.lower()
-    snippets = []
+    pairs = []
     for r in results:
         content = (r.get("content") or "").strip()
         title = (r.get("title") or "")
+        url = (r.get("url") or "").strip()
         if not content:
             continue
         if needle in content.lower() or needle in title.lower():
-            snippets.append(content)
-    return snippets
+            pairs.append((content, url))
+    return pairs
 
 
 def _cap_snippets(snippets: list[str], limit: int) -> list[str]:

@@ -23,6 +23,7 @@ from app.services.enrichment.profile_reuse import (
     normalize_email,
     upsert_enriched_profile,
 )
+from app.services.enrichment.tavily_web_search import search_person
 from app.workers.celery_app import celery_app
 
 logger = logging.getLogger(__name__)
@@ -58,20 +59,30 @@ def _record_job(
     db.commit()
 
 
-def _normalize_with_one_extra_retry(merged_context: str, *, looking_for: str | None, offerings: str | None) -> dict:
+def _normalize_with_one_extra_retry(
+    merged_context: str,
+    *,
+    looking_for: str | None,
+    offerings: str | None,
+    source_urls: list[str] | None = None,
+) -> dict:
     """Call normalize_participant_profile, and if it still fails (both of its
     own internal attempts exhausted), wait briefly and try once more before
     giving up. Never re-runs the 5 sources - merged_context is already built.
     """
     try:
-        return normalize_participant_profile(merged_context, looking_for=looking_for, offerings=offerings)
+        return normalize_participant_profile(
+            merged_context, looking_for=looking_for, offerings=offerings, source_urls=source_urls
+        )
     except ProfileNormalizationError as first_error:
         logger.warning(
             f"Normalization failed, retrying once more after "
             f"{EXTRA_NORMALIZATION_RETRY_DELAY_SECONDS}s: {first_error}"
         )
         time.sleep(EXTRA_NORMALIZATION_RETRY_DELAY_SECONDS)
-        return normalize_participant_profile(merged_context, looking_for=looking_for, offerings=offerings)
+        return normalize_participant_profile(
+            merged_context, looking_for=looking_for, offerings=offerings, source_urls=source_urls
+        )
 
 
 def _embed_and_store(db: Session, participant: Participant, profile: dict) -> None:
@@ -148,6 +159,9 @@ def enrich_participant(self, participant_id: int) -> dict:
         _record_job(db, participant.id, EnrichmentSource.tavily_news, company_data.get("tavily_news"))
         _record_job(db, participant.id, EnrichmentSource.crunchbase, company_data.get("crunchbase"))
 
+        person_tavily = search_person(participant.name, participant.company)
+        _record_job(db, participant.id, EnrichmentSource.tavily_person, person_tavily.get("snippets"))
+
         linkedin_profile = scrape_linkedin_profile(participant.linkedin_url or "")
         _record_job(db, participant.id, EnrichmentSource.linkedin, linkedin_profile)
 
@@ -161,13 +175,23 @@ def enrich_participant(self, participant_id: int) -> dict:
             biggest_opportunity=participant.biggest_opportunity,
             company_enrichment=company_data,
             linkedin_profile=linkedin_profile,
+            person_tavily=person_tavily,
         )
+
+        source_urls = [
+            *(company_data.get("tavily_web_sources") or []),
+            *(company_data.get("tavily_news_sources") or []),
+            *(person_tavily.get("sources") or []),
+        ]
+        if participant.website:
+            source_urls.append(participant.website)
 
         try:
             profile = _normalize_with_one_extra_retry(
                 merged_context,
                 looking_for=participant.looking_for,
                 offerings=participant.offerings,
+                source_urls=source_urls,
             )
         except ProfileNormalizationError as e:
             _record_job(

@@ -36,3 +36,9 @@ class StructuredProfile(BaseModel):
     # the LLM couldn't confidently classify it. See
     # docs/CLIENT_FEEDBACK_GAP_ANALYSIS.md, Item 2.
     ecosystem_role: str | None = None
+    # Real URLs the enrichment pipeline actually fetched data from (Tavily
+    # company/person/news search results), deterministically collected in
+    # enrichment_tasks.py and stamped in by llm_normalizer.
+    # normalize_participant_profile's source_urls param - never asked of or
+    # produced by the LLM itself, to avoid hallucinated citations.
+    research_sources: list[str] = []
