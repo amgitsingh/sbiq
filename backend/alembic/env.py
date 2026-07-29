@@ -14,8 +14,12 @@ if config.config_file_name is not None:
 
 target_metadata = Base.metadata
 
-# Override sqlalchemy.url from environment settings
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+# Override sqlalchemy.url from environment settings. "%" must be escaped as
+# "%%" here - alembic.config.Config stores this in a ConfigParser, which
+# treats "%" as its own interpolation escape character (e.g. from a
+# URL-encoded special character in the password, like "%40" for "@") and
+# raises on read otherwise.
+config.set_main_option("sqlalchemy.url", settings.DATABASE_URL.replace("%", "%%"))
 
 
 def run_migrations_offline() -> None:
