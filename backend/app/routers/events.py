@@ -473,3 +473,76 @@ def list_matches(
             for m, is_mutual in page
         ],
     )
+
+
+class ParticipantMatchOut(BaseModel):
+    participant: MatchParticipantOut
+    rank: int | None = None
+    score: float | None = None
+    reasoning: list[str] | None = None
+    email_draft: str | None = None
+    linkedin_draft: str | None = None
+    status: str
+    # True if this recipient's own matching run independently selected this
+    # counterpart (a genuine match_writer.store_match row - has real
+    # personalized drafts). False means this match was only auto-received via
+    # CLAUDE.md's bidirectional-matching rule (the counterpart selected this
+    # recipient, not the other way around) - email_draft/linkedin_draft are
+    # null in that case, since they were never generated from this
+    # recipient's perspective. See match_writer.store_match's docstring.
+    self_selected: bool
+
+
+class ParticipantMatchesOut(BaseModel):
+    recipient: MatchParticipantOut
+    matches: list[ParticipantMatchOut]
+
+
+@router.get("/{event_id}/participants/{participant_id}/matches", response_model=ParticipantMatchesOut)
+def get_participant_matches(event_id: int, participant_id: int, db: Session = Depends(get_db)) -> ParticipantMatchesOut:
+    """One participant's own match list - the "recipient -> matches" shape,
+    mirroring docs/nabaruns-enrichment-example.json's response format.
+
+    Rows are looked up by participant_a_id == participant_id: per
+    match_writer.store_match, participant_a is always "self" on a row -
+    genuine self-selected matches (is_bidirectional=False) and matches
+    auto-received via the bidirectional rule (is_bidirectional=True) both
+    land here already correctly signed for this participant's perspective,
+    with no dedup needed (unlike list_matches, this is a directional view by
+    design, not a pair-level one).
+
+    Ordered by rank ascending (nulls last) - the LLM's own best-to-worst
+    ranking of this participant's final 3-5 matches.
+    """
+    _get_event_or_404(event_id, db)
+
+    participant = (
+        db.query(Participant).filter(Participant.id == participant_id, Participant.event_id == event_id).first()
+    )
+    if participant is None:
+        raise HTTPException(status_code=404, detail=f"Participant {participant_id} not found in event {event_id}")
+
+    rows = (
+        db.query(Match)
+        .filter(Match.event_id == event_id, Match.participant_a_id == participant_id)
+        .options(joinedload(Match.participant_b))
+        .order_by(Match.rank.asc().nulls_last())
+        .all()
+    )
+
+    return ParticipantMatchesOut(
+        recipient=MatchParticipantOut.model_validate(participant),
+        matches=[
+            ParticipantMatchOut(
+                participant=MatchParticipantOut.model_validate(m.participant_b),
+                rank=m.rank,
+                score=m.score,
+                reasoning=m.reasoning,
+                email_draft=m.email_draft,
+                linkedin_draft=m.linkedin_draft,
+                status=m.status,
+                self_selected=not m.is_bidirectional,
+            )
+            for m in rows
+        ],
+    )
