@@ -10,6 +10,7 @@ from app.models.participant import EnrichmentStatus, Participant
 from app.models.participant_embedding import ParticipantEmbedding
 from app.services.ingestion import run_ingestion_pipeline
 from app.services.matching.cost_estimator import estimate_matching_run_cost
+from app.services.matching.decision_authority import classify_seniority
 from app.workers.embedding_tasks import batch_embed_event
 from app.workers.enrichment_tasks import batch_enrich_event
 from app.workers.matching_tasks import batch_match_event
@@ -143,6 +144,153 @@ def list_events(db: Session = Depends(get_db)) -> list[Event]:
 def list_participants(event_id: int, db: Session = Depends(get_db)) -> list[Participant]:
     _get_event_or_404(event_id, db)
     return db.query(Participant).filter(Participant.event_id == event_id).all()
+
+
+class ParticipantPersonDetailOut(BaseModel):
+    name: str
+    title: str | None = None
+    # "senior" / "mid_level" / null - derived on the fly from `designation` via
+    # the same classifier the rule engine's decision_authority_score uses
+    # (app.services.matching.decision_authority.classify_seniority), not a
+    # stored field. Nabarun's sample used a richer label ("owner") than our
+    # classifier distinguishes - ours is a 3-bucket classifier, not a titled
+    # role lookup.
+    decision_authority: str | None = None
+    linkedin_url: str | None = None
+    # Not in Nabarun's shape - ours, kept because it's real and valuable.
+    ecosystem_role: str | None = None
+
+
+class ParticipantCompanyDetailOut(BaseModel):
+    name: str | None = None
+    website: str | None = None
+    employees: str | None = None
+    # Nabarun's shape nests "needs" under company - here it's participant.
+    # looking_for verbatim (CLAUDE.md's verbatim-from-Excel guarantee), not an
+    # LLM-synthesized field.
+    needs: str | None = None
+    # Not in Nabarun's shape - the natural counterpart to `needs`, real data
+    # we have (participant.offerings, also verbatim).
+    offerings: str | None = None
+    industry: str | None = None
+    products: list[str] = []
+    services: list[str] = []
+    markets: list[str] = []
+    customers: list[str] = []
+    technologies: list[str] = []
+    headquarters: str | None = None
+    funding_stage: str | None = None
+    investors: list[str] = []
+    recent_news: list[str] = []
+    summary: str | None = None
+    # The following Nabarun-shape fields are deliberately always null - this
+    # app's enrichment schema is fact-only by design (no inferential/
+    # LLM-guessed business judgments like a budget-band or market-position
+    # estimate). Kept here only for shape parity with
+    # docs/nabaruns-enrichment-example.json.
+    classification: str | None = None
+    market_position: str | None = None
+    commercial_proposition: str | None = None
+    ideal_counterpart: str | None = None
+    amsterdam_visibility: str | None = None
+    estimated_budget_band: str | None = None
+    existing_partnerships: list[str] = []
+
+
+class ParticipantEnrichmentDetailOut(BaseModel):
+    # research_sources: real, deterministically-collected URLs (never
+    # LLM-produced - see llm_normalizer.normalize_participant_profile).
+    sources: list[str] = []
+    # Closest real analog to Nabarun's "notes" - the LLM's own synthesized
+    # company.summary.
+    notes: str | None = None
+    # Always null - this app doesn't compute a confidence score (part of the
+    # same "fact-only, no inferential fields" decision as company.
+    # market_position etc. above).
+    confidence: float | None = None
+    research_confidence: float | None = None
+
+
+class ParticipantDetailOut(BaseModel):
+    id: int
+    tier: str
+    flags: list[str] = []
+    person: ParticipantPersonDetailOut
+    email: str | None = None
+    phone: str | None = None
+    company: ParticipantCompanyDetailOut
+    enrichment: ParticipantEnrichmentDetailOut
+
+
+_SENIORITY_LABELS = {1.0: "senior", 0.5: "mid_level"}
+
+
+@router.get("/{event_id}/participants/{participant_id}", response_model=ParticipantDetailOut)
+def get_participant_detail(event_id: int, participant_id: int, db: Session = Depends(get_db)) -> ParticipantDetailOut:
+    """Full participant detail, shaped to mirror
+    docs/nabaruns-enrichment-example.json's schema as closely as this app's
+    actual data supports.
+
+    Every field either maps 1:1 to a real column/structured_profile value, or
+    is explicitly always-null with a comment explaining why (this app's
+    enrichment is deliberately fact-only - no invented business judgments) -
+    never a fabricated guess dressed up to fit Nabarun's shape.
+    """
+    _get_event_or_404(event_id, db)
+
+    participant = (
+        db.query(Participant).filter(Participant.id == participant_id, Participant.event_id == event_id).first()
+    )
+    if participant is None:
+        raise HTTPException(status_code=404, detail=f"Participant {participant_id} not found in event {event_id}")
+
+    profile = participant.structured_profile or {}
+    company_profile = profile.get("company") or {}
+
+    flags = []
+    if participant.participant_status == "review":
+        flags.append("review")
+    if participant.enrichment_status == "failed":
+        flags.append("enrichment_failed")
+    if participant.matching_status == "failed":
+        flags.append("matching_failed")
+
+    return ParticipantDetailOut(
+        id=participant.id,
+        tier=participant.membership_tier,
+        flags=flags,
+        person=ParticipantPersonDetailOut(
+            name=participant.name,
+            title=participant.designation,
+            decision_authority=_SENIORITY_LABELS.get(classify_seniority(participant.designation)),
+            linkedin_url=participant.linkedin_url,
+            ecosystem_role=profile.get("ecosystem_role"),
+        ),
+        email=participant.email,
+        phone=participant.phone,
+        company=ParticipantCompanyDetailOut(
+            name=participant.company or company_profile.get("name"),
+            website=participant.website or company_profile.get("website"),
+            employees=company_profile.get("employee_count"),
+            needs=participant.looking_for,
+            offerings=participant.offerings,
+            industry=company_profile.get("industry"),
+            products=company_profile.get("products") or [],
+            services=company_profile.get("services") or [],
+            markets=company_profile.get("markets") or [],
+            customers=company_profile.get("customers") or [],
+            technologies=company_profile.get("technologies") or [],
+            headquarters=company_profile.get("headquarters"),
+            funding_stage=company_profile.get("funding_stage"),
+            investors=company_profile.get("investors") or [],
+            recent_news=company_profile.get("recent_news") or [],
+            summary=company_profile.get("summary"),
+        ),
+        enrichment=ParticipantEnrichmentDetailOut(
+            sources=profile.get("research_sources") or [],
+            notes=company_profile.get("summary"),
+        ),
+    )
 
 
 @router.post("/{event_id}/upload", response_model=UploadSummary)
