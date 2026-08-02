@@ -1,12 +1,13 @@
 from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFile, status
 from pydantic import BaseModel, ConfigDict
+from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.database import get_db
 from app.models.enrichment_job import EnrichmentJob
 from app.models.event import Event
 from app.models.match import Match
-from app.models.participant import EnrichmentStatus, Participant
+from app.models.participant import EnrichmentStatus, MembershipTier, Participant, ParticipantStatus
 from app.models.participant_embedding import ParticipantEmbedding
 from app.services.ingestion import run_ingestion_pipeline
 from app.services.matching.cost_estimator import estimate_matching_run_cost
@@ -439,6 +440,74 @@ def trigger_embedding(event_id: int, db: Session = Depends(get_db)) -> EmbedTrig
     )
 
 
+class ParticipantEmbeddingStatusOut(BaseModel):
+    participant_id: int
+    name: str
+    enrichment_status: str
+    embedded: bool
+
+
+class EmbeddingStatusSummary(BaseModel):
+    total: int
+    enriched: int
+    embedded: int
+    pending: int
+    participants: list[ParticipantEmbeddingStatusOut]
+
+
+@router.get("/{event_id}/embedding-status", response_model=EmbeddingStatusSummary)
+def get_embedding_status(event_id: int, db: Session = Depends(get_db)) -> EmbeddingStatusSummary:
+    """Per-participant embedding status, mirroring get_enrichment_status's
+    shape. embed_participant/generate_embedding (Task 22/23) have no status
+    field of their own on Participant - "embedded" here is purely "does a
+    participant_embeddings row exist for this event," which is what
+    trigger_matching's own pre-flight check (POST /{event_id}/match) already
+    relies on to decide whether matching can run.
+
+    `pending` counts enriched participants with no embedding yet - either
+    still queued behind a slow embedding job, or a swallowed failure from
+    Task 23's best-effort automatic embedding attempt (see
+    _embed_and_store in enrichment_tasks.py) that never got retried via
+    POST /{event_id}/embed.
+    """
+    _get_event_or_404(event_id, db)
+
+    participants = db.query(Participant).filter(Participant.event_id == event_id).all()
+    embedded_ids = {
+        pid
+        for (pid,) in db.query(ParticipantEmbedding.participant_id)
+        .filter(ParticipantEmbedding.event_id == event_id)
+        .all()
+    }
+
+    enriched_count = 0
+    embedded_count = 0
+    participants_out = []
+    for p in participants:
+        is_enriched = p.enrichment_status == EnrichmentStatus.done
+        is_embedded = p.id in embedded_ids
+        if is_enriched:
+            enriched_count += 1
+        if is_embedded:
+            embedded_count += 1
+        participants_out.append(
+            ParticipantEmbeddingStatusOut(
+                participant_id=p.id,
+                name=p.name,
+                enrichment_status=p.enrichment_status,
+                embedded=is_embedded,
+            )
+        )
+
+    return EmbeddingStatusSummary(
+        total=len(participants),
+        enriched=enriched_count,
+        embedded=embedded_count,
+        pending=enriched_count - embedded_count,
+        participants=participants_out,
+    )
+
+
 @router.post("/{event_id}/match", response_model=MatchTriggerResult)
 def trigger_matching(
     event_id: int, response: Response, confirm: bool = False, db: Session = Depends(get_db)
@@ -502,6 +571,82 @@ def trigger_matching(
         cost=cost,
         job_id=async_result.id,
         estimated_duration_seconds=cost.matching_eligible_count * ESTIMATED_SECONDS_PER_MATCH_JOB,
+    )
+
+
+class ParticipantMatchingStatusOut(BaseModel):
+    participant_id: int
+    name: str
+    matching_status: str
+    eligible: bool
+    match_count: int
+
+
+class MatchingStatusSummary(BaseModel):
+    total: int
+    eligible: int
+    pending: int
+    matching: int
+    done: int
+    failed: int
+    participants: list[ParticipantMatchingStatusOut]
+
+
+@router.get("/{event_id}/matching-status", response_model=MatchingStatusSummary)
+def get_matching_status(event_id: int, db: Session = Depends(get_db)) -> MatchingStatusSummary:
+    """Per-participant matching status, mirroring get_enrichment_status's
+    shape. `eligible` mirrors batch_match_event's own dispatch filter exactly
+    (membership_tier != non_member AND participant_status != review) - non-
+    members/review-flagged participants are never dispatched as the primary
+    subject (per CLAUDE.md's Priority & Eligibility Rules), so their
+    matching_status just stays at its default ('pending') forever, not a
+    sign anything is stuck.
+
+    match_count is this participant's own row count as participant_a_id
+    (GET /{event_id}/participants/{participant_id}/matches uses the same
+    query) - includes both self-selected matches and ones auto-received via
+    the bidirectional rule, so it can be >0 even for an `eligible=False`
+    participant who never ran their own matching pass.
+    """
+    _get_event_or_404(event_id, db)
+
+    participants = db.query(Participant).filter(Participant.event_id == event_id).all()
+
+    match_counts = dict(
+        db.query(Match.participant_a_id, func.count(Match.id))
+        .filter(Match.event_id == event_id)
+        .group_by(Match.participant_a_id)
+        .all()
+    )
+
+    counts = {"pending": 0, "matching": 0, "done": 0, "failed": 0}
+    eligible_count = 0
+    participants_out = []
+    for p in participants:
+        is_eligible = (
+            p.membership_tier != MembershipTier.non_member and p.participant_status != ParticipantStatus.review
+        )
+        if is_eligible:
+            eligible_count += 1
+            counts[p.matching_status] += 1
+        participants_out.append(
+            ParticipantMatchingStatusOut(
+                participant_id=p.id,
+                name=p.name,
+                matching_status=p.matching_status,
+                eligible=is_eligible,
+                match_count=match_counts.get(p.id, 0),
+            )
+        )
+
+    return MatchingStatusSummary(
+        total=len(participants),
+        eligible=eligible_count,
+        pending=counts["pending"],
+        matching=counts["matching"],
+        done=counts["done"],
+        failed=counts["failed"],
+        participants=participants_out,
     )
 
 
