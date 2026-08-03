@@ -182,6 +182,28 @@ similar hidden dependency, add it here.
   Python-side enum parsing on read, since nothing at the DB layer prevents or
   flags the mismatch.
 
+## Email / SMTP (`SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_USE_TLS`, `SMTP_FROM_EMAIL`)
+
+- **`POST /events/{event_id}/matches/send-email` fails with a 502, not a 500,
+  if these are unset or the SMTP server rejects the connection** —
+  `email_sender.send_email` raises `EmailSendError` for both "not configured"
+  and any `smtplib`/`OSError` failure, and the router maps that to 502
+  uniformly. Check `SMTP_HOST`/`SMTP_FROM_EMAIL` are actually set before
+  assuming it's a network problem.
+- **The `From` header is always `SMTP_FROM_EMAIL`, never the sending
+  participant's real address.** This is intentional, not a shortcut — most
+  mail servers reject or spam-flag a `From` outside the authenticated
+  account's own domain (no SPF/DKIM for a participant's domain). The sending
+  participant's name is the display name and their real address is
+  `Reply-To`, so replies still land with them directly.
+- **This is plain generic SMTP, not SendGrid/Resend** (the two options
+  CLAUDE.md's tech stack table names for Phase 2 email delivery). It's a
+  lighter-weight interim path scoped to a single endpoint
+  (send-one-match-email), not the full Phase 2 email delivery system —
+  swapping to SendGrid/Resend later only requires changing
+  `app/services/email_sender.py`, since it's the sole caller of these
+  settings.
+
 ## Supabase (`SUPABASE_URL`, `SUPABASE_KEY`)
 
 - **Configured but not wired to anything yet.** The actual DB connection today is

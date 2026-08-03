@@ -214,5 +214,11 @@ AI_MAX_TOKENS_PER_RUN=...               # cost cap
 Phase 1 features are frozen. Any new requests go to the Phase 2 backlog. Phase 1 scope:
 - CSV/Excel ingestion only (no Eventbrite API — that is Phase 2)
 - Admin panel only (no participant-facing portal — Phase 2)
-- Export to CSV/Excel only (no email delivery — Phase 2)
+- Export to CSV/Excel only
 - English only (multi-language is permanently out of scope)
+
+**Exception:** `POST /events/{event_id}/matches/send-email` (generic SMTP,
+`app/services/email_sender.py`) was added ahead of the Phase 2 email-delivery
+line item, at explicit user request — a single "send this one match's
+email_draft" action, not the full Phase 2 delivery system (bulk sends,
+templates, SendGrid/Resend, delivery tracking are still Phase 2 backlog).

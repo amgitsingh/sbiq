@@ -46,5 +46,20 @@ class Settings(BaseSettings):
     CELERY_BROKER_URL: str = "redis://localhost:6379/0"
     CELERY_RESULT_BACKEND: str = "redis://localhost:6379/1"
 
+    # Email (SMTP) — used to deliver a match's email_draft "on behalf of" the
+    # participant who selected the match. Generic SMTP, not SendGrid/Resend
+    # (CLAUDE.md names both as the eventual Phase 2 options; this is a
+    # lighter-weight interim path — swap providers later without touching
+    # callers, since app.services.email_sender is the only place that reads
+    # these).
+    SMTP_HOST: str = ""
+    SMTP_PORT: int = 587
+    SMTP_USERNAME: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_USE_TLS: bool = True
+    # The actual `From` address — always this, never a participant's own
+    # address. See email_sender.send_email's docstring for why.
+    SMTP_FROM_EMAIL: str = ""
+
 
 settings = Settings()

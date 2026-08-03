@@ -11,6 +11,7 @@ from app.models.participant import EnrichmentStatus, MembershipTier, Participant
 from app.models.participant_embedding import ParticipantEmbedding
 from app.services.ingestion import run_ingestion_pipeline
 from app.services.matching.cost_estimator import estimate_matching_run_cost
+from app.services.email_sender import EmailSendError, send_email
 from app.services.matching.decision_authority import classify_seniority
 from app.workers.embedding_tasks import batch_embed_event
 from app.workers.enrichment_tasks import batch_enrich_event
@@ -839,3 +840,97 @@ def get_participant_matches(event_id: int, participant_id: int, db: Session = De
             for m in rows
         ],
     )
+
+
+class SendMatchEmailRequest(BaseModel):
+    participant_a_id: int
+    participant_b_id: int
+
+
+class SendMatchEmailResult(BaseModel):
+    match_id: int
+    sent_to: str
+    sent_as: str
+
+
+@router.post("/{event_id}/matches/send-email", response_model=SendMatchEmailResult)
+def send_match_email(
+    event_id: int, payload: SendMatchEmailRequest, db: Session = Depends(get_db)
+) -> SendMatchEmailResult:
+    """Send participant A's own match email_draft to participant B, framed as
+    coming from A (display name + Reply-To — see email_sender.send_email's
+    docstring for why the actual `From` address can't be A's real one).
+
+    Looks up the match row keyed exactly (participant_a_id, participant_b_id):
+    per match_writer.store_match, only the genuine self-selected side
+    (is_bidirectional=False) has a real email_draft — the auto-created mirror
+    row on the reverse pair has a null draft. So this only works in the
+    direction the match was actually generated for; swapping a/b only works
+    if B independently selected A too.
+    """
+    _get_event_or_404(event_id, db)
+
+    participant_a = (
+        db.query(Participant)
+        .filter(Participant.id == payload.participant_a_id, Participant.event_id == event_id)
+        .first()
+    )
+    if participant_a is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Participant {payload.participant_a_id} not found in event {event_id}",
+        )
+
+    participant_b = (
+        db.query(Participant)
+        .filter(Participant.id == payload.participant_b_id, Participant.event_id == event_id)
+        .first()
+    )
+    if participant_b is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Participant {payload.participant_b_id} not found in event {event_id}",
+        )
+    if not participant_b.email:
+        raise HTTPException(
+            status_code=400, detail=f"Participant {participant_b.id} has no email on file"
+        )
+
+    match = (
+        db.query(Match)
+        .filter(
+            Match.event_id == event_id,
+            Match.participant_a_id == payload.participant_a_id,
+            Match.participant_b_id == payload.participant_b_id,
+        )
+        .first()
+    )
+    if match is None:
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                f"No match from participant {payload.participant_a_id} to "
+                f"{payload.participant_b_id} in event {event_id}"
+            ),
+        )
+    if not match.email_draft:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "This match has no email draft to send — likely the auto-received "
+                "side of a bidirectional match, not participant A's own selection"
+            ),
+        )
+
+    try:
+        send_email(
+            to_email=participant_b.email,
+            subject=f"Introduction from {participant_a.name}",
+            body=match.email_draft,
+            reply_to=participant_a.email,
+            from_display_name=f"{participant_a.name} via QBCals",
+        )
+    except EmailSendError as e:
+        raise HTTPException(status_code=502, detail=f"Failed to send email: {e}")
+
+    return SendMatchEmailResult(match_id=match.id, sent_to=participant_b.email, sent_as=participant_a.name)
