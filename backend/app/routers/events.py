@@ -7,7 +7,13 @@ from app.core.database import get_db
 from app.models.enrichment_job import EnrichmentJob
 from app.models.event import Event
 from app.models.match import Match
-from app.models.participant import EnrichmentStatus, MembershipTier, Participant, ParticipantStatus
+from app.models.participant import (
+    EnrichmentStatus,
+    MatchingStatus,
+    MembershipTier,
+    Participant,
+    ParticipantStatus,
+)
 from app.models.participant_embedding import ParticipantEmbedding
 from app.services.ingestion import run_ingestion_pipeline
 from app.services.matching.cost_estimator import estimate_matching_run_cost
@@ -790,6 +796,29 @@ class ParticipantMatchOut(BaseModel):
 class ParticipantMatchesOut(BaseModel):
     recipient: MatchParticipantOut
     matches: list[ParticipantMatchOut]
+    # Human-readable explanation, set only when matches is empty - distinguishes
+    # "not eligible to be matched" / "matching hasn't run yet" / "matching
+    # failed" / "ran fine but genuinely found nothing" instead of leaving the
+    # caller to guess what an empty list means. None whenever matches is non-empty.
+    message: str | None = None
+
+
+def _no_matches_message(participant: Participant) -> str:
+    """Explain an empty match list for one participant.
+
+    Mirrors get_matching_status's own eligibility check (membership_tier !=
+    non_member and participant_status != review) so the reason given here is
+    never inconsistent with what that endpoint reports.
+    """
+    if participant.membership_tier == MembershipTier.non_member:
+        return "This participant is a non-member and is not eligible to receive matches."
+    if participant.participant_status == ParticipantStatus.review:
+        return "This participant is flagged for admin review and has not been matched yet."
+    if participant.matching_status in (MatchingStatus.pending, MatchingStatus.matching):
+        return "Matching hasn't completed for this participant yet - check back after the run finishes."
+    if participant.matching_status == MatchingStatus.failed:
+        return "The matching run failed for this participant - check the matching logs."
+    return "No suitable matches were found for this participant."
 
 
 @router.get("/{event_id}/participants/{participant_id}/matches", response_model=ParticipantMatchesOut)
@@ -839,6 +868,7 @@ def get_participant_matches(event_id: int, participant_id: int, db: Session = De
             )
             for m in rows
         ],
+        message=_no_matches_message(participant) if not rows else None,
     )
 
 
