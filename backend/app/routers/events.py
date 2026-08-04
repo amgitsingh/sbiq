@@ -16,6 +16,7 @@ from app.models.participant import (
 )
 from app.models.participant_embedding import ParticipantEmbedding
 from app.services.ingestion import run_ingestion_pipeline
+from app.services.template_generator import generate_participant_template
 from app.services.matching.cost_estimator import estimate_matching_run_cost
 from app.services.email_sender import EmailSendError, send_email
 from app.services.matching.decision_authority import classify_seniority
@@ -298,6 +299,28 @@ def get_participant_detail(event_id: int, participant_id: int, db: Session = Dep
             sources=profile.get("research_sources") or [],
             notes=company_profile.get("summary"),
         ),
+    )
+
+
+@router.get("/participants-template")
+def download_participant_template() -> Response:
+    """Blank .xlsx to fill in and upload via POST /{event_id}/upload.
+
+    Not event-scoped (no event_id in the path) - the column shape is the
+    same for every event, so one static template covers all of them.
+
+    Mandatory columns (Name, Email, Company - exactly the three fields
+    validation.validate_rows rejects a row for missing, see
+    template_generator.TEMPLATE_COLUMNS) are bold and highlighted; every
+    other column is optional. Header labels are chosen to auto-map via
+    header_mapper.CANONICAL_HEADERS, so a filled-in copy of this template
+    re-uploaded as-is produces zero unmapped_headers.
+    """
+    content = generate_participant_template()
+    return Response(
+        content=content,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": 'attachment; filename="participant_upload_template.xlsx"'},
     )
 
 
