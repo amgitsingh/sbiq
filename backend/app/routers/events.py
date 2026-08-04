@@ -834,8 +834,12 @@ def get_participant_matches(event_id: int, participant_id: int, db: Session = De
     with no dedup needed (unlike list_matches, this is a directional view by
     design, not a pair-level one).
 
-    Ordered by rank ascending (nulls last) - the LLM's own best-to-worst
-    ranking of this participant's final 3-5 matches.
+    Ordered by score descending (nulls last) - the rule-engine composite
+    percentage, highest match quality first. Falls back to rank ascending as
+    a tiebreak when scores are equal, since rank is otherwise a reasonable
+    secondary ordering (the LLM's own best-to-worst judgment call) - but score
+    is primary, since "sorted percentage-wise" is what callers actually see
+    and act on.
     """
     _get_event_or_404(event_id, db)
 
@@ -849,7 +853,7 @@ def get_participant_matches(event_id: int, participant_id: int, db: Session = De
         db.query(Match)
         .filter(Match.event_id == event_id, Match.participant_a_id == participant_id)
         .options(joinedload(Match.participant_b))
-        .order_by(Match.rank.asc().nulls_last())
+        .order_by(Match.score.desc().nulls_last(), Match.rank.asc().nulls_last())
         .all()
     )
 

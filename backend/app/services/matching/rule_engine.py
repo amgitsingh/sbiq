@@ -46,6 +46,25 @@ def _ecosystem_role(p: Participant) -> str | None:
     return (p.structured_profile or {}).get("ecosystem_role")
 
 
+def _company_size(p: Participant) -> str | None:
+    """participant.company_size verbatim (from Excel), falling back to
+    enrichment's structured_profile.company.employee_count when the raw
+    ingested column is empty.
+
+    Real-world gap this closes: company_size is only ever set at ingestion
+    time from a mapped Excel column - if the source file has no such column
+    (confirmed for real against event 35, where all 75 rows have
+    company_size=None), company_size_score silently returns 0.0 for every
+    single pair, permanently zeroing out its full SIZE_WEIGHT share of the
+    composite even though enrichment already fetched a usable employee count
+    for a meaningful fraction of participants (Crunchbase/website/LinkedIn,
+    per CLAUDE.md's enrichment field mapping) that was simply never consulted
+    here. _parse_employee_count already tolerates free text (ranges, "FTE"/
+    "medewerkers" suffixes, thousands commas), so no extra parsing is needed.
+    """
+    return p.company_size or (p.structured_profile or {}).get("company", {}).get("employee_count")
+
+
 def score_pair(a: Participant, b: Participant) -> dict:
     """Composite rule-engine score for one candidate pair - symmetric, i.e.
     score_pair(a, b) == score_pair(b, a) in everything but which participant_id
@@ -68,7 +87,7 @@ def score_pair(a: Participant, b: Participant) -> dict:
         b_offerings=b.offerings,
     )
     sector = sector_alignment_score(a.sector, b.sector)
-    size = company_size_score(a.company_size, b.company_size)
+    size = company_size_score(_company_size(a), _company_size(b))
     role_adjacency = role_adjacency_score(_ecosystem_role(a), _ecosystem_role(b))
     decision_authority = decision_authority_score(a.designation, b.designation)
     composite = (
