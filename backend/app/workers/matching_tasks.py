@@ -2,9 +2,10 @@ import logging
 from typing import cast
 
 from app.core.database import session_scope
+from app.models.event import Event
 from app.models.participant import MatchingStatus, MembershipTier, Participant, ParticipantStatus
 from app.models.participant_embedding import ParticipantEmbedding
-from app.services.matching.llm_matcher import MatchSelectionError, select_matches
+from app.services.matching.llm_matcher import MatchSelectionError, build_event_context, select_matches
 from app.services.matching.match_writer import store_match
 from app.services.matching.rule_engine import TIER_PROCESSING_ORDER, rank_candidates
 from app.workers.celery_app import celery_app
@@ -21,6 +22,11 @@ def match_participant(self, participant_id: int, event_id: int) -> dict:
     """Run the matching pipeline for one participant: similarity search ->
     rule engine -> LLM reasoning -> store match records -> enforce
     bidirectional (Tasks 24, 28, 29, 30 respectively).
+
+    Also fetches the parent Event and, if it has any of agenda/
+    matching_goals/target_sectors set, feeds them to the LLM as event context
+    (see llm_matcher.build_event_context) so reasoning/drafts are grounded in
+    this event's actual purpose, not generated from participant profiles alone.
 
     Skips (doesn't fail) non-members and review-flagged participants even if
     called directly - same eligibility rule Task 28's batch entry point
@@ -72,8 +78,11 @@ def match_participant(self, participant_id: int, event_id: int) -> dict:
             if c["participant_id"] in candidate_participants
         ]
 
+        event = db.get(Event, event_id)
+        event_context = build_event_context(event) if event else None
+
         try:
-            selected = select_matches(structured_profile, candidates_with_profile)
+            selected = select_matches(structured_profile, candidates_with_profile, event_context)
         except MatchSelectionError as e:
             logger.warning(f"Match selection failed for participant {participant_id}: {e}")
             participant.matching_status = MatchingStatus.failed

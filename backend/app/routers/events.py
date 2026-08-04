@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFile, status
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
@@ -41,10 +41,36 @@ MAX_MATCHES_LIMIT = 200
 router = APIRouter(prefix="/events", tags=["events"])
 
 
+# Suggested, not enforced - see app/models/event.py's Event.target_sectors
+# comment for why. Reuses sector_size.SECTOR_KEYWORDS' taxonomy so values
+# stay comparable to what classify_sector() assigns participants.
+SUGGESTED_TARGET_SECTORS = [
+    "finance_banking", "real_estate", "health_wellness", "hospitality_tourism",
+    "culture_entertainment", "media_photography", "education_training",
+    "administrative_hr", "technology", "retail_ecommerce", "manufacturing",
+    "consulting", "legal", "logistics", "construction", "agriculture_food",
+    "energy", "nonprofit_government", "telecommunications",
+]
+
+# Suggested, not enforced - a starting list, not derived from existing code
+# (see Event.event_type's comment).
+SUGGESTED_EVENT_TYPES = ["networking", "pitch_day", "conference", "trade_show", "workshop", "mixer", "panel"]
+
+
 class EventCreate(BaseModel):
     name: str
     date: str | None = None
     description: str | None = None
+    agenda: str | None = None
+    matching_goals: str | None = None
+    target_sectors: list[str] | None = Field(
+        default=None,
+        description=f"Not enforced - suggested values: {', '.join(SUGGESTED_TARGET_SECTORS)}",
+    )
+    event_type: str | None = Field(
+        default=None, description=f"Not enforced - suggested values: {', '.join(SUGGESTED_EVENT_TYPES)}"
+    )
+    expected_participant_count: int | None = None
 
 
 class EventOut(BaseModel):
@@ -55,6 +81,11 @@ class EventOut(BaseModel):
     date: str | None = None
     description: str | None = None
     status: str
+    agenda: str | None = None
+    matching_goals: str | None = None
+    target_sectors: list[str] | None = None
+    event_type: str | None = None
+    expected_participant_count: int | None = None
 
 
 class ParticipantOut(BaseModel):
@@ -137,7 +168,16 @@ def _get_event_or_404(event_id: int, db: Session) -> Event:
 
 @router.post("", response_model=EventOut, status_code=201)
 def create_event(payload: EventCreate, db: Session = Depends(get_db)) -> Event:
-    event = Event(name=payload.name, date=payload.date, description=payload.description)
+    event = Event(
+        name=payload.name,
+        date=payload.date,
+        description=payload.description,
+        agenda=payload.agenda,
+        matching_goals=payload.matching_goals,
+        target_sectors=payload.target_sectors,
+        event_type=payload.event_type,
+        expected_participant_count=payload.expected_participant_count,
+    )
     db.add(event)
     db.commit()
     db.refresh(event)

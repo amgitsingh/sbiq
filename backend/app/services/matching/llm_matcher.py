@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 
+from app.models.event import Event
 from app.services.ai_client import chat_json_with_usage
 from app.services.json_utils import strip_markdown_fence
 from app.services.matching.match_schema import MatchSelection
@@ -18,6 +19,10 @@ platform. You will be given one participant's profile and a shortlist of candida
 profiles that a deterministic rule engine has already pre-filtered for them, along \
 with each candidate's rule-engine score. Your job is to select the best matches from \
 this shortlist and write a short rationale and outreach drafts for each.
+
+You may also be given an EVENT CONTEXT section describing this specific event's \
+purpose and matchmaking goals - when present, weigh it when judging fit and let it \
+inform your reasoning bullets and drafts, not just the two participants' profiles.
 
 Respond with a single JSON object with exactly this shape:
 {
@@ -72,12 +77,38 @@ def _format_profile(profile: dict) -> str:
     return "\n".join(lines)
 
 
-def build_matching_prompt(participant_profile: dict, candidates: list[dict]) -> str:
+def build_event_context(event: Event) -> str | None:
+    """Assemble a short event-context block from agenda/matching_goals/
+    target_sectors, for prepending to the matching prompt. Returns None if
+    all three are blank, so callers can skip the section entirely rather
+    than emit an empty/pointless header.
+    """
+    lines: list[str] = []
+    if event.agenda:
+        lines.append(f"Agenda: {event.agenda}")
+    if event.matching_goals:
+        lines.append(f"Matching goals: {event.matching_goals}")
+    if event.target_sectors:
+        lines.append(f"Target sectors: {', '.join(event.target_sectors)}")
+    return "\n".join(lines) if lines else None
+
+
+def build_matching_prompt(
+    participant_profile: dict, candidates: list[dict], event_context: str | None = None
+) -> str:
     """candidates: [{"participant_id", "profile", "composite_score",
     "token_overlap", "sector_score", "size_score"}, ...] - rule_engine.py's
     output shape, joined with each candidate's structured_profile by the caller.
+
+    event_context: pre-built via build_event_context() - kept as a plain
+    string param here (rather than accepting the Event itself) so this
+    function stays testable without a real Event/DB object.
     """
-    lines = ["=== PARTICIPANT (selecting matches for this person) ===", _format_profile(participant_profile), ""]
+    lines: list[str] = []
+    if event_context:
+        lines.extend(["=== EVENT CONTEXT ===", event_context, ""])
+
+    lines += ["=== PARTICIPANT (selecting matches for this person) ===", _format_profile(participant_profile), ""]
 
     lines.append("=== CANDIDATES (pre-filtered by the rule engine) ===")
     for c in candidates:
@@ -120,7 +151,9 @@ def _validate_selection(selection: MatchSelection, valid_ids: set[int]) -> None:
         raise ValueError(f"Ranks must be a contiguous sequence starting at 1, got {sorted(seen_ranks)}")
 
 
-def select_matches(participant_profile: dict, candidates: list[dict]) -> list[dict]:
+def select_matches(
+    participant_profile: dict, candidates: list[dict], event_context: str | None = None
+) -> list[dict]:
     """Send a participant's profile + their rule-engine candidate shortlist to
     the LLM (JSON mode enforced) and return the selected matches as plain
     dicts. Retries once on any failure - invalid JSON, schema validation
@@ -130,12 +163,15 @@ def select_matches(participant_profile: dict, candidates: list[dict]) -> list[di
 
     Returns [] immediately, with no LLM call, if given no candidates - nothing
     to select from.
+
+    event_context: see build_event_context() - passed through untouched to
+    build_matching_prompt.
     """
     if not candidates:
         return []
 
     valid_ids = {c["participant_id"] for c in candidates}
-    user_prompt = build_matching_prompt(participant_profile, candidates)
+    user_prompt = build_matching_prompt(participant_profile, candidates, event_context)
 
     last_error: Exception | None = None
     for attempt in range(1, MAX_ATTEMPTS + 1):

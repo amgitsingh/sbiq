@@ -29,6 +29,34 @@ class Event(Base):
     date: Mapped[str | None] = mapped_column(String(50))
     description: Mapped[str | None] = mapped_column(Text)
     matching_rules: Mapped[dict | None] = mapped_column(JSON)
+
+    # Purpose/description of the event - what happens, why it's being run.
+    agenda: Mapped[str | None] = mapped_column(Text)
+    # Explicit "who should meet whom" intent (e.g. "connect early-stage
+    # founders with Series A investors") - distinct from agenda, written
+    # specifically as guidance for the matching LLM, not just event
+    # description. See llm_matcher.build_event_context, which reads this.
+    matching_goals: Mapped[str | None] = mapped_column(Text)
+    # Sectors the event is centered on. Free text/JSON list, not enforced -
+    # deliberately kept open in case a real event doesn't fit the known list.
+    # Suggested vocabulary: reuse app.services.matching.sector_size's
+    # SECTOR_KEYWORDS categories (finance_banking, real_estate,
+    # health_wellness, hospitality_tourism, culture_entertainment,
+    # media_photography, education_training, administrative_hr, technology,
+    # retail_ecommerce, manufacturing, consulting, legal, logistics,
+    # construction, agriculture_food, energy, nonprofit_government,
+    # telecommunications) - same taxonomy classify_sector() uses on
+    # participants, so values here stay comparable to what participants
+    # actually get classified as.
+    target_sectors: Mapped[list | None] = mapped_column(JSON)
+    # Free-text category - not an enum, since no code branches on it yet and
+    # this list is a starting suggestion, not derived from existing code.
+    # Suggested vocabulary: networking, pitch_day, conference, trade_show,
+    # workshop, mixer, panel.
+    event_type: Mapped[str | None] = mapped_column(String(100))
+    # Pre-upload headcount estimate, for admin display only - not wired into
+    # cost_estimator.py (that reads real uploaded participant rows instead).
+    expected_participant_count: Mapped[int | None] = mapped_column(Integer)
     status: Mapped[str] = mapped_column(
         Enum(EventStatus, values_callable=lambda e: [x.value for x in e], native_enum=False),
         default=EventStatus.draft,
