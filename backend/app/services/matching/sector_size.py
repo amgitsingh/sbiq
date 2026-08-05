@@ -9,27 +9,48 @@ from collections import defaultdict
 # organizational development sector") and is often multi-topic, so a raw string
 # can and does classify into more than one category. Categories chosen to cover
 # both the real sample data's sectors and common general B2B ones.
+#
+# Bilingual (English + Dutch) in the same list per category, no separate
+# language-detection step needed - classify_sector() just does substring
+# matching against whatever's here, same convention already proven in
+# decision_authority.SENIOR_TITLE_KEYWORDS. Dutch terms added where the
+# English keyword doesn't already happen to be a substring of the Dutch word
+# (e.g. "transport" is identical in both languages - no Dutch entry needed;
+# "energy" is not a substring of "energie" - Dutch entry added).
 SECTOR_KEYWORDS: dict[str, list[str]] = {
-    "finance_banking": ["bank", "financ", "pension", "insuran", "invest", "private debt", "fintech"],
-    "real_estate": ["real estate", "property", "realty"],
-    "health_wellness": ["health", "wellness", "fitness", "medical", "care"],
-    "hospitality_tourism": ["tourism", "hospitality", "hotel", "travel", "event"],
-    "culture_entertainment": ["cultur", "entertainment", "art", "creative", "music", "film"],
-    "media_photography": ["media", "photograph", "marketing", "advertis", "communicat"],
-    "education_training": ["education", "training", "language", "coach", "school", "academy"],
+    "finance_banking": [
+        "bank", "financ", "pension", "insuran", "invest", "private debt", "fintech",
+        "bankwezen", "verzeker", "pensioen",
+    ],
+    "real_estate": ["real estate", "property", "realty", "vastgoed", "onroerend goed"],
+    "health_wellness": ["health", "wellness", "fitness", "medical", "care", "gezondheid", "zorg", "welzijn"],
+    "hospitality_tourism": ["tourism", "hospitality", "hotel", "travel", "event", "toerisme", "horeca"],
+    "culture_entertainment": [
+        "cultur", "entertainment", "art", "creative", "music", "film", "cultuur", "amusement", "creatie",
+    ],
+    "media_photography": [
+        "media", "photograph", "marketing", "advertis", "communicat", "fotografie", "adverten",
+    ],
+    "education_training": [
+        "education", "training", "language", "coach", "school", "academy",
+        "onderwijs", "opleiding", "academie", "taal",
+    ],
     "administrative_hr": [
         "administrat", "office management", "personal assistant", " hr ", "human resources", "recruit",
+        "administratie", "personeelszaken", "werving",
     ],
-    "technology": ["tech", "software", " it ", "saas", "digital", "data"],
-    "retail_ecommerce": ["retail", "ecommerce", "e-commerce", "shop", "consumer goods"],
-    "manufacturing": ["manufactur", "industrial", "production", "factory"],
-    "consulting": ["consult", "advisory", "strategy"],
-    "legal": ["legal", "law", "attorney", "notary"],
-    "logistics": ["logistic", "supply chain", "transport", "freight", "shipping"],
-    "construction": ["construction", "building", "architect", "engineering"],
-    "agriculture_food": ["agricultur", "farm", "food", "beverage"],
-    "energy": ["energy", "sustainab", "renewable", "solar", "utilit"],
-    "nonprofit_government": ["nonprofit", "non-profit", "government", "public sector", "ngo", "charity"],
+    "technology": ["tech", "software", " it ", "saas", "digital", "data", "digitaal"],
+    "retail_ecommerce": ["retail", "ecommerce", "e-commerce", "shop", "consumer goods", "detailhandel", "webshop"],
+    "manufacturing": ["manufactur", "industrial", "production", "factory", "productie", "fabriek"],
+    "consulting": ["consult", "advisory", "strategy", "advies", "strategie"],
+    "legal": ["legal", "law", "attorney", "notary", "juridisch", "advocaat", "notaris"],
+    "logistics": ["logistic", "supply chain", "transport", "freight", "shipping", "logistiek"],
+    "construction": ["construction", "building", "architect", "engineering", "bouw"],
+    "agriculture_food": ["agricultur", "farm", "food", "beverage", "landbouw", "voedsel", "boerderij"],
+    "energy": ["energy", "sustainab", "renewable", "solar", "utilit", "energie", "duurzaam"],
+    "nonprofit_government": [
+        "nonprofit", "non-profit", "government", "public sector", "ngo", "charity", "overheid", "goede doel",
+    ],
     "telecommunications": ["telecom"],
 }
 

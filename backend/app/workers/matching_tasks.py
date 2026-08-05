@@ -81,8 +81,10 @@ def match_participant(self, participant_id: int, event_id: int) -> dict:
         event = db.get(Event, event_id)
         event_context = build_event_context(event) if event else None
 
+        content_language = event.content_language if event else None
+
         try:
-            selected = select_matches(structured_profile, candidates_with_profile, event_context)
+            selected = select_matches(structured_profile, candidates_with_profile, event_context, content_language)
         except MatchSelectionError as e:
             logger.warning(f"Match selection failed for participant {participant_id}: {e}")
             participant.matching_status = MatchingStatus.failed

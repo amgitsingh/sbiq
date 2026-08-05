@@ -51,6 +51,22 @@ addressed to the candidate by name.
 no commentary."""
 
 
+# Only Dutch needs an entry - English is the prompt's implicit default, so
+# content_language=None/"en" appends nothing (no behavior change for
+# existing events). Keyed by Event.content_language's exact values. Same
+# convention as llm_normalizer._language_directive - kept as a separate small
+# copy here rather than a shared helper, since the two prompts' wording
+# (which fields to write in that language) genuinely differs.
+LANGUAGE_NAMES = {"nl": "Dutch"}
+
+
+def _language_directive(content_language: str | None) -> str | None:
+    name = LANGUAGE_NAMES.get(content_language or "")
+    if not name:
+        return None
+    return f'Write "reasoning", "email_draft", and "linkedin_draft" in {name}, not English.'
+
+
 class MatchSelectionError(Exception):
     """Raised when the LLM never produced a valid match selection after retrying."""
 
@@ -152,7 +168,10 @@ def _validate_selection(selection: MatchSelection, valid_ids: set[int]) -> None:
 
 
 def select_matches(
-    participant_profile: dict, candidates: list[dict], event_context: str | None = None
+    participant_profile: dict,
+    candidates: list[dict],
+    event_context: str | None = None,
+    content_language: str | None = None,
 ) -> list[dict]:
     """Send a participant's profile + their rule-engine candidate shortlist to
     the LLM (JSON mode enforced) and return the selected matches as plain
@@ -166,17 +185,22 @@ def select_matches(
 
     event_context: see build_event_context() - passed through untouched to
     build_matching_prompt.
+
+    content_language: "en"/"nl"/None (Event.content_language) - affects
+    reasoning/email_draft/linkedin_draft only.
     """
     if not candidates:
         return []
 
     valid_ids = {c["participant_id"] for c in candidates}
     user_prompt = build_matching_prompt(participant_profile, candidates, event_context)
+    language_directive = _language_directive(content_language)
+    system_prompt = f"{SYSTEM_PROMPT}\n\n{language_directive}" if language_directive else SYSTEM_PROMPT
 
     last_error: Exception | None = None
     for attempt in range(1, MAX_ATTEMPTS + 1):
         try:
-            raw, usage = chat_json_with_usage(SYSTEM_PROMPT, user_prompt, max_tokens=MAX_RESPONSE_TOKENS)
+            raw, usage = chat_json_with_usage(system_prompt, user_prompt, max_tokens=MAX_RESPONSE_TOKENS)
             logger.info(
                 f"Match selection attempt {attempt}: input_tokens={usage['input_tokens']} "
                 f"output_tokens={usage['output_tokens']}"

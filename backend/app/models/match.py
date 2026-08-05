@@ -43,6 +43,13 @@ class Match(Base):
     email_draft: Mapped[str | None] = mapped_column(Text)
     linkedin_draft: Mapped[str | None] = mapped_column(Text)
 
+    # On-demand translation cache, keyed by language code:
+    # {"nl": {"reasoning": [...], "email_draft": "...", "linkedin_draft": "..."}}.
+    # Reset to None whenever store_match overwrites this row's reasoning/
+    # drafts (a re-run), so a stale translation of the old content is never
+    # served after a rematch.
+    translations: Mapped[dict | None] = mapped_column(JSON)
+
     status: Mapped[str] = mapped_column(
         Enum(MatchStatus, values_callable=lambda e: [x.value for x in e], native_enum=False),
         default=MatchStatus.pending,

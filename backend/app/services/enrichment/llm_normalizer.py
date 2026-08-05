@@ -121,6 +121,19 @@ every field you can support and to write a substantive company.summary; do not \
 stop after one search just because other context already had some data."""
 
 
+# Only Dutch needs an entry - English is the prompt's implicit default, so
+# content_language=None/"en" appends nothing (no behavior change for
+# existing events). Keyed by Event.content_language's exact values.
+LANGUAGE_NAMES = {"nl": "Dutch"}
+
+
+def _language_directive(content_language: str | None) -> str | None:
+    name = LANGUAGE_NAMES.get(content_language or "")
+    if not name:
+        return None
+    return f'Write "company.summary" in {name}, not English.'
+
+
 class ProfileNormalizationError(Exception):
     """Raised when the LLM never produced a schema-valid profile after retrying."""
 
@@ -131,6 +144,7 @@ def normalize_participant_profile(
     looking_for: str | None,
     offerings: str | None,
     source_urls: list[str] | None = None,
+    content_language: str | None = None,
 ) -> dict:
     """Send one participant's merged enrichment context (Task 18's output) to the
     LLM and return CLAUDE.md's structured JSON profile as a plain dict.
@@ -153,20 +167,27 @@ def normalize_participant_profile(
     response does. Raises ProfileNormalizationError if both attempts fail; this is
     not one of the optional enrichment sources, so a failure here must surface as
     a real per-participant enrichment failure rather than degrade silently.
+
+    content_language: "en"/"nl"/None (Event.content_language) - only affects
+    "company.summary", the one free-text field the LLM actually writes from
+    scratch. looking_for/offerings are exempt by design (see above) - already
+    verbatim, never touched regardless of this setting.
     """
     last_error: Exception | None = None
+    language_directive = _language_directive(content_language)
+    system_prompt = f"{SYSTEM_PROMPT}\n\n{language_directive}" if language_directive else SYSTEM_PROMPT
 
     for attempt in range(1, MAX_ATTEMPTS + 1):
         try:
             if settings.ENABLE_LLM_WEB_SEARCH:
                 raw = chat_json_web_search(
-                    SYSTEM_PROMPT + "\n\n" + WEB_SEARCH_ADDENDUM,
+                    system_prompt + "\n\n" + WEB_SEARCH_ADDENDUM,
                     merged_context,
                     max_tokens=MAX_RESPONSE_TOKENS_WEB_SEARCH,
                     force_tool_use=True,
                 )
             else:
-                raw = chat_json(SYSTEM_PROMPT, merged_context, max_tokens=MAX_RESPONSE_TOKENS)
+                raw = chat_json(system_prompt, merged_context, max_tokens=MAX_RESPONSE_TOKENS)
             parsed = json.loads(strip_markdown_fence(raw))
             profile = StructuredProfile.model_validate(parsed)
         except Exception as e:

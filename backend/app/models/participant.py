@@ -99,6 +99,16 @@ class Participant(Base):
     # Normalized output from LLM enrichment step
     structured_profile: Mapped[dict | None] = mapped_column(JSON)
 
+    # On-demand translation cache, keyed by language code:
+    # {"nl": {"company_summary": "..."}}. Deliberately NOT nested inside
+    # structured_profile - app.services.embedding.generate_embedding reads
+    # structured_profile to build this participant's vector, so a translated
+    # summary leaking in there would silently corrupt the embedding with
+    # mixed-language content. Reset to None whenever structured_profile is
+    # reassigned (see app/workers/enrichment_tasks.py), so a re-enrichment
+    # can never leave a stale translation of the old content behind.
+    profile_translations: Mapped[dict | None] = mapped_column(JSON)
+
     # Full original upload row (original header text -> raw cell value), so any
     # organizer-specific question with no dedicated column is never lost.
     raw_source_data: Mapped[dict | None] = mapped_column(JSON)

@@ -57,6 +57,15 @@ class Event(Base):
     # Pre-upload headcount estimate, for admin display only - not wired into
     # cost_estimator.py (that reads real uploaded participant rows instead).
     expected_participant_count: Mapped[int | None] = mapped_column(Integer)
+    # "en" / "nl" - language for LLM-generated content (company.summary,
+    # match reasoning, email_draft, linkedin_draft). None is treated as "en"
+    # everywhere it's read (llm_normalizer.py, llm_matcher.py,
+    # events.py::send_match_email) - no behavior change for existing events.
+    # Deliberately per-event, not per-participant: a shared reasoning/email
+    # artifact between two participants can't have two languages at once.
+    # looking_for/offerings are exempt - already guaranteed verbatim/
+    # never-translated regardless of this setting.
+    content_language: Mapped[str | None] = mapped_column(String(10))
     status: Mapped[str] = mapped_column(
         Enum(EventStatus, values_callable=lambda e: [x.value for x in e], native_enum=False),
         default=EventStatus.draft,

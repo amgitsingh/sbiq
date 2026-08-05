@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.database import session_scope
 from app.models.enrichment_job import EnrichmentJob, EnrichmentSource, JobStatus
+from app.models.event import Event
 from app.models.participant import EnrichmentStatus, Participant
 from app.services.enrichment.company_enrichment import get_company_enrichment
 from app.services.enrichment.linkedin_scraper import scrape_linkedin_profile
@@ -65,6 +66,7 @@ def _normalize_with_one_extra_retry(
     looking_for: str | None,
     offerings: str | None,
     source_urls: list[str] | None = None,
+    content_language: str | None = None,
 ) -> dict:
     """Call normalize_participant_profile, and if it still fails (both of its
     own internal attempts exhausted), wait briefly and try once more before
@@ -72,7 +74,11 @@ def _normalize_with_one_extra_retry(
     """
     try:
         return normalize_participant_profile(
-            merged_context, looking_for=looking_for, offerings=offerings, source_urls=source_urls
+            merged_context,
+            looking_for=looking_for,
+            offerings=offerings,
+            source_urls=source_urls,
+            content_language=content_language,
         )
     except ProfileNormalizationError as first_error:
         logger.warning(
@@ -81,7 +87,11 @@ def _normalize_with_one_extra_retry(
         )
         time.sleep(EXTRA_NORMALIZATION_RETRY_DELAY_SECONDS)
         return normalize_participant_profile(
-            merged_context, looking_for=looking_for, offerings=offerings, source_urls=source_urls
+            merged_context,
+            looking_for=looking_for,
+            offerings=offerings,
+            source_urls=source_urls,
+            content_language=content_language,
         )
 
 
@@ -118,9 +128,19 @@ def enrich_participant(self, participant_id: int) -> dict:
         if participant is None:
             raise ValueError(f"Participant {participant_id} not found")
 
+        event = db.get(Event, participant.event_id)
+        content_language = event.content_language if event else None
+
         if settings.ENABLE_ENRICHMENT_REUSE:
             cached = get_reusable_profile(db, participant.email)
             if cached is not None:
+                # NOTE: a cache hit reuses company.summary as originally
+                # generated - if it was first written under a different
+                # event's content_language (e.g. cached in English, this
+                # event is Dutch), it is NOT re-translated here. Same
+                # "shared across events as-is" tradeoff CONFIG_CAVEATS.md
+                # already documents for ENABLE_ENRICHMENT_REUSE generally -
+                # not solved in this pass.
                 age_days = (datetime.utcnow() - cached.last_enriched_at).days
                 # Deep copy - never mutate cached.structured_profile itself,
                 # that dict belongs to the EnrichedProfile row.
@@ -139,6 +159,9 @@ def enrich_participant(self, participant_id: int) -> dict:
                     },
                 )
                 participant.structured_profile = profile
+                # Stale-cache guard: any prior translation of the old
+                # summary is no longer valid for this new content.
+                participant.profile_translations = None
                 participant.enrichment_status = EnrichmentStatus.done
                 db.commit()
 
@@ -192,6 +215,7 @@ def enrich_participant(self, participant_id: int) -> dict:
                 looking_for=participant.looking_for,
                 offerings=participant.offerings,
                 source_urls=source_urls,
+                content_language=content_language,
             )
         except ProfileNormalizationError as e:
             _record_job(
@@ -208,6 +232,9 @@ def enrich_participant(self, participant_id: int) -> dict:
 
         _record_job(db, participant.id, EnrichmentSource.llm_normalization, profile)
         participant.structured_profile = profile
+        # Stale-cache guard: any prior translation of the old summary is no
+        # longer valid for this new content.
+        participant.profile_translations = None
         participant.enrichment_status = EnrichmentStatus.done
         db.commit()
 

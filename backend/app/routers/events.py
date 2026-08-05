@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFile, status
+from typing import Literal
+
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Response, UploadFile, status
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
@@ -20,6 +22,7 @@ from app.services.template_generator import generate_participant_template
 from app.services.matching.cost_estimator import estimate_matching_run_cost
 from app.services.email_sender import EmailSendError, send_email
 from app.services.matching.decision_authority import classify_seniority
+from app.services.translation import TranslationError, translate_match_content, translate_text
 from app.workers.embedding_tasks import batch_embed_event
 from app.workers.enrichment_tasks import batch_enrich_event
 from app.workers.matching_tasks import batch_match_event
@@ -71,6 +74,13 @@ class EventCreate(BaseModel):
         default=None, description=f"Not enforced - suggested values: {', '.join(SUGGESTED_EVENT_TYPES)}"
     )
     expected_participant_count: int | None = None
+    # Enforced (unlike target_sectors/event_type above) - real code branches
+    # on this exact value (llm_normalizer.py, llm_matcher.py, send_match_email),
+    # so a typo like "eng" silently behaving as English would be a real,
+    # hard-to-notice bug rather than just an unrecognized free-text label.
+    content_language: Literal["en", "nl"] | None = Field(
+        default=None, description="Language for LLM-generated content. None is treated as 'en'."
+    )
 
 
 class EventOut(BaseModel):
@@ -86,6 +96,7 @@ class EventOut(BaseModel):
     target_sectors: list[str] | None = None
     event_type: str | None = None
     expected_participant_count: int | None = None
+    content_language: str | None = None
 
 
 class ParticipantOut(BaseModel):
@@ -166,6 +177,20 @@ def _get_event_or_404(event_id: int, db: Session) -> Event:
     return event
 
 
+def _native_language(event: Event) -> str:
+    """Event.content_language, defaulting to "en" - same convention
+    llm_normalizer.py/llm_matcher.py already use for generation-time language.
+    """
+    return event.content_language or "en"
+
+
+# lang query param on the two detail endpoints below is a mock for a future
+# per-user language preference (users table, Phase 2 auth - not built yet).
+# Real version will resolve this from the authenticated user's row instead
+# of a query param; the caching/translation logic doesn't change either way.
+LangParam = Query(default=None, description="Mock for a future per-user language preference.")
+
+
 @router.post("", response_model=EventOut, status_code=201)
 def create_event(payload: EventCreate, db: Session = Depends(get_db)) -> Event:
     event = Event(
@@ -177,6 +202,7 @@ def create_event(payload: EventCreate, db: Session = Depends(get_db)) -> Event:
         target_sectors=payload.target_sectors,
         event_type=payload.event_type,
         expected_participant_count=payload.expected_participant_count,
+        content_language=payload.content_language,
     )
     db.add(event)
     db.commit()
@@ -275,7 +301,9 @@ _SENIORITY_LABELS = {1.0: "senior", 0.5: "mid_level"}
 
 
 @router.get("/{event_id}/participants/{participant_id}", response_model=ParticipantDetailOut)
-def get_participant_detail(event_id: int, participant_id: int, db: Session = Depends(get_db)) -> ParticipantDetailOut:
+def get_participant_detail(
+    event_id: int, participant_id: int, lang: Literal["en", "nl"] | None = LangParam, db: Session = Depends(get_db)
+) -> ParticipantDetailOut:
     """Full participant detail, shaped to mirror
     docs/nabaruns-enrichment-example.json's schema as closely as this app's
     actual data supports.
@@ -284,8 +312,14 @@ def get_participant_detail(event_id: int, participant_id: int, db: Session = Dep
     is explicitly always-null with a comment explaining why (this app's
     enrichment is deliberately fact-only - no invented business judgments) -
     never a fabricated guess dressed up to fit Nabarun's shape.
+
+    lang: if set and different from the event's native content_language,
+    company.summary (the one freely-generated field here) is translated on
+    first request and cached on participant.profile_translations - see
+    app/services/translation.py. needs/offerings are never translated,
+    regardless of lang - same verbatim guarantee as always.
     """
-    _get_event_or_404(event_id, db)
+    event = _get_event_or_404(event_id, db)
 
     participant = (
         db.query(Participant).filter(Participant.id == participant_id, Participant.event_id == event_id).first()
@@ -295,6 +329,22 @@ def get_participant_detail(event_id: int, participant_id: int, db: Session = Dep
 
     profile = participant.structured_profile or {}
     company_profile = profile.get("company") or {}
+    summary = company_profile.get("summary")
+
+    native_language = _native_language(event)
+    if lang and lang != native_language and summary:
+        cached = (participant.profile_translations or {}).get(lang, {}).get("company_summary")
+        if cached is not None:
+            summary = cached
+        else:
+            try:
+                summary = translate_text(summary, lang)
+            except TranslationError as e:
+                raise HTTPException(status_code=502, detail=f"Translation failed: {e}")
+            translations = dict(participant.profile_translations or {})
+            translations[lang] = {**translations.get(lang, {}), "company_summary": summary}
+            participant.profile_translations = translations
+            db.commit()
 
     flags = []
     if participant.participant_status == "review":
@@ -333,11 +383,11 @@ def get_participant_detail(event_id: int, participant_id: int, db: Session = Dep
             funding_stage=company_profile.get("funding_stage"),
             investors=company_profile.get("investors") or [],
             recent_news=company_profile.get("recent_news") or [],
-            summary=company_profile.get("summary"),
+            summary=summary,
         ),
         enrichment=ParticipantEnrichmentDetailOut(
             sources=profile.get("research_sources") or [],
-            notes=company_profile.get("summary"),
+            notes=summary,
         ),
     )
 
@@ -885,7 +935,9 @@ def _no_matches_message(participant: Participant) -> str:
 
 
 @router.get("/{event_id}/participants/{participant_id}/matches", response_model=ParticipantMatchesOut)
-def get_participant_matches(event_id: int, participant_id: int, db: Session = Depends(get_db)) -> ParticipantMatchesOut:
+def get_participant_matches(
+    event_id: int, participant_id: int, lang: Literal["en", "nl"] | None = LangParam, db: Session = Depends(get_db)
+) -> ParticipantMatchesOut:
     """One participant's own match list - the "recipient -> matches" shape,
     mirroring docs/nabaruns-enrichment-example.json's response format.
 
@@ -903,8 +955,14 @@ def get_participant_matches(event_id: int, participant_id: int, db: Session = De
     secondary ordering (the LLM's own best-to-worst judgment call) - but score
     is primary, since "sorted percentage-wise" is what callers actually see
     and act on.
+
+    lang: if set and different from the event's native content_language,
+    each match's reasoning/email_draft/linkedin_draft is translated on first
+    request and cached on match.translations - see
+    app/services/translation.py. A mirror row's null email_draft/
+    linkedin_draft stay null (never fabricated by translation).
     """
-    _get_event_or_404(event_id, db)
+    event = _get_event_or_404(event_id, db)
 
     participant = (
         db.query(Participant).filter(Participant.id == participant_id, Participant.event_id == event_id).first()
@@ -920,21 +978,50 @@ def get_participant_matches(event_id: int, participant_id: int, db: Session = De
         .all()
     )
 
-    return ParticipantMatchesOut(
-        recipient=MatchParticipantOut.model_validate(participant),
-        matches=[
+    native_language = _native_language(event)
+    match_outs = []
+    for m in rows:
+        reasoning, email_draft, linkedin_draft = m.reasoning, m.email_draft, m.linkedin_draft
+        if lang and lang != native_language and reasoning:
+            cached = (m.translations or {}).get(lang)
+            if cached is not None:
+                reasoning = cached["reasoning"]
+                email_draft = cached["email_draft"]
+                linkedin_draft = cached["linkedin_draft"]
+            else:
+                try:
+                    translated = translate_match_content(
+                        reasoning=reasoning,
+                        email_draft=email_draft,
+                        linkedin_draft=linkedin_draft,
+                        target_language=lang,
+                    )
+                except TranslationError as e:
+                    raise HTTPException(status_code=502, detail=f"Translation failed: {e}")
+                reasoning = translated["reasoning"]
+                email_draft = translated["email_draft"]
+                linkedin_draft = translated["linkedin_draft"]
+                translations = dict(m.translations or {})
+                translations[lang] = translated
+                m.translations = translations
+
+        match_outs.append(
             ParticipantMatchOut(
                 participant=MatchParticipantOut.model_validate(m.participant_b),
                 rank=m.rank,
                 score=m.score,
-                reasoning=m.reasoning,
-                email_draft=m.email_draft,
-                linkedin_draft=m.linkedin_draft,
+                reasoning=reasoning,
+                email_draft=email_draft,
+                linkedin_draft=linkedin_draft,
                 status=m.status,
                 self_selected=not m.is_bidirectional,
             )
-            for m in rows
-        ],
+        )
+    db.commit()
+
+    return ParticipantMatchesOut(
+        recipient=MatchParticipantOut.model_validate(participant),
+        matches=match_outs,
         message=_no_matches_message(participant) if not rows else None,
     )
 
@@ -965,7 +1052,7 @@ def send_match_email(
     direction the match was actually generated for; swapping a/b only works
     if B independently selected A too.
     """
-    _get_event_or_404(event_id, db)
+    event = _get_event_or_404(event_id, db)
 
     participant_a = (
         db.query(Participant)
@@ -1019,10 +1106,16 @@ def send_match_email(
             ),
         )
 
+    subject = (
+        f"Kennismaking van {participant_a.name}"
+        if event.content_language == "nl"
+        else f"Introduction from {participant_a.name}"
+    )
+
     try:
         send_email(
             to_email=participant_b.email,
-            subject=f"Introduction from {participant_a.name}",
+            subject=subject,
             body=match.email_draft,
             reply_to=participant_a.email,
             from_display_name=f"{participant_a.name} via QBCals",

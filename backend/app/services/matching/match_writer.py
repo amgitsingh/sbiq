@@ -62,6 +62,10 @@ def store_match(
         existing.email_draft = email_draft
         existing.linkedin_draft = linkedin_draft
         existing.is_bidirectional = False
+        # Stale-cache guard: any prior translation of the old reasoning/
+        # drafts is no longer valid for this new content (a re-run of
+        # matching for this pair).
+        existing.translations = None
         match = existing
     else:
         match = Match(

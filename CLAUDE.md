@@ -222,3 +222,14 @@ Phase 1 features are frozen. Any new requests go to the Phase 2 backlog. Phase 1
 line item, at explicit user request — a single "send this one match's
 email_draft" action, not the full Phase 2 delivery system (bulk sends,
 templates, SendGrid/Resend, delivery tracking are still Phase 2 backlog).
+
+**Exception:** `Event.content_language` (`"en"`/`"nl"`) was added ahead of
+the "English only" boundary, at explicit user request — scoped to
+LLM-generated content only (`company.summary` in
+`app/services/enrichment/llm_normalizer.py`, `reasoning`/`email_draft`/
+`linkedin_draft` in `app/services/matching/llm_matcher.py`, and the
+`send-email` subject line). `looking_for`/`offerings` remain untouched
+regardless (already verbatim-guaranteed). Not included: translating
+admin-facing API strings (`HTTPException` details, `validation.py`/
+`tier_normalizer.py` reason strings) or any participant/admin portal UI —
+still out of scope, since no UI exists yet to localize.
