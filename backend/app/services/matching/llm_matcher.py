@@ -6,13 +6,19 @@ import logging
 from app.models.event import Event
 from app.services.ai_client import chat_json_with_usage
 from app.services.json_utils import strip_markdown_fence
-from app.services.matching.match_schema import MatchSelection
+from app.services.matching.match_schema import MatchSelection, ReverseDraft
 
 logger = logging.getLogger(__name__)
 
-MAX_RESPONSE_TOKENS = 3_000
+# Raised from 3_000: drafts are now written in more detail (see SYSTEM_PROMPT),
+# so up to 5 matches' worth of reasoning + longer email/linkedin drafts need
+# more headroom to avoid getting cut off mid-JSON.
+MAX_RESPONSE_TOKENS = 4_500
 MAX_ATTEMPTS = 2
 MAX_MATCHES = 5
+# Reverse-draft calls only ever produce one match's worth of email+linkedin
+# content (no reasoning, no candidate list) - a fraction of MAX_RESPONSE_TOKENS.
+REVERSE_DRAFT_MAX_RESPONSE_TOKENS = 1_200
 
 SYSTEM_PROMPT = """You are a business matchmaking assistant for an event networking \
 platform. You will be given one participant's profile and a shortlist of candidate \
@@ -31,9 +37,18 @@ Respond with a single JSON object with exactly this shape:
       "participant_id": <int, MUST be one of the candidate IDs given>,
       "rank": <int, 1 = best match, no gaps or duplicates>,
       "reasoning": [<exactly 3 short bullet strings explaining why this is a good match>],
-      "email_draft": <a short, personalized introduction email from the participant to \
-this candidate, referencing specific shared interest or complementary offering>,
-      "linkedin_draft": <a short LinkedIn connection request message, 1-2 sentences>
+      "email_draft": <a detailed, personalized introduction email from the participant \
+to this candidate, 120-200 words across 3-4 short paragraphs: (1) a warm opening naming \
+the event and how they're connected through it, (2) 2-3 concrete, specific details \
+pulled from the candidate's actual profile - company, role, what they offer or are \
+looking for - that prove this isn't a form letter, (3) a clear statement of the \
+complementary fit between the two profiles, (4) a specific call to action (e.g. \
+propose a 15-20 minute call, or meeting at the event itself). Sign off with the \
+sender's first name, or "[Your name]" if not given.>,
+      "linkedin_draft": <a detailed LinkedIn message, 3-5 sentences (roughly 60-100 \
+words) - more than a bare connection note: a brief self-introduction, one specific \
+detail referencing the candidate's profile, the complementary fit, and a suggestion \
+to connect or chat briefly.>
     }
   ]
 }
@@ -46,7 +61,8 @@ bad match.
 - Rank matches 1 (best) through N with no gaps or duplicates.
 - Reasoning bullets must reference concrete details from both profiles - no generic filler.
 - "email_draft" and "linkedin_draft" must be written from the participant's perspective, \
-addressed to the candidate by name.
+addressed to the candidate by name, and must meet the length/structure guidance above - \
+never a one-line or generic-filler draft.
 - Respond with a single JSON object only, matching the shape above exactly. No markdown, \
 no commentary."""
 
@@ -218,3 +234,101 @@ def select_matches(
     raise MatchSelectionError(
         f"Match selection failed after {MAX_ATTEMPTS} attempts: {last_error}"
     ) from last_error
+
+
+REVERSE_DRAFT_SYSTEM_PROMPT = """You are a business matchmaking assistant for an event \
+networking platform. A deterministic pipeline has already decided that two participants \
+are a good match and produced the reasoning bullets below, written from the first \
+participant's (the "sender") perspective. Your only job is to write that sender's own \
+outreach drafts to the second participant (the "recipient") - do not re-evaluate whether \
+they are a good match, that decision is already made.
+
+Respond with a single JSON object with exactly this shape:
+{
+  "email_draft": <a detailed, personalized introduction email from the sender to the \
+recipient, 120-200 words across 3-4 short paragraphs: (1) a warm opening naming the \
+event and how they're connected through it, (2) 2-3 concrete, specific details pulled \
+from the recipient's actual profile - company, role, what they offer or are looking \
+for - that prove this isn't a form letter, (3) a clear statement of the complementary \
+fit between the two profiles (grounded in the reasoning bullets given), (4) a specific \
+call to action (e.g. propose a 15-20 minute call, or meeting at the event itself). Sign \
+off with the sender's first name, or "[Your name]" if not given.>,
+  "linkedin_draft": <a detailed LinkedIn message, 3-5 sentences (roughly 60-100 words) - \
+more than a bare connection note: a brief self-introduction, one specific detail \
+referencing the recipient's profile, the complementary fit, and a suggestion to connect \
+or chat briefly.>
+}
+
+Rules:
+- Write from the sender's perspective, addressed to the recipient by name.
+- Ground both drafts in the reasoning bullets given - don't contradict them or invent a \
+different rationale.
+- Meet the length/structure guidance above - never a one-line or generic-filler draft.
+- Respond with a single JSON object only, matching the shape above exactly. No markdown, \
+no commentary."""
+
+
+def build_reverse_draft_prompt(
+    sender_profile: dict, recipient_profile: dict, reasoning: list[str], event_context: str | None = None
+) -> str:
+    lines: list[str] = []
+    if event_context:
+        lines.extend(["=== EVENT CONTEXT ===", event_context, ""])
+    lines += ["=== SENDER (writing the drafts) ===", _format_profile(sender_profile), ""]
+    lines += ["=== RECIPIENT (drafts are addressed to them) ===", _format_profile(recipient_profile), ""]
+    lines.append("=== WHY THIS IS A MATCH (already decided, do not re-evaluate) ===")
+    lines.extend(f"- {bullet}" for bullet in reasoning)
+    return "\n".join(lines)
+
+
+class ReverseDraftError(Exception):
+    """Raised when the LLM never produced a valid reverse draft after retrying."""
+
+
+def generate_reverse_draft(
+    sender_profile: dict,
+    recipient_profile: dict,
+    reasoning: list[str],
+    event_context: str | None = None,
+    content_language: str | None = None,
+) -> dict:
+    """Write the sender's own email_draft/linkedin_draft to the recipient, for the
+    auto-created bidirectional mirror side of a match (see match_writer.store_match).
+    The match itself and its reasoning are already decided by the forward
+    direction's select_matches() call - this only fills in the missing
+    personalized drafts so the mirror row isn't left with null drafts until/
+    unless the recipient's own independent matching run happens to reciprocate.
+
+    Retries once, same pattern as select_matches. Raises ReverseDraftError if
+    both attempts fail - callers should treat that as non-fatal (log and leave
+    the drafts null) since the primary match this mirrors was already written
+    successfully.
+    """
+    user_prompt = build_reverse_draft_prompt(sender_profile, recipient_profile, reasoning, event_context)
+    language_directive = _language_directive(content_language)
+    system_prompt = (
+        f"{REVERSE_DRAFT_SYSTEM_PROMPT}\n\n{language_directive}"
+        if language_directive
+        else REVERSE_DRAFT_SYSTEM_PROMPT
+    )
+
+    last_error: Exception | None = None
+    for attempt in range(1, MAX_ATTEMPTS + 1):
+        try:
+            raw, usage = chat_json_with_usage(
+                system_prompt, user_prompt, max_tokens=REVERSE_DRAFT_MAX_RESPONSE_TOKENS
+            )
+            logger.info(
+                f"Reverse draft attempt {attempt}: input_tokens={usage['input_tokens']} "
+                f"output_tokens={usage['output_tokens']}"
+            )
+            parsed = json.loads(strip_markdown_fence(raw))
+            draft = ReverseDraft.model_validate(parsed)
+        except Exception as e:
+            last_error = e
+            logger.warning(f"Reverse draft attempt {attempt}/{MAX_ATTEMPTS} failed: {e}")
+            continue
+
+        return draft.model_dump()
+
+    raise ReverseDraftError(f"Reverse draft failed after {MAX_ATTEMPTS} attempts: {last_error}") from last_error

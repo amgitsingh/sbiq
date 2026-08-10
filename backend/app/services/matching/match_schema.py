@@ -13,3 +13,8 @@ class MatchItem(BaseModel):
 
 class MatchSelection(BaseModel):
     matches: list[MatchItem]
+
+
+class ReverseDraft(BaseModel):
+    email_draft: str
+    linkedin_draft: str

@@ -92,6 +92,7 @@ def match_participant(self, participant_id: int, event_id: int) -> dict:
             raise
 
         composite_by_id = {c["participant_id"]: c["composite_score"] for c in candidates}
+        profile_by_id = {c["participant_id"]: c["profile"] for c in candidates_with_profile}
         for m in selected:
             store_match(
                 db,
@@ -103,6 +104,10 @@ def match_participant(self, participant_id: int, event_id: int) -> dict:
                 reasoning=m["reasoning"],
                 email_draft=m["email_draft"],
                 linkedin_draft=m["linkedin_draft"],
+                participant_a_profile=structured_profile,
+                participant_b_profile=profile_by_id.get(m["participant_id"]),
+                event_context=event_context,
+                content_language=content_language,
             )
 
         participant.matching_status = MatchingStatus.done
