@@ -12,10 +12,14 @@ from openpyxl.worksheet.datavalidation import DataValidation
 # filled in and re-uploaded via POST /{event_id}/upload auto-maps with zero
 # unmapped_headers.
 #
-# "mandatory" mirrors validation.validate_rows's own reject conditions
-# exactly (name, email, company are the only fields a row is rejected for
-# missing) - keep these two lists in sync if that validation logic ever
-# changes.
+# "mandatory" is a template-level UX nudge, not a strict mirror of
+# validation.validate_rows's reject conditions. Name/Email/Company are
+# reject-if-missing there, and are marked mandatory here for that reason.
+# Looking For/Offerings are also marked mandatory here to push uploaders
+# toward filling them in - a row that skips both still only gets *flagged*
+# for admin review by validate_rows, not rejected (CLAUDE.md: "Sparse rows
+# are flagged, not dropped"). If validate_rows' reject conditions ever
+# change, double check whether this list should follow.
 TEMPLATE_COLUMNS: list[tuple[str, bool, str]] = [
     ("Name", True, "Jane Doe"),
     ("Email", True, "jane.doe@example.com"),
@@ -24,8 +28,8 @@ TEMPLATE_COLUMNS: list[tuple[str, bool, str]] = [
     ("Sector", False, "Technology"),
     ("Company Size", False, "50-200"),
     ("Membership Tier", False, "Premium Member"),
-    ("Looking For", False, "Investors for a Series A round"),
-    ("Offerings", False, "SaaS analytics platform for retail"),
+    ("Looking For", True, "Investors for a Series A round"),
+    ("Offerings", True, "SaaS analytics platform for retail"),
     ("Ideal Connection", False, "Corporate innovation leads"),
     ("Biggest Opportunity", False, "Expanding into the DACH market"),
     ("Website", False, "https://acme.example.com"),

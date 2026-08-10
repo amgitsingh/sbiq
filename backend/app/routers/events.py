@@ -399,12 +399,14 @@ def download_participant_template() -> Response:
     Not event-scoped (no event_id in the path) - the column shape is the
     same for every event, so one static template covers all of them.
 
-    Mandatory columns (Name, Email, Company - exactly the three fields
-    validation.validate_rows rejects a row for missing, see
-    template_generator.TEMPLATE_COLUMNS) are bold and highlighted; every
-    other column is optional. Header labels are chosen to auto-map via
-    header_mapper.CANONICAL_HEADERS, so a filled-in copy of this template
-    re-uploaded as-is produces zero unmapped_headers.
+    Mandatory-styled columns (Name, Email, Company, Looking For, Offerings -
+    see template_generator.TEMPLATE_COLUMNS) are bold and highlighted; every
+    other column is optional. Note this styling is a UX nudge, not a strict
+    reject rule: validation.validate_rows only rejects a row for missing
+    Name/Email/Company - a row missing Looking For/Offerings is still
+    imported, just flagged for admin review. Header labels are chosen to
+    auto-map via header_mapper.CANONICAL_HEADERS, so a filled-in copy of
+    this template re-uploaded as-is produces zero unmapped_headers.
     """
     content = generate_participant_template()
     return Response(
