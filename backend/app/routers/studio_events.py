@@ -14,9 +14,17 @@ StudioEvent*/StudioEventCreate contract the Studio frontend already expects
 at /studio/events (this repo drops the /api prefix IndMatchmaking used,
 same convention as every other ported router in this phase - see auth.py).
 
-Task 62 ported the three events routes. Task 63 (this update) adds the
-upload route. Enrich/embed/match/matches/review/send follow in Tasks 64-65,
-appended to this same router as they're ported.
+Task 62 ported the three events routes, Task 63 the upload route. Task 64
+(this update) adds enrich/embed/match + their status endpoints. All of
+these stay plain `def` handlers, same as events.py's own style - the
+original plan anticipated needing `run_in_threadpool`/`asyncio.to_thread`
+bridging here, but that was written when these routes were expected to
+stay `async def` (matching the old IndMatchmaking proxy's signatures);
+since they now call QBCals' own sync functions directly instead of
+`await`-ing an HTTP client, there is nothing async to bridge - FastAPI
+already runs a sync `def` route in its threadpool, identical to how
+events.py's own trigger_enrichment/trigger_embedding/trigger_matching work.
+Matches/review/send follow in Task 65.
 """
 
 from __future__ import annotations
@@ -24,7 +32,7 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import Any
 
-from fastapi import APIRouter, Depends, File, UploadFile, status
+from fastapi import APIRouter, Depends, File, Query, Response, UploadFile, status
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy.orm import Session
 
@@ -222,3 +230,166 @@ def studio_upload_participants(
         event_id, file=file, db=db, current_user=current_user, role_name=role_name
     )
     return StudioUploadSummary(**result.model_dump())
+
+
+class StudioEnrichmentTrigger(BaseModel):
+    event_id: int
+    dispatched: int
+
+
+class StudioSourceStatus(BaseModel):
+    source: str
+    status: str
+    error_message: str | None = None
+
+
+class StudioParticipantEnrichmentStatus(BaseModel):
+    participant_id: int
+    name: str
+    enrichment_status: str
+    sources: list[StudioSourceStatus] = Field(default_factory=list)
+
+
+class StudioEnrichmentStatus(BaseModel):
+    total: int
+    pending: int
+    enriching: int
+    done: int
+    failed: int
+    participants: list[StudioParticipantEnrichmentStatus] = Field(default_factory=list)
+
+
+class StudioEmbedTrigger(BaseModel):
+    event_id: int
+    dispatched: int
+    estimated_completion_seconds: int
+
+
+class StudioParticipantEmbeddingStatus(BaseModel):
+    participant_id: int
+    name: str
+    enrichment_status: str
+    embedded: bool
+
+
+class StudioEmbeddingStatus(BaseModel):
+    total: int
+    enriched: int
+    embedded: int
+    pending: int
+    participants: list[StudioParticipantEmbeddingStatus] = Field(default_factory=list)
+
+
+class StudioMatchCost(BaseModel):
+    participant_count: int
+    matching_eligible_count: int
+    embedding_cost_usd: float
+    llm_cost_usd: float
+    total_cost_usd: float
+
+
+class StudioMatchTrigger(BaseModel):
+    event_id: int
+    confirmed: bool
+    cost: StudioMatchCost
+    job_id: str | None = None
+    estimated_duration_seconds: int | None = None
+
+
+class StudioParticipantMatchingStatus(BaseModel):
+    participant_id: int
+    name: str
+    matching_status: str
+    eligible: bool
+    match_count: int
+
+
+class StudioMatchingStatus(BaseModel):
+    total: int
+    eligible: int
+    pending: int
+    matching: int
+    done: int
+    failed: int
+    participants: list[StudioParticipantMatchingStatus] = Field(default_factory=list)
+
+
+@router.post("/events/{event_id}/enrich", response_model=StudioEnrichmentTrigger, status_code=status.HTTP_202_ACCEPTED)
+def studio_enrich(
+    event_id: int,
+    db: Session = Depends(get_db),
+    current_user: UserMaster = Depends(current_admin),
+    role_name: str | None = Depends(events_router.current_user_role_name),
+) -> StudioEnrichmentTrigger:
+    """Dispatch enrichment, calling QBCals' own trigger_enrichment directly."""
+    result = events_router.trigger_enrichment(event_id, db=db, current_user=current_user, role_name=role_name)
+    return StudioEnrichmentTrigger(**result.model_dump())
+
+
+@router.get("/events/{event_id}/enrichment-status", response_model=StudioEnrichmentStatus)
+def studio_enrichment_status(
+    event_id: int,
+    db: Session = Depends(get_db),
+    current_user: UserMaster = Depends(current_admin),
+    role_name: str | None = Depends(events_router.current_user_role_name),
+) -> StudioEnrichmentStatus:
+    """Calling QBCals' own get_enrichment_status directly."""
+    result = events_router.get_enrichment_status(event_id, db=db, current_user=current_user, role_name=role_name)
+    return StudioEnrichmentStatus(**result.model_dump())
+
+
+@router.post("/events/{event_id}/embed", response_model=StudioEmbedTrigger, status_code=status.HTTP_202_ACCEPTED)
+def studio_embed(
+    event_id: int,
+    db: Session = Depends(get_db),
+    current_user: UserMaster = Depends(current_admin),
+    role_name: str | None = Depends(events_router.current_user_role_name),
+) -> StudioEmbedTrigger:
+    """Dispatch embedding generation, calling QBCals' own trigger_embedding
+    directly - same pre-flight rejection (400 while any participant is still
+    pending/enriching) as the native route."""
+    result = events_router.trigger_embedding(event_id, db=db, current_user=current_user, role_name=role_name)
+    return StudioEmbedTrigger(**result.model_dump())
+
+
+@router.get("/events/{event_id}/embedding-status", response_model=StudioEmbeddingStatus)
+def studio_embedding_status(
+    event_id: int,
+    db: Session = Depends(get_db),
+    current_user: UserMaster = Depends(current_admin),
+    role_name: str | None = Depends(events_router.current_user_role_name),
+) -> StudioEmbeddingStatus:
+    """Calling QBCals' own get_embedding_status directly."""
+    result = events_router.get_embedding_status(event_id, db=db, current_user=current_user, role_name=role_name)
+    return StudioEmbeddingStatus(**result.model_dump())
+
+
+@router.post("/events/{event_id}/match", response_model=StudioMatchTrigger)
+def studio_match(
+    event_id: int,
+    response: Response,
+    confirm: bool = Query(default=False, description="Run the billed matching job instead of estimating its cost"),
+    db: Session = Depends(get_db),
+    current_user: UserMaster = Depends(current_admin),
+    role_name: str | None = Depends(events_router.current_user_role_name),
+) -> StudioMatchTrigger:
+    """Estimate matching cost, or run it when `confirm` is true - calling
+    QBCals' own trigger_matching directly, same 200/202 status-code
+    convention as the native route (mirrored here via the same `response`
+    object passed straight through)."""
+    result = events_router.trigger_matching(
+        event_id, response, confirm=confirm, db=db, current_user=current_user, role_name=role_name
+    )
+    return StudioMatchTrigger(**result.model_dump())
+
+
+@router.get("/events/{event_id}/matching-status", response_model=StudioMatchingStatus)
+def studio_matching_status(
+    event_id: int,
+    db: Session = Depends(get_db),
+    current_user: UserMaster = Depends(current_admin),
+    role_name: str | None = Depends(events_router.current_user_role_name),
+) -> StudioMatchingStatus:
+    """Calling QBCals' own get_matching_status directly."""
+    result = events_router.get_matching_status(event_id, db=db, current_user=current_user, role_name=role_name)
+    return StudioMatchingStatus(**result.model_dump())
