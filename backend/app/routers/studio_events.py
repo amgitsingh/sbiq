@@ -14,16 +14,17 @@ StudioEvent*/StudioEventCreate contract the Studio frontend already expects
 at /studio/events (this repo drops the /api prefix IndMatchmaking used,
 same convention as every other ported router in this phase - see auth.py).
 
-Only the three events routes are in scope for Task 62. Upload/enrich/embed/
-match/matches/review/send follow in Tasks 63-65, appended to this same
-router as they're ported.
+Task 62 ported the three events routes. Task 63 (this update) adds the
+upload route. Enrich/embed/match/matches/review/send follow in Tasks 64-65,
+appended to this same router as they're ported.
 """
 
 from __future__ import annotations
 
 from enum import StrEnum
+from typing import Any
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, File, UploadFile, status
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy.orm import Session
 
@@ -186,3 +187,38 @@ def studio_event(
     routes do when the event exists but isn't owned by the current user."""
     event = events_router._get_event_or_404(event_id, db, current_user, role_name)
     return StudioEvent.model_validate(event)
+
+
+class StudioUploadSummary(BaseModel):
+    """Mirrors events.py's UploadSummary exactly - field names match 1:1, so
+    this is a pure pass-through, not a re-derived shape."""
+
+    total_rows: int
+    parse_skipped: int
+    valid: int
+    flagged: int
+    rejected: int
+    unmapped_headers: list[str] = Field(default_factory=list)
+    rejected_details: list[dict[str, Any]] = Field(default_factory=list)
+
+
+@router.post("/events/{event_id}/upload", response_model=StudioUploadSummary)
+def studio_upload_participants(
+    event_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: UserMaster = Depends(current_admin),
+    role_name: str | None = Depends(events_router.current_user_role_name),
+) -> StudioUploadSummary:
+    """Upload a participant spreadsheet, calling QBCals' own
+    upload_participants (which itself calls run_ingestion_pipeline)
+    directly - no intermediate pre-checks (empty file / size cap / suffix
+    allowlist) beyond what the native route already enforces, since
+    duplicating IndMatchmaking's old ones here could reject or accept a
+    file differently than the native path would. Participants land in the
+    exact same shape and via the exact same code path as
+    POST /events/{id}/upload."""
+    result = events_router.upload_participants(
+        event_id, file=file, db=db, current_user=current_user, role_name=role_name
+    )
+    return StudioUploadSummary(**result.model_dump())
