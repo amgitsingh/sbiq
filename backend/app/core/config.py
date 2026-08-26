@@ -61,5 +61,14 @@ class Settings(BaseSettings):
     # address. See email_sender.send_email's docstring for why.
     SMTP_FROM_EMAIL: str = ""
 
+    # Auth (docs/PLAN.md Phase 8 — merge with IndMatchmaking). Ported
+    # verbatim from IndMatchmaking's Settings — same field names/defaults,
+    # so its ported auth code (app/services/auth/) needs no changes here.
+    # JWT_SECRET_KEY's default is a placeholder, not a real secret — must be
+    # overridden via .env in any real deployment.
+    JWT_SECRET_KEY: str = "change-this-secret"
+    JWT_ALGORITHM: str = "HS256"
+    JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 720
+
 
 settings = Settings()
