@@ -2,6 +2,13 @@ from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+def _split_csv(value: str) -> list[str]:
+    """Comma-separated .env value -> list, e.g. "a, b,c" -> ["a", "b", "c"].
+    A bare "*" stays a single-item ["*"] list (the CORSMiddleware wildcard),
+    not split on nothing."""
+    return [item.strip() for item in value.split(",") if item.strip()]
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
@@ -97,6 +104,23 @@ class Settings(BaseSettings):
     # real key via .env before exposing this beyond local dev - the payloads
     # carry participant contact details.
     EXTERNAL_API_KEY: SecretStr | None = None
+
+    # CORS (Task 69 - IndMatchmaking's create_app() made these configurable
+    # via settings rather than hardcoded; adopted here for the same reason,
+    # not because two apps are being merged - main.py is and stays the sole
+    # app factory). Kept as plain comma-separated strings, not list[str] -
+    # pydantic-settings tries to JSON-decode any "complex" (list) field's
+    # raw env value *before* any field_validator runs, so a plain CSV value
+    # like "https://a.com,https://b.com" crashes outright at Settings()
+    # construction (`json.decoder.JSONDecodeError`), not just at validation
+    # time. main.py splits these via _split_csv() at the point of use, which
+    # sidesteps that entirely. Defaults preserve this app's pre-existing
+    # wide-open local-dev behavior (main.py previously hardcoded "*" for all
+    # three) - override via .env for any real deployment, e.g.
+    # ALLOWED_CORS_ORIGINS=https://admin.example.com,https://app.example.com
+    ALLOWED_CORS_ORIGINS: str = "*"
+    CORS_ALLOW_METHODS: str = "*"
+    CORS_ALLOW_HEADERS: str = "*"
 
 
 settings = Settings()

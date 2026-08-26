@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.core.config import settings
+from app.core.config import _split_csv, settings
 from app.routers import (
     account,
     auth,
@@ -23,10 +23,10 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_split_csv(settings.ALLOWED_CORS_ORIGINS),
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=_split_csv(settings.CORS_ALLOW_METHODS),
+    allow_headers=_split_csv(settings.CORS_ALLOW_HEADERS),
 )
 
 app.include_router(events.router)
