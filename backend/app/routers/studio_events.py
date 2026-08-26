@@ -20,9 +20,9 @@ same as events.py's own style - see that update's note on why no
 `run_in_threadpool`/`asyncio.to_thread` bridging is needed once a route
 calls a sync function directly instead of `await`-ing an HTTP client).
 
-Task 65 (this update) adds the review route. Unlike every route above, this
-one has no existing native events.py function to call - QBCals' own routes
-never had a review endpoint of their own, since "review" was purely an
+Task 65 added the review route. Unlike every route above, this one has no
+existing native events.py function to call - QBCals' own routes never had a
+review endpoint of their own, since "review" was purely an
 IndMatchmaking-side concept (the old, now-dropped standalone MatchReview
 table). Per docs/PLAN.md's merge design, that table was folded directly
 onto QBCals' own Match row (status already carried the decision;
@@ -30,13 +30,25 @@ reviewed_by_user_id/reviewed_at were added alongside it - see
 app/models/match.py), so this route is the first real write path for those
 two columns, implemented here rather than delegated to events.py.
 
-Task 66 (this update) adds the send route. Like review, this has no native
-events.py function to fully call-through - QBCals' own send_match_email
+Task 66 added the send route. Like review, this has no native events.py
+function to fully call-through - QBCals' own send_match_email
 (app/routers/events.py) does the actual send, so this delegates to it
 directly for that part, but its EmailLog audit trail is new (native
 send_match_email doesn't write one; see app/models/matching_admin.py's
 EmailLog docstring on why participant-pair FKs, not user-pair, fit this
 kind of email).
+
+Task 67 was reframed at the user's explicit direction: no IndMatchmaking
+files are being deleted (its own /api/studio/* routes stay as-is, still a
+live proxy in that separate app) - instead, this task became a
+self-sufficiency pass on QBCals' own native surface. That pass added
+`location` (an existing but previously unwired Event column) to
+EventCreate/EventOut here and in events.py, and added native
+GET/PATCH/DELETE /events/{event_id} directly to events.py (previously only
+reachable via this file's GET /studio/events/{event_id} wrapper) - no
+Studio-side PATCH/DELETE were added here, since the original IndMatchmaking
+Studio contract never had them and there's no compatibility shape to
+preserve for routes that never existed.
 """
 
 from __future__ import annotations
@@ -114,6 +126,7 @@ class StudioEvent(BaseModel):
     name: str
     date: str | None = None
     description: str | None = None
+    location: str | None = None
     status: str
     agenda: str | None = None
     matching_goals: str | None = None
@@ -143,6 +156,7 @@ class StudioEventCreate(BaseModel):
     name: str = Field(min_length=1, max_length=200)
     date: str | None = Field(default=None, max_length=40)
     description: str | None = Field(default=None, max_length=2000)
+    location: str | None = Field(default=None, max_length=255)
     agenda: str | None = Field(default=None, max_length=5000)
     matching_goals: str | None = Field(default=None, max_length=2000)
     target_sectors: list[StudioTargetSector] | None = Field(
@@ -186,6 +200,7 @@ def studio_create_event(
         name=payload.name,
         date=payload.date,
         description=payload.description,
+        location=payload.location,
         agenda=payload.agenda,
         matching_goals=payload.matching_goals,
         target_sectors=[sector.value for sector in payload.target_sectors] if payload.target_sectors else None,

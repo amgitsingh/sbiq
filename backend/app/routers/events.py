@@ -2,7 +2,7 @@ from typing import Literal
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Response, UploadFile, status
 from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy import func
+from sqlalchemy import func, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session, joinedload
 
@@ -69,6 +69,11 @@ class EventCreate(BaseModel):
     name: str
     date: str | None = None
     description: str | None = None
+    # Venue/address - carried over from IndMatchmaking's EventMaster (Phase
+    # 8 merge, Task 59's Event.location column) but never wired into this
+    # schema until Task 67's self-sufficiency pass; QBCals' own matching
+    # pipeline doesn't read it, it's admin-facing display data only.
+    location: str | None = None
     agenda: str | None = None
     matching_goals: str | None = None
     target_sectors: list[str] | None = Field(
@@ -95,6 +100,7 @@ class EventOut(BaseModel):
     name: str
     date: str | None = None
     description: str | None = None
+    location: str | None = None
     status: str
     agenda: str | None = None
     matching_goals: str | None = None
@@ -230,6 +236,7 @@ def create_event(
         name=payload.name,
         date=payload.date,
         description=payload.description,
+        location=payload.location,
         agenda=payload.agenda,
         matching_goals=payload.matching_goals,
         target_sectors=payload.target_sectors,
@@ -1225,3 +1232,83 @@ def send_match_email(
         raise HTTPException(status_code=502, detail=f"Failed to send email: {e}")
 
     return SendMatchEmailResult(match_id=match.id, sent_to=participant_b.email, sent_as=participant_a.name)
+
+
+class EventUpdate(BaseModel):
+    """All fields optional (PATCH semantics) - unset fields are left
+    untouched via model_dump(exclude_unset=True) below, matching
+    IndMatchmaking's old EventUpdate convention for its own (now-eliminated)
+    EventMaster CRUD."""
+
+    name: str | None = None
+    date: str | None = None
+    description: str | None = None
+    location: str | None = None
+    agenda: str | None = None
+    matching_goals: str | None = None
+    target_sectors: list[str] | None = Field(
+        default=None,
+        description=f"Not enforced - suggested values: {', '.join(SUGGESTED_TARGET_SECTORS)}",
+    )
+    event_type: str | None = Field(
+        default=None, description=f"Not enforced - suggested values: {', '.join(SUGGESTED_EVENT_TYPES)}"
+    )
+    expected_participant_count: int | None = None
+    content_language: Literal["en", "nl"] | None = None
+    status: Literal["draft", "active", "completed"] | None = None
+
+
+# Task 67 (docs/PLAN.md Phase 8 self-sufficiency pass): QBCals never had its
+# own single-event GET/PATCH/DELETE - only the Studio compatibility shim
+# (app/routers/studio_events.py) exposed a GET via _get_event_or_404
+# directly. Added here so the native /events/* surface is complete on its
+# own, without requiring the /studio prefix at all. Placed after every
+# other route in this file (in particular after GET /participants-template)
+# since a bare `GET /{event_id}` pattern would otherwise shadow that
+# literal path - Starlette matches routes in registration order, and
+# `event_id: int` failing to parse "participants-template" would 422
+# rather than fall through to the literal route.
+@router.get("/{event_id}", response_model=EventOut)
+def get_event(
+    event_id: int,
+    db: Session = Depends(get_db),
+    current_user: UserMaster = Depends(current_admin),
+    role_name: str | None = Depends(current_user_role_name),
+) -> Event:
+    return _get_event_or_404(event_id, db, current_user, role_name)
+
+
+@router.patch("/{event_id}", response_model=EventOut)
+def update_event(
+    event_id: int,
+    payload: EventUpdate,
+    db: Session = Depends(get_db),
+    current_user: UserMaster = Depends(current_admin),
+    role_name: str | None = Depends(current_user_role_name),
+) -> Event:
+    event = _get_event_or_404(event_id, db, current_user, role_name)
+    for field, value in payload.model_dump(exclude_unset=True).items():
+        setattr(event, field, value)
+    db.commit()
+    db.refresh(event)
+    return event
+
+
+@router.delete("/{event_id}", status_code=204, response_model=None)
+def delete_event(
+    event_id: int,
+    db: Session = Depends(get_db),
+    current_user: UserMaster = Depends(current_admin),
+    role_name: str | None = Depends(current_user_role_name),
+) -> None:
+    """Raw SQL delete, not db.delete(event) - a pre-existing, known ORM
+    cascade bug (db.delete() on Event tries to null out
+    participant_embeddings.participant_id, which is NOT NULL, instead of
+    trusting the DB-level ON DELETE CASCADE) has been worked around this
+    same way in every test cleanup script throughout this merge; this is
+    the first real application code path to actually delete an event, so
+    it follows the same established pattern rather than hitting that bug
+    for real."""
+    _get_event_or_404(event_id, db, current_user, role_name)
+    db.execute(text("DELETE FROM events WHERE id = :id"), {"id": event_id})
+    db.commit()
