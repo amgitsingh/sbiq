@@ -663,6 +663,105 @@ in this phase was verified against mocks alone.
 
 ---
 
+## Phase 8 — Merge with IndMatchmaking
+> QBCals and IndMatchmaking (`D:\Python\IndMatchmaking`) currently run as two
+> separate services. Investigation found IndMatchmaking is an auth +
+> admin-UI backend that already calls QBCals as an upstream HTTP service
+> (`lib/qbcals.py` + `/api/studio/*`, a thin proxy whose endpoints map
+> almost 1:1 onto QBCals' own real endpoints). This phase folds
+> IndMatchmaking's auth/user-management/admin domains directly into this
+> app and deletes the HTTP hop, so the frontend talks to one base URL for
+> everything and all data lives in one database.
+>
+> Confirmed decisions: full DB consolidation into one Postgres schema now;
+> IndMatchmaking's shadow tables that duplicate QBCals data
+> (`ExcelUpload`/`ExcelRawData`, `ParticipantMatchMaster`, `MatchScoreLog`)
+> are eliminated in favor of reading QBCals' own `Participant`/`Match`
+> directly; genuinely new concepts (`MatchReview`'s decision/audit fields,
+> `EmailLog`) are added onto QBCals' own schema instead of kept as separate
+> shadow tables; the vestigial `MatchProfile`/matrimonial `profiles` domain
+> is carried over as-is; sync (QBCals) and async (IndMatchmaking) SQLAlchemy
+> coexist in one app for now rather than a full rewrite to one style.
+>
+> Conceptual overlap being reconciled: `EventMaster` is dropped — QBCals'
+> `Event` becomes canonical, gaining `location` and `owner_user_id` (FK to
+> `UserMaster`). `MatchReview` is folded into `Match` (`status` already
+> carries the decision; gains `reviewed_by_user_id`/`reviewed_at`).
+> `EventParticipantMapping` is kept as a distinct concept (registered
+> platform users assigned to an event) from QBCals' `Participant` (an
+> uploaded Excel row), migrated to FK QBCals' `Event.id` (integer) +
+> `UserMaster.id` (UUID). `EmailLog`/`SmtpMaster`/`CompanyMaster` are
+> genuinely new, ported as-is.
+>
+> Each task below should be executed and tested individually before moving
+> to the next — do not batch multiple tasks before verifying.
+
+### Stage 8.1 — Foundation
+
+| # | Task | Description | Status |
+|---|---|---|---|
+| 48 | **Async SQLAlchemy dependencies** | Add `sqlalchemy[asyncio]`, `asyncpg`, `pyjwt`, `passlib` to `backend/requirements.txt`. Stay on this repo's pip/requirements.txt convention — do not adopt IndMatchmaking's `uv` tooling. Test: `pip install -r requirements.txt` succeeds in a clean venv. | `pending` |
+| 49 | **Async DB session** | New `app/core/async_database.py`: async engine + `AsyncSession` factory + `get_async_db` FastAPI dependency, pointed at the same `DATABASE_URL` as the existing sync engine — one physical database, two SQLAlchemy access styles. Test: a throwaway script opens an async session and runs `SELECT 1`. | `pending` |
+
+### Stage 8.2 — Database consolidation
+
+| # | Task | Description | Status |
+|---|---|---|---|
+| 50 | **Port RBAC/user models** | `UserMaster`, `RoleMaster`, `PermissionMaster`, `RolePermissionMapping`, `CompanyMaster`, `TagMaster`, `UserTagMapping` into new `app/models/user.py` / `app/models/rbac.py`, using this repo's existing `Base`. Test: models import cleanly, no circular imports. | `pending` |
+| 51 | **Port remaining new models** | `EventParticipantMapping`, `SmtpMaster`, `MatchProfile`, `EmailLog` into new model files, FK'd to the new integer/UUID targets (not their old IndMatchmaking shapes). Test: same import check as #50. | `pending` |
+| 52 | **Extend Event and Match** | `Event` gains `location`, `owner_user_id` (FK `user_master.id`). `Match` gains `reviewed_by_user_id`, `reviewed_at`. Test: import check; existing `Event(...)`/`Match(...)` construction call sites still work with the new nullable columns. | `pending` |
+| 53 | **Consolidation migration** | One new Alembic migration (continuing QBCals' existing chain) creating every table from #50–52 in QBCals' database. Do not replay IndMatchmaking's own 15 migrations — this single migration recreates their end-state directly. Test: `alembic upgrade head` succeeds on a fresh test DB; `downgrade -1` then `upgrade head` round-trips clean. | `pending` |
+| 54 | **Checkpoint: real data?** | Confirm with the user whether IndMatchmaking's live database has real rows worth preserving (real registered users, etc.). Only if yes, write a one-off copy script before cutover. Decision checkpoint, not a code change. | `pending` |
+
+### Stage 8.3 — Auth port
+
+| # | Task | Description | Status |
+|---|---|---|---|
+| 55 | **Port JWT + password hashing** | `app/services/auth/security.py` (PyJWT encode/decode, passlib PBKDF2-SHA256); add `JWT_SECRET_KEY`/`JWT_ALGORITHM`/`JWT_ACCESS_TOKEN_EXPIRE_MINUTES` to `app/core/config.py`. Test: hash+verify a password; encode+decode a token and confirm claims round-trip. | `pending` |
+| 56 | **Port login/me/current_admin** | `POST /auth/login`, `GET /auth/me` → `app/routers/auth.py`; `current_admin` dependency → `app/services/auth/deps.py` (async, using `get_async_db`). Test: seed one `UserMaster` row, log in, get a token, call `/auth/me`, confirm the right user comes back; wrong password / inactive user rejected. | `pending` |
+| 57 | **Port registrations + account** | `domain/registrations` → `app/routers/registrations.py`; `domain/account` → `app/routers/account.py`. Test: public signup creates a `pending` user; activate/reject flip status correctly; profile GET/PUT round-trips. | `pending` |
+| 58 | **Generic role dependency** | New `require_role(*role_names)` dependency factory (IndMatchmaking only had inline `role.role_name` checks). Test: a route guarded by `require_role("Super Admin")` 403s a non-admin token, 200s an admin token. | `pending` |
+
+### Stage 8.4 — Admin domains port
+
+| # | Task | Description | Status |
+|---|---|---|---|
+| 59 | **Port simple admin domains** | `domain/dashboard`, `domain/lookups`, `domain/tables`, `domain/smtp`, `domain/profiles` (MatchProfile, carried over as-is) → matching `app/routers/*.py`, same `Depends(current_admin)` router-level gating. Test: each ported router exercised via `/docs` with a real admin token — same responses as the old IndMatchmaking service. | `pending` |
+| 60 | **Port external API** | `domain/external` (`EXTERNAL_API_KEY`-gated) → `app/routers/external.py`, repointed to read QBCals' real `Event`/`Participant` tables directly instead of proxied data. Test: real HTTP call with the API key header returns real QBCals data. | `pending` |
+
+### Stage 8.5 — Delete the proxy (the core of the merge)
+
+| # | Task | Description | Status |
+|---|---|---|---|
+| 61 | **Rewrite Studio events routes** | `POST/GET /events`, `GET /events/{id}` call QBCals' existing `create_event`/`list_events`/`_get_event_or_404` logic directly instead of `httpx`-calling itself. Test: create + list + get through the new path; identical shape to the old proxied response. | `pending` |
+| 62 | **Rewrite Studio upload route** | `POST /events/{id}/upload` calls `run_ingestion_pipeline` directly. Test: upload a real test file; participants land exactly as QBCals' own upload endpoint would produce. | `pending` |
+| 63 | **Rewrite enrich/embed/match routes** | Enrich/embed/match + status endpoints call the existing Celery dispatch functions directly. Bridge every async→sync call with `run_in_threadpool`/`asyncio.to_thread`, applied consistently. Test: run a real enrich→embed→match cycle for one test participant through the new async routes; results match calling QBCals' native endpoints directly. | `pending` |
+| 64 | **Rewrite review route** | `POST /review` writes `Match.status` + `reviewed_by_user_id`/`reviewed_at` instead of the old `MatchReview` table. Test: review a real match; confirm the three columns update on the right `Match` row. | `pending` |
+| 65 | **Rewrite send route** | `POST /send` calls `send_match_email`'s existing logic directly, plus writes a new `EmailLog` row (new audit trail). Test: send a real match email; confirm it sends and an `EmailLog` row is created. | `pending` |
+| 66 | **Delete the proxy client** | Delete `lib/qbcals.py`, all `QBCALS_API_BASE_URL`/`QBCALS_TOKEN`/etc. config, and the `httpx` upstream-client dependency. Test: grep for `qbcals.py`/`QBCALS_API_BASE_URL` returns nothing; app still starts, all Stage 8.5 tests still pass. | `pending` |
+| 67 | **Checkpoint: path collapse?** | Decide with the user whether to collapse `/api/studio/*` into QBCals' native `/events/*` path space (recommended — the "studio vs native" distinction no longer means anything post-merge). Breaking change for any frontend code still calling `/api/studio/...`. Decision checkpoint. | `pending` |
+
+### Stage 8.6 — App wiring & deployment
+
+| # | Task | Description | Status |
+|---|---|---|---|
+| 68 | **Merge app factory** | Merge IndMatchmaking's `create_app()` (CORS middleware, router registration) into QBCals' `main.py` — every ported router added via `include_router`. Test: `/docs` shows every route (QBCals-native + every ported domain) in one Swagger UI; app boots with one `uvicorn main:app` command. | `pending` |
+| 69 | **Reconcile config** | Merge `JWT_*`, `ALLOWED_CORS_ORIGINS`, `SMTP_ENCRYPTION_KEY`, `MICROSOFT_GRAPH_*`, `CONTACT_*` into `.env.example`/`Settings`; drop proxy-specific vars removed in #66. Test: fresh `.env` from the updated `.env.example` boots the app with no missing-config errors. | `pending` |
+| 70 | **Update deployment doc** | Update `docs/DEPLOY_EC2.md` for one systemd service instead of two separately-deployed apps. Test: redeploy against a real test instance following the updated doc; `/docs` and a ported auth endpoint both reachable from one process. | `pending` |
+
+> **Final verification (after all Phase 8 stages):** full real flow —
+> register → activate → login → create event → upload → enrich → embed →
+> match → matches → review → send — through the one merged app with no HTTP
+> calls to a second service anywhere; non-Super-Admin users only see their
+> own events; `alembic upgrade head` runs clean end to end on a brand-new
+> database; this session's existing QBCals features (Dutch
+> `content_language`/on-demand translation, event-context fields, the
+> participant Excel template, the `looking_for`/`offerings` verbatim
+> guarantee) remain unregressed — this merge changes how QBCals' functions
+> are *called*, never their internal logic.
+
+---
+
 ## Summary
 
 Task status: `pending` → `done` as each task is completed.
@@ -676,5 +775,6 @@ Task status: `pending` → `done` as each task is completed.
 | 5 — Matching Engine | 26–33 | Scorers, rule engine, LLM reasoning (JSON mode), bidirectional enforcement, cost estimate | 8 / 8 |
 | 6 — Match Output | 34–35 | Paginated GET /matches API (Excel/CSV export descoped) | 1 / 2 (1 cancelled) |
 | 7 — Testing & Deployment | 43–47 | Unit, integration, E2E tests, Railway + Supabase production deploy | 0 / 5 |
+| 8 — Merge with IndMatchmaking | 48–70 | Fold IndMatchmaking's auth/user-management/admin domains into QBCals, delete the HTTP proxy hop, consolidate into one database | 0 / 23 |
 
-**Total: 40 tasks** — frontend and admin panel handled separately.
+**Total: 63 tasks** — frontend and admin panel handled separately.
