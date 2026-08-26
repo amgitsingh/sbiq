@@ -75,6 +75,11 @@ async def get_microsoft_graph_access_token() -> str:
     return access_token
 
 
+async def test_microsoft_graph_mail_credentials() -> None:
+    """Verify that Graph client credentials can obtain a token without sending email."""
+    await get_microsoft_graph_access_token()
+
+
 async def send_microsoft_graph_mail(
     *,
     from_email: str,
