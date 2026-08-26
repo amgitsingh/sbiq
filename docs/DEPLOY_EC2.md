@@ -152,6 +152,15 @@ nano .env
 
 Fill in at minimum: `AI_API_KEY`, `TAVILY_API_KEY`, `DATABASE_URL`.
 
+**`JWT_SECRET_KEY` — do not skip this one.** Its default
+(`change-this-secret`) is a real, publicly-known placeholder, not a real
+secret — leaving it unchanged in a real deployment means anyone can forge a
+valid Super Admin token. Generate a real one and set it before going live:
+
+```bash
+python3 -c "import secrets; print(secrets.token_urlsafe(48))"
+```
+
 **Database — pick one:**
 
 - **Option A (recommended): Supabase.** Matches this project's documented
@@ -194,6 +203,30 @@ cd ~/SBIQ/backend
 source myenv/bin/activate
 alembic upgrade head
 ```
+
+## 6.5. Bootstrap the first Super Admin
+
+**Do not skip this step.** A freshly migrated database has zero rows in
+`role_master`/`user_master` — and every way to create or approve a user
+(`POST /public/register`, `POST /admin/registrations/{id}/activate`) either
+needs the `"User"` role to already exist, or needs an already-logged-in
+Super Admin to call it. With nothing seeded, there is no way into the app
+at all through the API alone.
+
+```bash
+python seed_admin.py --email you@example.com --first-name Your --last-name Name
+# prompts for a password (min 8 chars) - or pass --password / set
+# SEED_ADMIN_PASSWORD to run non-interactively
+```
+
+This creates the three core roles (`Super Admin`, `Admin`, `User`) if they
+don't already exist, then one active Super Admin account. Safe to re-run —
+an existing role or the given email is reported, not duplicated or
+modified. Log in via `POST /auth/login` with that email/password to get a
+token for everything else (including approving the first real registrant
+through `POST /admin/registrations/{id}/activate`, which itself requires
+active SMTP settings to be configured first via `PUT /admin/smtp` — see
+`docs/CONFIG_CAVEATS.md` if that 400s).
 
 ## 7. Smoke-test manually before wiring up systemd
 
@@ -319,10 +352,17 @@ sudo certbot --nginx -d your-domain.example.com
 
 ```bash
 curl https://your-domain.example.com/health
-curl https://your-domain.example.com/events
+curl -X POST https://your-domain.example.com/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"you@example.com","password":"<the password from Step 6.5>"}'
+# {"access_token":"...","token_type":"bearer","user":{...,"role_name":"Super Admin"}}
 ```
+`/events` itself requires that bearer token (`Authorization: Bearer <access_token>`)
+— every route does except `/health`, `/public/register`, and `/auth/login`.
 Then exercise the real endpoints via `/docs` (same Swagger UI used in local
-dev) at `https://your-domain.example.com/docs`.
+dev, showing every domain's routes in one place) at
+`https://your-domain.example.com/docs` — click **Authorize** and paste the
+token to try authenticated routes directly from the UI.
 
 ## 11. Deploying updates later
 
@@ -338,9 +378,16 @@ sudo systemctl restart qbcals-api qbcals-worker-enrichment qbcals-worker-matchin
 
 ## Things worth knowing before you flip this on for real traffic
 
-- **CORS is currently wide open** (`allow_origins=["*"]` in `main.py`) — fine
-  for an internal/admin-only deployment, but tighten this to your actual
-  frontend origin before exposing it more broadly.
+- **CORS is wide open by default** (`ALLOWED_CORS_ORIGINS=*` in `.env`) — fine
+  for an internal/admin-only deployment, but set it to your actual frontend
+  origin(s) before exposing this more broadly, e.g.
+  `ALLOWED_CORS_ORIGINS=https://admin.example.com` (comma-separated for more
+  than one; see `.env.example`'s CORS section).
+- **This is a standalone replacement for IndMatchmaking, not a companion to
+  it.** This app has every capability IndMatchmaking had (auth, admin
+  domains, event/participant/matchmaking CRUD) natively — it does not call
+  out to IndMatchmaking, and IndMatchmaking's own deployment (if any) is
+  entirely separate infrastructure, unaffected by anything in this doc.
 - **`AI_MAX_TOKENS_PER_RUN` does nothing yet** — it's a documented cost cap
   with no enforcement code behind it (`docs/CONFIG_CAVEATS.md`). Nothing on
   this server will stop a runaway matching run from spending real money.
