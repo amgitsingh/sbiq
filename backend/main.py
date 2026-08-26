@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.routers import events
+from app.routers import auth, events
 
 app = FastAPI(
     title="QBCals",
@@ -19,6 +19,7 @@ app.add_middleware(
 )
 
 app.include_router(events.router)
+app.include_router(auth.router)
 
 
 @app.get("/health")
