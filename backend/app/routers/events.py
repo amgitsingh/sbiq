@@ -3,8 +3,10 @@ from typing import Literal
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Response, UploadFile, status
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import func
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session, joinedload
 
+from app.core.async_database import get_async_db
 from app.core.database import get_db
 from app.models.enrichment_job import EnrichmentJob
 from app.models.event import Event
@@ -17,6 +19,9 @@ from app.models.participant import (
     ParticipantStatus,
 )
 from app.models.participant_embedding import ParticipantEmbedding
+from app.models.rbac import RoleMaster
+from app.models.user import UserMaster
+from app.services.auth.deps import current_admin
 from app.services.ingestion import run_ingestion_pipeline
 from app.services.template_generator import generate_participant_template
 from app.services.matching.cost_estimator import estimate_matching_run_cost
@@ -170,10 +175,36 @@ class MatchTriggerResult(BaseModel):
     estimated_duration_seconds: int | None = None
 
 
-def _get_event_or_404(event_id: int, db: Session) -> Event:
+async def current_user_role_name(
+    user: UserMaster = Depends(current_admin), db: AsyncSession = Depends(get_async_db)
+) -> str | None:
+    """This request's authenticated user's role name, or None if unset/
+    unknown - added for Task 59's ownership enforcement. A thin sibling to
+    current_admin: FastAPI caches dependency results per request by
+    default, so a route declaring both this and current_admin directly
+    still only resolves current_admin once, not twice.
+    """
+    role = await db.get(RoleMaster, user.role_id) if user.role_id else None
+    return role.role_name if role else None
+
+
+def _get_event_or_404(event_id: int, db: Session, current_user: UserMaster, role_name: str | None) -> Event:
+    """Task 59: also enforces owner-scoped access - the one access control
+    IndMatchmaking's now-deleted proxy layer used to provide ("Super Admin
+    sees all events, others see only their own").
+
+    Strict by design (amended 2026-08-26, at explicit user request): an
+    unowned event (owner_user_id IS NULL) is NOT given a free pass - only
+    Super Admin can see/reach it. All pre-Task-59 legacy data was
+    deliberately wiped at the same time specifically so this stricter rule
+    could apply cleanly with nothing orphaned - every event from here on is
+    created through create_event, which always stamps a real owner.
+    """
     event = db.query(Event).filter(Event.id == event_id).first()
     if not event:
         raise HTTPException(status_code=404, detail=f"Event {event_id} not found")
+    if role_name != "Super Admin" and event.owner_user_id != current_user.id:
+        raise HTTPException(status_code=403, detail=f"You do not have access to event {event_id}")
     return event
 
 
@@ -192,7 +223,9 @@ LangParam = Query(default=None, description="Mock for a future per-user language
 
 
 @router.post("", response_model=EventOut, status_code=201)
-def create_event(payload: EventCreate, db: Session = Depends(get_db)) -> Event:
+def create_event(
+    payload: EventCreate, db: Session = Depends(get_db), current_user: UserMaster = Depends(current_admin)
+) -> Event:
     event = Event(
         name=payload.name,
         date=payload.date,
@@ -203,6 +236,7 @@ def create_event(payload: EventCreate, db: Session = Depends(get_db)) -> Event:
         event_type=payload.event_type,
         expected_participant_count=payload.expected_participant_count,
         content_language=payload.content_language,
+        owner_user_id=current_user.id,
     )
     db.add(event)
     db.commit()
@@ -211,13 +245,28 @@ def create_event(payload: EventCreate, db: Session = Depends(get_db)) -> Event:
 
 
 @router.get("", response_model=list[EventOut])
-def list_events(db: Session = Depends(get_db)) -> list[Event]:
-    return db.query(Event).order_by(Event.created_at.desc()).all()
+def list_events(
+    db: Session = Depends(get_db),
+    current_user: UserMaster = Depends(current_admin),
+    role_name: str | None = Depends(current_user_role_name),
+) -> list[Event]:
+    query = db.query(Event)
+    if role_name != "Super Admin":
+        # Strict (amended 2026-08-26, at explicit user request): only the
+        # owner's own events, full stop - no unowned-event carve-out. See
+        # _get_event_or_404's docstring for why.
+        query = query.filter(Event.owner_user_id == current_user.id)
+    return query.order_by(Event.created_at.desc()).all()
 
 
 @router.get("/{event_id}/participants", response_model=list[ParticipantOut])
-def list_participants(event_id: int, db: Session = Depends(get_db)) -> list[Participant]:
-    _get_event_or_404(event_id, db)
+def list_participants(
+    event_id: int,
+    db: Session = Depends(get_db),
+    current_user: UserMaster = Depends(current_admin),
+    role_name: str | None = Depends(current_user_role_name),
+) -> list[Participant]:
+    _get_event_or_404(event_id, db, current_user, role_name)
     return db.query(Participant).filter(Participant.event_id == event_id).all()
 
 
@@ -302,7 +351,12 @@ _SENIORITY_LABELS = {1.0: "senior", 0.5: "mid_level"}
 
 @router.get("/{event_id}/participants/{participant_id}", response_model=ParticipantDetailOut)
 def get_participant_detail(
-    event_id: int, participant_id: int, lang: Literal["en", "nl"] | None = LangParam, db: Session = Depends(get_db)
+    event_id: int,
+    participant_id: int,
+    lang: Literal["en", "nl"] | None = LangParam,
+    db: Session = Depends(get_db),
+    current_user: UserMaster = Depends(current_admin),
+    role_name: str | None = Depends(current_user_role_name),
 ) -> ParticipantDetailOut:
     """Full participant detail, shaped to mirror
     docs/nabaruns-enrichment-example.json's schema as closely as this app's
@@ -319,7 +373,7 @@ def get_participant_detail(
     app/services/translation.py. needs/offerings are never translated,
     regardless of lang - same verbatim guarantee as always.
     """
-    event = _get_event_or_404(event_id, db)
+    event = _get_event_or_404(event_id, db, current_user, role_name)
 
     participant = (
         db.query(Participant).filter(Participant.id == participant_id, Participant.event_id == event_id).first()
@@ -418,9 +472,13 @@ def download_participant_template() -> Response:
 
 @router.post("/{event_id}/upload", response_model=UploadSummary)
 def upload_participants(
-    event_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)
+    event_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: UserMaster = Depends(current_admin),
+    role_name: str | None = Depends(current_user_role_name),
 ) -> UploadSummary:
-    _get_event_or_404(event_id, db)
+    _get_event_or_404(event_id, db, current_user, role_name)
 
     filename = file.filename
     if not filename:
@@ -461,14 +519,19 @@ def upload_participants(
 
 
 @router.post("/{event_id}/enrich", response_model=EnrichmentTriggerResult, status_code=202)
-def trigger_enrichment(event_id: int, db: Session = Depends(get_db)) -> EnrichmentTriggerResult:
+def trigger_enrichment(
+    event_id: int,
+    db: Session = Depends(get_db),
+    current_user: UserMaster = Depends(current_admin),
+    role_name: str | None = Depends(current_user_role_name),
+) -> EnrichmentTriggerResult:
     """Dispatch enrichment for every participant in the event. A separate,
     deliberate action rather than automatic on upload - enrichment spends real
     Tavily/OpenAI credits, and an organizer may want to fix flagged rows first.
     Requires a Celery worker consuming the 'enrichment' queue to actually
     process the dispatched jobs.
     """
-    _get_event_or_404(event_id, db)
+    _get_event_or_404(event_id, db, current_user, role_name)
     # Celery's @task(bind=True) auto-supplies `self` at runtime (Task.__call__
     # binds the task instance), but its type stubs treat the decorator as
     # identity-preserving, so Pylance still sees the original (self, event_id)
@@ -478,14 +541,19 @@ def trigger_enrichment(event_id: int, db: Session = Depends(get_db)) -> Enrichme
 
 
 @router.get("/{event_id}/enrichment-status", response_model=EnrichmentStatusSummary)
-def get_enrichment_status(event_id: int, db: Session = Depends(get_db)) -> EnrichmentStatusSummary:
+def get_enrichment_status(
+    event_id: int,
+    db: Session = Depends(get_db),
+    current_user: UserMaster = Depends(current_admin),
+    role_name: str | None = Depends(current_user_role_name),
+) -> EnrichmentStatusSummary:
     """Per-participant enrichment status with a per-source breakdown, plus
     aggregate counts. If a participant's enrichment ran more than once
     (e.g. a Celery retry after a failed LLM normalization), only the most
     recent EnrichmentJob row per source is shown - earlier rows from prior
     attempts stay in the DB but aren't surfaced here.
     """
-    _get_event_or_404(event_id, db)
+    _get_event_or_404(event_id, db, current_user, role_name)
 
     participants = db.query(Participant).filter(Participant.event_id == event_id).all()
     participant_ids = [p.id for p in participants]
@@ -530,7 +598,12 @@ def get_enrichment_status(event_id: int, db: Session = Depends(get_db)) -> Enric
 
 
 @router.post("/{event_id}/embed", response_model=EmbedTriggerResult, status_code=202)
-def trigger_embedding(event_id: int, db: Session = Depends(get_db)) -> EmbedTriggerResult:
+def trigger_embedding(
+    event_id: int,
+    db: Session = Depends(get_db),
+    current_user: UserMaster = Depends(current_admin),
+    role_name: str | None = Depends(current_user_role_name),
+) -> EmbedTriggerResult:
     """Dispatch embedding generation for every enriched participant in the
     event. Callable only after enrichment has finished - rejects while any
     participant is still 'pending' or 'enriching', since running this early
@@ -542,7 +615,7 @@ def trigger_embedding(event_id: int, db: Session = Depends(get_db)) -> EmbedTrig
     participants enriched before that existed, or retrying ones whose
     automatic embedding attempt failed and was swallowed.
     """
-    _get_event_or_404(event_id, db)
+    _get_event_or_404(event_id, db, current_user, role_name)
 
     statuses = [
         s for (s,) in db.query(Participant.enrichment_status).filter(Participant.event_id == event_id).all()
@@ -578,7 +651,12 @@ class EmbeddingStatusSummary(BaseModel):
 
 
 @router.get("/{event_id}/embedding-status", response_model=EmbeddingStatusSummary)
-def get_embedding_status(event_id: int, db: Session = Depends(get_db)) -> EmbeddingStatusSummary:
+def get_embedding_status(
+    event_id: int,
+    db: Session = Depends(get_db),
+    current_user: UserMaster = Depends(current_admin),
+    role_name: str | None = Depends(current_user_role_name),
+) -> EmbeddingStatusSummary:
     """Per-participant embedding status, mirroring get_enrichment_status's
     shape. embed_participant/generate_embedding (Task 22/23) have no status
     field of their own on Participant - "embedded" here is purely "does a
@@ -592,7 +670,7 @@ def get_embedding_status(event_id: int, db: Session = Depends(get_db)) -> Embedd
     _embed_and_store in enrichment_tasks.py) that never got retried via
     POST /{event_id}/embed.
     """
-    _get_event_or_404(event_id, db)
+    _get_event_or_404(event_id, db, current_user, role_name)
 
     participants = db.query(Participant).filter(Participant.event_id == event_id).all()
     embedded_ids = {
@@ -632,7 +710,12 @@ def get_embedding_status(event_id: int, db: Session = Depends(get_db)) -> Embedd
 
 @router.post("/{event_id}/match", response_model=MatchTriggerResult)
 def trigger_matching(
-    event_id: int, response: Response, confirm: bool = False, db: Session = Depends(get_db)
+    event_id: int,
+    response: Response,
+    confirm: bool = False,
+    db: Session = Depends(get_db),
+    current_user: UserMaster = Depends(current_admin),
+    role_name: str | None = Depends(current_user_role_name),
 ) -> MatchTriggerResult:
     """Cost-gated trigger for a matching run, per CLAUDE.md's "estimated cost
     shown before triggering matching run": called without `?confirm=true`,
@@ -650,7 +733,7 @@ def trigger_matching(
     count) - this task explicitly asks for a job ID back, so the caller can
     look the run up later via Celery's result backend.
     """
-    _get_event_or_404(event_id, db)
+    _get_event_or_404(event_id, db, current_user, role_name)
 
     enriched = (
         db.query(Participant)
@@ -715,7 +798,12 @@ class MatchingStatusSummary(BaseModel):
 
 
 @router.get("/{event_id}/matching-status", response_model=MatchingStatusSummary)
-def get_matching_status(event_id: int, db: Session = Depends(get_db)) -> MatchingStatusSummary:
+def get_matching_status(
+    event_id: int,
+    db: Session = Depends(get_db),
+    current_user: UserMaster = Depends(current_admin),
+    role_name: str | None = Depends(current_user_role_name),
+) -> MatchingStatusSummary:
     """Per-participant matching status, mirroring get_enrichment_status's
     shape. `eligible` mirrors batch_match_event's own dispatch filter exactly
     (membership_tier != non_member AND participant_status != review) - non-
@@ -730,7 +818,7 @@ def get_matching_status(event_id: int, db: Session = Depends(get_db)) -> Matchin
     the bidirectional rule, so it can be >0 even for an `eligible=False`
     participant who never ran their own matching pass.
     """
-    _get_event_or_404(event_id, db)
+    _get_event_or_404(event_id, db, current_user, role_name)
 
     participants = db.query(Participant).filter(Participant.event_id == event_id).all()
 
@@ -842,6 +930,8 @@ def list_matches(
     limit: int = DEFAULT_MATCHES_LIMIT,
     offset: int = 0,
     db: Session = Depends(get_db),
+    current_user: UserMaster = Depends(current_admin),
+    role_name: str | None = Depends(current_user_role_name),
 ) -> PaginatedMatchesOut:
     """One row per match pair (deduplicated - A->B and B->A are the same
     relationship, not two matches), paginated.
@@ -850,7 +940,7 @@ def list_matches(
     (pending/approved/rejected). Ordered by id, so pagination is stable
     across calls even as new matches are added between pages.
     """
-    _get_event_or_404(event_id, db)
+    _get_event_or_404(event_id, db, current_user, role_name)
 
     if limit < 1 or limit > MAX_MATCHES_LIMIT:
         raise HTTPException(status_code=400, detail=f"limit must be between 1 and {MAX_MATCHES_LIMIT}")
@@ -938,7 +1028,12 @@ def _no_matches_message(participant: Participant) -> str:
 
 @router.get("/{event_id}/participants/{participant_id}/matches", response_model=ParticipantMatchesOut)
 def get_participant_matches(
-    event_id: int, participant_id: int, lang: Literal["en", "nl"] | None = LangParam, db: Session = Depends(get_db)
+    event_id: int,
+    participant_id: int,
+    lang: Literal["en", "nl"] | None = LangParam,
+    db: Session = Depends(get_db),
+    current_user: UserMaster = Depends(current_admin),
+    role_name: str | None = Depends(current_user_role_name),
 ) -> ParticipantMatchesOut:
     """One participant's own match list - the "recipient -> matches" shape,
     mirroring docs/nabaruns-enrichment-example.json's response format.
@@ -964,7 +1059,7 @@ def get_participant_matches(
     app/services/translation.py. A mirror row's null email_draft/
     linkedin_draft stay null (never fabricated by translation).
     """
-    event = _get_event_or_404(event_id, db)
+    event = _get_event_or_404(event_id, db, current_user, role_name)
 
     participant = (
         db.query(Participant).filter(Participant.id == participant_id, Participant.event_id == event_id).first()
@@ -1041,7 +1136,11 @@ class SendMatchEmailResult(BaseModel):
 
 @router.post("/{event_id}/matches/send-email", response_model=SendMatchEmailResult)
 def send_match_email(
-    event_id: int, payload: SendMatchEmailRequest, db: Session = Depends(get_db)
+    event_id: int,
+    payload: SendMatchEmailRequest,
+    db: Session = Depends(get_db),
+    current_user: UserMaster = Depends(current_admin),
+    role_name: str | None = Depends(current_user_role_name),
 ) -> SendMatchEmailResult:
     """Send participant A's own match email_draft to participant B, framed as
     coming from A (display name + Reply-To — see email_sender.send_email's
@@ -1054,7 +1153,7 @@ def send_match_email(
     direction the match was actually generated for; swapping a/b only works
     if B independently selected A too.
     """
-    event = _get_event_or_404(event_id, db)
+    event = _get_event_or_404(event_id, db, current_user, role_name)
 
     participant_a = (
         db.query(Participant)
