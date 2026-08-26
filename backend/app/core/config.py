@@ -91,5 +91,12 @@ class Settings(BaseSettings):
     # Link included in activation emails - the frontend's login page.
     MATCHMAKING_APPLICATION_URL: str = "http://localhost:8024/login"
 
+    # Gates X-API-Key enforcement on /external/* (Task 61) - those routes
+    # stay open (no check) if unset, same "off means skip the check, not
+    # error" convention as every other optional toggle in this file. Set a
+    # real key via .env before exposing this beyond local dev - the payloads
+    # carry participant contact details.
+    EXTERNAL_API_KEY: SecretStr | None = None
+
 
 settings = Settings()
