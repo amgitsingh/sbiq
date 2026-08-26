@@ -709,7 +709,7 @@ in this phase was verified against mocks alone.
 |---|---|---|---|
 | 50 | **Port RBAC/user models** | `UserMaster`, `RoleMaster`, `PermissionMaster`, `RolePermissionMapping`, `CompanyMaster`, `TagMaster`, `UserTagMapping` into new `app/models/user.py` / `app/models/rbac.py`, using this repo's existing `Base`. Test: models import cleanly, no circular imports. | `done` |
 | 51 | **Port remaining new models** | `EventParticipantMapping`, `SmtpMaster`, `MatchProfile`, `EmailLog` into new model files, FK'd to the new integer/UUID targets (not their old IndMatchmaking shapes). Test: same import check as #50. | `done` |
-| 52 | **Extend Event and Match** | `Event` gains `location`, `owner_user_id` (FK `user_master.id`). `Match` gains `reviewed_by_user_id`, `reviewed_at`. Test: import check; existing `Event(...)`/`Match(...)` construction call sites still work with the new nullable columns. | `pending` |
+| 52 | **Extend Event and Match** | `Event` gains `location`, `owner_user_id` (FK `user_master.id`). `Match` gains `reviewed_by_user_id`, `reviewed_at`. Test: import check; existing `Event(...)`/`Match(...)` construction call sites still work with the new nullable columns. | `done` |
 | 53 | **Consolidation migration** | One new Alembic migration (continuing QBCals' existing chain) creating every table from #50–52 in QBCals' database. Do not replay IndMatchmaking's own 15 migrations — this single migration recreates their end-state directly. Test: `alembic upgrade head` succeeds on a fresh test DB; `downgrade -1` then `upgrade head` round-trips clean. | `pending` |
 | 54 | **Checkpoint: real data?** | Confirm with the user whether IndMatchmaking's live database has real rows worth preserving (real registered users, etc.). Only if yes, write a one-off copy script before cutover. Decision checkpoint, not a code change. | `pending` |
 
@@ -776,6 +776,6 @@ Task status: `pending` → `done` as each task is completed.
 | 5 — Matching Engine | 26–33 | Scorers, rule engine, LLM reasoning (JSON mode), bidirectional enforcement, cost estimate | 8 / 8 |
 | 6 — Match Output | 34–35 | Paginated GET /matches API (Excel/CSV export descoped) | 1 / 2 (1 cancelled) |
 | 7 — Testing & Deployment | 43–47 | Unit, integration, E2E tests, Railway + Supabase production deploy | 0 / 5 |
-| 8 — Merge with IndMatchmaking | 48–71 | Fold IndMatchmaking's auth/user-management/admin domains into QBCals, delete the HTTP proxy hop, consolidate into one database, enforce owner-scoped event/match access | 4 / 24 |
+| 8 — Merge with IndMatchmaking | 48–71 | Fold IndMatchmaking's auth/user-management/admin domains into QBCals, delete the HTTP proxy hop, consolidate into one database, enforce owner-scoped event/match access | 5 / 24 |
 
 **Total: 64 tasks** — frontend and admin panel handled separately.

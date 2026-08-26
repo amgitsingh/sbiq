@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import enum
+import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, DateTime, Enum, Float, ForeignKey, Integer, Text, func
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import JSON
 
@@ -57,6 +59,16 @@ class Match(Base):
     )
     # True when this record was auto-created as the reverse of another match
     is_bidirectional: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    # Added for docs/PLAN.md Phase 8 (merge with IndMatchmaking) - folds
+    # IndMatchmaking's separate MatchReview table into this one. `status`
+    # above already carries the pending/approved/rejected decision; these
+    # two add the audit trail (who decided, when) that `status` alone never
+    # had. Set together by the Task 64 review endpoint - never independently.
+    reviewed_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("user_master.id", ondelete="SET NULL")
+    )
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now(), nullable=False

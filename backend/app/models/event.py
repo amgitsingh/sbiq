@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import enum
+import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, Enum, Integer, String, Text, func
+from sqlalchemy import DateTime, Enum, ForeignKey, Integer, String, Text, func
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import JSON
 
@@ -66,6 +68,18 @@ class Event(Base):
     # looking_for/offerings are exempt - already guaranteed verbatim/
     # never-translated regardless of this setting.
     content_language: Mapped[str | None] = mapped_column(String(10))
+    # Ported/added for docs/PLAN.md Phase 8 (merge with IndMatchmaking).
+    # location: carried over from IndMatchmaking's EventMaster (QBCals' own
+    # Event never had a venue/location field). owner_user_id: new - QBCals
+    # had no ownership concept at all before this merge; nullable/SET NULL
+    # since existing events predate this column and an owner account being
+    # deleted shouldn't cascade-delete real event/participant data. See
+    # Task 59 for how this is actually enforced (this column alone doesn't
+    # restrict anything by itself).
+    location: Mapped[str | None] = mapped_column(String(255))
+    owner_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("user_master.id", ondelete="SET NULL")
+    )
     status: Mapped[str] = mapped_column(
         Enum(EventStatus, values_callable=lambda e: [x.value for x in e], native_enum=False),
         default=EventStatus.draft,
