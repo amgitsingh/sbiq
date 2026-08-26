@@ -18,6 +18,7 @@ from app.models.rbac import (
     TagMaster,
     UserTagMapping,
 )
+from app.models.upload_batch import ParticipantUploadBatch
 from app.models.user import UserMaster
 
 # UserMaster/RoleMaster/etc. (Phase 8 merge, Task 51 onward) must be
@@ -58,4 +59,5 @@ __all__ = [
     "SmtpMaster",
     "MatchProfile",
     "EmailLog",
+    "ParticipantUploadBatch",
 ]

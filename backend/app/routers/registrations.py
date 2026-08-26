@@ -5,9 +5,10 @@ Ported from IndMatchmaking (D:\\Python\\IndMatchmaking\\src\\app\\domain\\regist
 as part of docs/PLAN.md Phase 8 (Task 57). Adapted: reads the module-level
 `settings` singleton directly instead of `Depends(get_settings)`; uses this
 repo's `get_async_db`/`current_admin`; router paths drop the `/api` prefix,
-matching the precedent already set in app/routers/auth.py (Task 56) - final
-path decisions get revisited at the Task 68 "collapse /api/studio/*"
-checkpoint anyway, so this isn't locked in.
+matching the precedent already set in app/routers/auth.py (Task 56) - this
+stood as final: Task 68's checkpoint resolved to collapsing the separate
+`/studio/events/*` shim into native `/events/*`, not a broader `/api`-prefix
+reconsideration, so nothing here changed.
 """
 
 from __future__ import annotations

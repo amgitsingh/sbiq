@@ -12,7 +12,6 @@ from app.routers import (
     profiles,
     registrations,
     smtp,
-    studio_events,
     tables,
 )
 
@@ -40,7 +39,6 @@ app.include_router(profiles.router)
 app.include_router(smtp.router)
 app.include_router(tables.router)
 app.include_router(external.router)
-app.include_router(studio_events.router)
 
 
 @app.get("/health")

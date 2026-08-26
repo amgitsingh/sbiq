@@ -1,8 +1,10 @@
+import uuid
+from datetime import UTC, datetime
 from typing import Literal
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Response, UploadFile, status
 from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy import func, text
+from sqlalchemy import func, or_, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session, joinedload
 
@@ -11,6 +13,7 @@ from app.core.database import get_db
 from app.models.enrichment_job import EnrichmentJob
 from app.models.event import Event
 from app.models.match import Match
+from app.models.matching_admin import EmailLog
 from app.models.participant import (
     EnrichmentStatus,
     MatchingStatus,
@@ -20,6 +23,7 @@ from app.models.participant import (
 )
 from app.models.participant_embedding import ParticipantEmbedding
 from app.models.rbac import RoleMaster
+from app.models.upload_batch import ParticipantUploadBatch
 from app.models.user import UserMaster
 from app.services.auth.deps import current_admin
 from app.services.ingestion import run_ingestion_pipeline
@@ -91,6 +95,14 @@ class EventCreate(BaseModel):
     content_language: Literal["en", "nl"] | None = Field(
         default=None, description="Language for LLM-generated content. None is treated as 'en'."
     )
+    # IndMatchmaking-parity (post-Task-68 audit): Super Admin only - lets an
+    # admin create/set up an event on behalf of another user. Ignored (403)
+    # for a non-Super-Admin caller who names a different owner than
+    # themselves; passing their own id is a harmless no-op.
+    owner_user_id: uuid.UUID | None = Field(
+        default=None,
+        description="Super Admin only - create this event on behalf of another user.",
+    )
 
 
 class EventOut(BaseModel):
@@ -108,6 +120,7 @@ class EventOut(BaseModel):
     event_type: str | None = None
     expected_participant_count: int | None = None
     content_language: str | None = None
+    owner_user_id: uuid.UUID | None = None
 
 
 class ParticipantOut(BaseModel):
@@ -123,6 +136,10 @@ class ParticipantOut(BaseModel):
 
 
 class UploadSummary(BaseModel):
+    # IndMatchmaking-parity (post-Task-68 audit): links this response to the
+    # persisted ParticipantUploadBatch row - GET /{event_id}/uploads/{upload_id}
+    # returns this same information later, not just at upload time.
+    upload_id: int
     total_rows: int
     parse_skipped: int
     valid: int
@@ -130,6 +147,24 @@ class UploadSummary(BaseModel):
     rejected: int
     unmapped_headers: list[str]
     rejected_details: list[dict]
+
+
+class UploadBatchOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    event_id: int
+    uploaded_by_user_id: uuid.UUID | None = None
+    file_name: str
+    total_rows: int
+    parse_skipped: int
+    valid_count: int
+    flagged_count: int
+    rejected_count: int
+    unmapped_headers: list[str] | None = None
+    rejected_details: list[dict] | None = None
+    status: str
+    created_at: datetime
 
 
 class EnrichmentTriggerResult(BaseModel):
@@ -214,6 +249,24 @@ def _get_event_or_404(event_id: int, db: Session, current_user: UserMaster, role
     return event
 
 
+def _is_super_admin(role_name: str | None) -> bool:
+    return role_name == "Super Admin"
+
+
+def _validate_owner(owner_id: uuid.UUID, db: Session) -> None:
+    """IndMatchmaking-parity (post-Task-68 audit): mirrors its old
+    _validate_owner - a Super Admin naming an owner_user_id must name a
+    real, active user, not an arbitrary UUID. Plain sync query is fine here
+    (no lazy-loaded relationship access) despite UserMaster normally being
+    read via AsyncSession elsewhere in this codebase - see app/models/
+    __init__.py's comment for why that split exists in the first place."""
+    exists = (
+        db.query(UserMaster.id).filter(UserMaster.id == owner_id, UserMaster.status == "active").first()
+    )
+    if exists is None:
+        raise HTTPException(status_code=400, detail="Selected user not found")
+
+
 def _native_language(event: Event) -> str:
     """Event.content_language, defaulting to "en" - same convention
     llm_normalizer.py/llm_matcher.py already use for generation-time language.
@@ -230,8 +283,21 @@ LangParam = Query(default=None, description="Mock for a future per-user language
 
 @router.post("", response_model=EventOut, status_code=201)
 def create_event(
-    payload: EventCreate, db: Session = Depends(get_db), current_user: UserMaster = Depends(current_admin)
+    payload: EventCreate,
+    db: Session = Depends(get_db),
+    current_user: UserMaster = Depends(current_admin),
+    role_name: str | None = Depends(current_user_role_name),
 ) -> Event:
+    owner_id = current_user.id
+    if payload.owner_user_id is not None and payload.owner_user_id != current_user.id:
+        # IndMatchmaking-parity (post-Task-68 audit): Super Admin can create
+        # an event "for" another user; anyone else naming a different owner
+        # is rejected outright rather than silently ignored.
+        if not _is_super_admin(role_name):
+            raise HTTPException(status_code=403, detail="Cannot create an event for another user")
+        _validate_owner(payload.owner_user_id, db)
+        owner_id = payload.owner_user_id
+
     event = Event(
         name=payload.name,
         date=payload.date,
@@ -243,7 +309,7 @@ def create_event(
         event_type=payload.event_type,
         expected_participant_count=payload.expected_participant_count,
         content_language=payload.content_language,
-        owner_user_id=current_user.id,
+        owner_user_id=owner_id,
     )
     db.add(event)
     db.commit()
@@ -253,17 +319,49 @@ def create_event(
 
 @router.get("", response_model=list[EventOut])
 def list_events(
+    response: Response,
+    q: str | None = Query(default=None, description="Search across name, location, description, status"),
+    user_id: uuid.UUID | None = Query(
+        default=None, description="Super Admin only - filter to one user's events; ignored for other roles"
+    ),
+    limit: int = Query(default=50, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
     db: Session = Depends(get_db),
     current_user: UserMaster = Depends(current_admin),
     role_name: str | None = Depends(current_user_role_name),
 ) -> list[Event]:
+    """IndMatchmaking-parity (post-Task-68 audit): added q/user_id/limit/
+    offset, none of which existed here before. Kept the response as a bare
+    array (not a {items, total} envelope like IndMatchmaking's own
+    EventList) to avoid a breaking shape change for the real admin frontend
+    already calling this endpoint - total count is instead surfaced via the
+    X-Total-Count response header, a non-breaking way to support pagination
+    UI without changing the body shape."""
+    is_super_admin = _is_super_admin(role_name)
     query = db.query(Event)
-    if role_name != "Super Admin":
+    if not is_super_admin:
         # Strict (amended 2026-08-26, at explicit user request): only the
         # owner's own events, full stop - no unowned-event carve-out. See
-        # _get_event_or_404's docstring for why.
+        # _get_event_or_404's docstring for why. user_id is Super-Admin-only,
+        # so it's silently ignored for everyone else rather than 403ing -
+        # they're already scoped to their own events regardless.
         query = query.filter(Event.owner_user_id == current_user.id)
-    return query.order_by(Event.created_at.desc()).all()
+    elif user_id is not None:
+        query = query.filter(Event.owner_user_id == user_id)
+
+    if q:
+        pattern = f"%{q}%"
+        query = query.filter(
+            or_(
+                Event.name.ilike(pattern),
+                Event.location.ilike(pattern),
+                Event.description.ilike(pattern),
+                Event.status.ilike(pattern),
+            )
+        )
+
+    response.headers["X-Total-Count"] = str(query.count())
+    return query.order_by(Event.created_at.desc()).offset(offset).limit(limit).all()
 
 
 @router.get("/{event_id}/participants", response_model=list[ParticipantOut])
@@ -512,9 +610,39 @@ def upload_participants(
         for record in result.participants
     ]
     db.add_all(participants)
+
+    # IndMatchmaking-parity (post-Task-68 audit): persist this run's summary
+    # so it's queryable after the fact (GET /{event_id}/uploads/{upload_id}),
+    # not just in this synchronous response - restores a capability
+    # IndMatchmaking's ExcelUpload/ExcelRawData tables provided, without
+    # resurrecting those shadow tables verbatim. Same three-state status
+    # convention as IndMatchmaking's old ExcelUpload.status.
+    if result.rejected_count == 0:
+        batch_status = "completed"
+    elif result.valid_count == 0 and result.flagged_count == 0:
+        batch_status = "failed"
+    else:
+        batch_status = "completed_with_errors"
+
+    batch = ParticipantUploadBatch(
+        event_id=event_id,
+        uploaded_by_user_id=current_user.id,
+        file_name=filename,
+        total_rows=result.total_rows,
+        parse_skipped=result.parse_skipped,
+        valid_count=result.valid_count,
+        flagged_count=result.flagged_count,
+        rejected_count=result.rejected_count,
+        unmapped_headers=result.unmapped_headers,
+        rejected_details=result.rejected_details,
+        status=batch_status,
+    )
+    db.add(batch)
     db.commit()
+    db.refresh(batch)
 
     return UploadSummary(
+        upload_id=batch.id,
         total_rows=result.total_rows,
         parse_skipped=result.parse_skipped,
         valid=result.valid_count,
@@ -523,6 +651,45 @@ def upload_participants(
         unmapped_headers=result.unmapped_headers,
         rejected_details=result.rejected_details,
     )
+
+
+@router.get("/{event_id}/uploads", response_model=list[UploadBatchOut])
+def list_upload_batches(
+    event_id: int,
+    db: Session = Depends(get_db),
+    current_user: UserMaster = Depends(current_admin),
+    role_name: str | None = Depends(current_user_role_name),
+) -> list[ParticipantUploadBatch]:
+    """IndMatchmaking-parity (post-Task-68 audit): mirrors its old
+    GET /excel-uploads/{id} (one at a time, across all events) as a
+    per-event list instead - every upload batch for this event, newest
+    first."""
+    _get_event_or_404(event_id, db, current_user, role_name)
+    return (
+        db.query(ParticipantUploadBatch)
+        .filter(ParticipantUploadBatch.event_id == event_id)
+        .order_by(ParticipantUploadBatch.created_at.desc())
+        .all()
+    )
+
+
+@router.get("/{event_id}/uploads/{upload_id}", response_model=UploadBatchOut)
+def get_upload_batch(
+    event_id: int,
+    upload_id: int,
+    db: Session = Depends(get_db),
+    current_user: UserMaster = Depends(current_admin),
+    role_name: str | None = Depends(current_user_role_name),
+) -> ParticipantUploadBatch:
+    _get_event_or_404(event_id, db, current_user, role_name)
+    batch = (
+        db.query(ParticipantUploadBatch)
+        .filter(ParticipantUploadBatch.id == upload_id, ParticipantUploadBatch.event_id == event_id)
+        .first()
+    )
+    if batch is None:
+        raise HTTPException(status_code=404, detail=f"Upload batch {upload_id} not found in event {event_id}")
+    return batch
 
 
 @router.post("/{event_id}/enrich", response_model=EnrichmentTriggerResult, status_code=202)
@@ -1229,9 +1396,116 @@ def send_match_email(
             from_display_name=f"{participant_a.name} via QBCals",
         )
     except EmailSendError as e:
+        # Task 68 (path collapse): logs the failed attempt too - an audit
+        # trail is only useful if it also records what didn't go out, not
+        # just successes.
+        db.add(
+            EmailLog(
+                event_id=event_id,
+                match_id=match.id,
+                sender_participant_id=payload.participant_a_id,
+                receiver_participant_id=payload.participant_b_id,
+                subject=subject,
+                body=match.email_draft,
+                status="failed",
+                error_message=str(e),
+            )
+        )
+        db.commit()
         raise HTTPException(status_code=502, detail=f"Failed to send email: {e}")
 
+    # Task 68 (path collapse): EmailLog audit trail, folded in from the
+    # now-deleted /studio/events/{id}/send wrapper (Task 66) - this is the
+    # single send path now, so it's the one place that needs to log it.
+    db.add(
+        EmailLog(
+            event_id=event_id,
+            match_id=match.id,
+            sender_participant_id=payload.participant_a_id,
+            receiver_participant_id=payload.participant_b_id,
+            subject=subject,
+            body=match.email_draft,
+            status="sent",
+            sent_at=datetime.now(UTC),
+        )
+    )
+    db.commit()
+
     return SendMatchEmailResult(match_id=match.id, sent_to=participant_b.email, sent_as=participant_a.name)
+
+
+ReviewDecision = Literal["approve", "reject"]
+
+_REVIEW_DECISION_TO_STATUS = {"approve": "approved", "reject": "rejected"}
+
+
+class ReviewMatchRequest(BaseModel):
+    recipient_id: int = Field(gt=0)
+    counterpart_id: int = Field(gt=0)
+    decision: ReviewDecision
+
+
+class ReviewMatchResult(BaseModel):
+    success: bool
+    recipient_id: int
+    counterpart_id: int
+    decision: ReviewDecision
+    message: str
+
+
+@router.post("/{event_id}/review", response_model=ReviewMatchResult)
+def review_match(
+    event_id: int,
+    payload: ReviewMatchRequest,
+    db: Session = Depends(get_db),
+    current_user: UserMaster = Depends(current_admin),
+    role_name: str | None = Depends(current_user_role_name),
+) -> ReviewMatchResult:
+    """Approve or reject one directed match pair (recipient_id = participant_a,
+    the match's own selector; counterpart_id = participant_b - see
+    get_participant_matches' docstring on why participant_a is always
+    "self"), writing straight onto that row's status/reviewed_by_user_id/
+    reviewed_at.
+
+    Folded in from the now-deleted /studio/events/{id}/review wrapper
+    (originally Task 65) as part of Task 68's path collapse - QBCals never
+    had its own review endpoint before, since "review" was purely an
+    IndMatchmaking-side concept (the old, now-dropped standalone
+    MatchReview table), folded directly onto Match itself per the merge
+    design (see app/models/match.py).
+    """
+    _get_event_or_404(event_id, db, current_user, role_name)
+
+    match = (
+        db.query(Match)
+        .filter(
+            Match.event_id == event_id,
+            Match.participant_a_id == payload.recipient_id,
+            Match.participant_b_id == payload.counterpart_id,
+        )
+        .first()
+    )
+    if match is None:
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                f"No match from participant {payload.recipient_id} to "
+                f"{payload.counterpart_id} in event {event_id}"
+            ),
+        )
+
+    match.status = _REVIEW_DECISION_TO_STATUS[payload.decision]
+    match.reviewed_by_user_id = current_user.id
+    match.reviewed_at = datetime.now(UTC)
+    db.commit()
+
+    return ReviewMatchResult(
+        success=True,
+        recipient_id=payload.recipient_id,
+        counterpart_id=payload.counterpart_id,
+        decision=payload.decision,
+        message="Match approved successfully." if payload.decision == "approve" else "Match rejected successfully.",
+    )
 
 
 class EventUpdate(BaseModel):
@@ -1256,6 +1530,11 @@ class EventUpdate(BaseModel):
     expected_participant_count: int | None = None
     content_language: Literal["en", "nl"] | None = None
     status: Literal["draft", "active", "completed"] | None = None
+    # IndMatchmaking-parity (post-Task-68 audit): Super Admin only - transfers
+    # this event to another user. Handled specially in update_event (not via
+    # the generic setattr loop) since it needs a role check + existence
+    # validation the other plain fields don't.
+    owner_user_id: uuid.UUID | None = None
 
 
 # Task 67 (docs/PLAN.md Phase 8 self-sufficiency pass): QBCals never had its
@@ -1287,7 +1566,18 @@ def update_event(
     role_name: str | None = Depends(current_user_role_name),
 ) -> Event:
     event = _get_event_or_404(event_id, db, current_user, role_name)
-    for field, value in payload.model_dump(exclude_unset=True).items():
+
+    values = payload.model_dump(exclude_unset=True)
+    if "owner_user_id" in values:
+        new_owner = values.pop("owner_user_id")
+        if not _is_super_admin(role_name):
+            raise HTTPException(status_code=403, detail="Only Super Admin can transfer an event to another user")
+        if new_owner is None:
+            raise HTTPException(status_code=400, detail="owner_user_id cannot be cleared")
+        _validate_owner(new_owner, db)
+        event.owner_user_id = new_owner
+
+    for field, value in values.items():
         setattr(event, field, value)
     db.commit()
     db.refresh(event)
