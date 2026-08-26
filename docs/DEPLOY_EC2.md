@@ -66,9 +66,47 @@ sudo apt install -y python3.12 python3.12-venv python3-pip git build-essential \
 
 ## 4. Clone the repo and set up the virtualenv
 
+**If this is a client's server (or any box you don't fully control), don't
+put your own personal SSH key on it to clone a private repo** — use a
+GitHub **deploy key** instead. It's generated on the server itself (your own
+private key never leaves your machine), scoped to just this one repo, and
+read-only by default — so even if the server is ever compromised, the
+blast radius is "read access to this one repo," not your whole GitHub
+account.
+
+**4a. Generate a deploy key on the server:**
+
+```bash
+ssh-keygen -t ed25519 -C "sbiq-deploy" -f ~/.ssh/sbiq_deploy_key -N ""
+cat ~/.ssh/sbiq_deploy_key.pub   # copy this output
+```
+
+**4b. Register it on GitHub:** repo → **Settings → Deploy keys → Add deploy
+key** → paste the public key → leave **"Allow write access" unchecked**
+(deploys only ever need to pull) → **Add key**.
+
+**4c. Point SSH at this key for GitHub specifically**, via
+`~/.ssh/config` (create it if it doesn't exist):
+
+```
+Host github.com-sbiq
+    HostName github.com
+    User git
+    IdentityFile ~/.ssh/sbiq_deploy_key
+    IdentitiesOnly yes
+```
+
+```bash
+chmod 700 ~/.ssh
+chmod 600 ~/.ssh/sbiq_deploy_key ~/.ssh/config
+```
+
+**4d. Clone using the alias** — not the plain `github.com` hostname, or the
+override above is silently skipped:
+
 ```bash
 cd ~
-git clone <your-repo-url> SBIQ
+git clone git@github.com-sbiq:amgitsingh/sbiq.git SBIQ
 cd SBIQ/backend
 
 python3.12 -m venv myenv
@@ -79,6 +117,27 @@ pip install -r requirements.txt
 # Playwright's own Chromium binary + OS-level deps (fonts, codecs, etc.)
 playwright install --with-deps chromium
 ```
+
+> **Getting `ERROR: Repository not found` on clone?** That message
+> specifically means SSH *did* authenticate with some key, just not one
+> authorized for that repo — it's not a "no key found" failure. Run
+> `ssh -T git@github.com-sbiq` and read the response:
+> - `Hi amgitsingh/sbiq! You've successfully authenticated...` → the key is
+>   fine; you likely typed the plain `github.com` hostname in the clone URL
+>   instead of the `github.com-sbiq` alias.
+> - `Hi <your-personal-username>! ...` → the alias isn't being applied —
+>   check `~/.ssh/config` lives in the home directory of the user actually
+>   running `git clone` (a `sudo`/root clone reads a different home
+>   directory than a plain-user one), and that `IdentitiesOnly yes` is
+>   present.
+> - `Hi <some-other-repo>! ...` → the deploy key was pasted onto the wrong
+>   repository's Deploy Keys page.
+> - `Permission denied (publickey)` → the key isn't being accepted at all —
+>   re-check the `chmod` permissions above and that the public key was
+>   pasted in full on GitHub with no truncation.
+
+Future redeploys (Step 11) reuse this same aliased remote automatically —
+no further key setup needed after this.
 
 ## 5. Configure environment
 
