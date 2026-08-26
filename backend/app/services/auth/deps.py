@@ -9,6 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.async_database import get_async_db
+from app.models.rbac import RoleMaster
 from app.models.user import UserMaster
 from app.services.auth.security import decode_access_token
 
@@ -40,3 +41,33 @@ async def current_admin_user(
 # Alias matching IndMatchmaking's naming - used by every ported router's
 # `Depends(current_admin)` (Stage 8.4 onward).
 current_admin = current_admin_user
+
+
+def require_role(*role_names: str):
+    """Dependency factory: authenticate via current_admin, then additionally
+    require the user's role to be one of role_names.
+
+    New in this merge (Task 58) - IndMatchmaking only had ad hoc inline
+    checks scattered across routers (e.g. `if role.role_name != "Super
+    Admin": raise HTTPException(403)` in registrations/controller.py). This
+    gives QBCals' own routers (Task 59 onward) one consistent, reusable way
+    to gate a route by role instead of repeating that pattern.
+
+    Loads the role by role_id via db.get() rather than accessing
+    `user.role` directly - lazy-loading a relationship outside an active
+    async context raises MissingGreenlet, so every role lookup in this
+    codebase goes through an explicit db.get(RoleMaster, ...) call instead
+    (same pattern already used in auth.py's /me and registrations.py).
+    """
+
+    async def dependency(
+        user: UserMaster = Depends(current_admin),
+        db: AsyncSession = Depends(get_async_db),
+    ) -> UserMaster:
+        role = await db.get(RoleMaster, user.role_id) if user.role_id else None
+        role_name = role.role_name if role else None
+        if role_name not in role_names:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
+        return user
+
+    return dependency
