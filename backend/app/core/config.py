@@ -1,3 +1,4 @@
+from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -69,6 +70,26 @@ class Settings(BaseSettings):
     JWT_SECRET_KEY: str = "change-this-secret"
     JWT_ALGORITHM: str = "HS256"
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 720
+
+    # Fernet key encrypting SmtpMaster.password_encrypted (per-user SMTP
+    # credentials, Task 60). Falls back to deriving a key from JWT_SECRET_KEY
+    # if unset (see app/services/auth/security.py._credential_cipher) - set a
+    # real one via .env for anything beyond local dev.
+    SMTP_ENCRYPTION_KEY: str | None = None
+
+    # Alternate email-delivery path for admin/registration emails
+    # (app/services/microsoft_graph_mail.py) - app-only Graph API send,
+    # tried before falling back to a UserMaster's own SmtpMaster row. Unset
+    # by default (is_microsoft_graph_mail_configured() gates on all three
+    # being present), same degrade-gracefully convention as
+    # ENABLE_CRUNCHBASE/etc.
+    MICROSOFT_GRAPH_TENANT_ID: str | None = None
+    MICROSOFT_GRAPH_CLIENT_ID: str | None = None
+    MICROSOFT_GRAPH_CLIENT_SECRET: SecretStr | None = None
+    MICROSOFT_GRAPH_TIMEOUT_SECONDS: float = 20.0
+
+    # Link included in activation emails - the frontend's login page.
+    MATCHMAKING_APPLICATION_URL: str = "http://localhost:8024/login"
 
 
 settings = Settings()

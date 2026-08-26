@@ -101,20 +101,28 @@ class MatchProfile(Base):
 
 
 class EmailLog(Base):
-    """Match-email send audit trail - genuinely new (QBCals'
-    send_match_email had no audit trail before this merge).
+    """Email send audit trail - genuinely new (neither QBCals'
+    send_match_email nor IndMatchmaking's registration/activation emails had
+    a persisted audit trail before this merge... well, IndMatchmaking did,
+    just not FK'd to real data - see below).
 
-    Re-targeted from IndMatchmaking's original shape, not a straight port:
-    the old sender_user_id/receiver_user_id (UUID FKs to user_master) plus a
-    string-only external_recipient_id fallback existed because, pre-merge,
-    IndMatchmaking had no real FK into QBCals' data at all. Post-merge, both
-    sender and receiver of a match email are always real QBCals Participant
-    rows (match emails are sent participant-to-participant, not
-    account-to-account - most Participants never have a UserMaster login at
-    all) - so both become plain integer FKs into `participants`, and the old
-    string fallback is dropped as unnecessary. triggered_by_user_id is new:
-    which admin (UserMaster) clicked "send," distinct from which
-    participant's persona the email was sent as/to.
+    Re-targeted from IndMatchmaking's original shape, not a straight port -
+    but covers TWO distinct kinds of email, both real (found while porting
+    Task 57's registrations domain, which logs admin<->user emails through
+    this same table):
+    - Match emails (participant-to-participent, QBCals' own
+      send_match_email): sender/receiver are real Participant rows - most
+      Participants never have a UserMaster login at all, so these are
+      integer FKs into `participants`, not `user_master`.
+    - Admin/system emails (registration confirmations, activation
+      credentials): sender/receiver are real UserMaster accounts - these
+      keep IndMatchmaking's original sender_user_id/receiver_user_id shape
+      (UUID FKs to user_master), just pointed at this DB's own user_master
+      instead of a cross-service placeholder.
+    A given row populates exactly one pair (participant or user), never
+    both - which pair depends on what kind of email it is. The old
+    string-only external_recipient_id fallback is dropped - no longer
+    needed now that everything has a real local FK to point at.
     """
 
     __tablename__ = "email_log"
@@ -128,12 +136,18 @@ class EmailLog(Base):
     receiver_participant_id: Mapped[int | None] = mapped_column(
         Integer, ForeignKey("participants.id", ondelete="SET NULL")
     )
-    triggered_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
+    sender_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("user_master.id", ondelete="SET NULL")
+    )
+    receiver_user_id: Mapped[uuid.UUID | None] = mapped_column(
         PGUUID(as_uuid=True), ForeignKey("user_master.id", ondelete="SET NULL")
     )
     subject: Mapped[str] = mapped_column(String(255))
     body: Mapped[str | None] = mapped_column(Text)
     status: Mapped[str] = mapped_column(String(40), default="pending", index=True)
     error_message: Mapped[str | None] = mapped_column(Text)
-    sent_at: Mapped[datetime | None] = mapped_column(DateTime)
+    # timezone=True: written via datetime.now(UTC) by the ported
+    # registrations router (Task 57) - see app/models/user.py's
+    # approved_at comment for why this must stay tz-aware.
+    sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), nullable=False)

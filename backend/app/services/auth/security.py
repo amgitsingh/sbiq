@@ -1,19 +1,22 @@
 from __future__ import annotations
 
+import base64
+import hashlib
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import jwt
+from cryptography.fernet import Fernet, InvalidToken
 from passlib.context import CryptContext
 
 from app.core.config import settings
 
 # Ported from IndMatchmaking (D:\Python\IndMatchmaking\src\app\lib\security.py)
-# as part of docs/PLAN.md Phase 8 (Task 55) - JWT + password hashing only.
-# The same source file also has Fernet-based encrypt_credential/
-# decrypt_credential helpers for SmtpMaster.password_encrypted - deliberately
-# not ported here (out of this task's scope); those land in Task 60 when the
-# smtp domain is actually wired up.
+# as part of docs/PLAN.md Phase 8. JWT + password hashing landed in Task 55;
+# encrypt_credential/decrypt_credential (below) were originally deferred to
+# Task 60, but pulled forward while porting Task 57's registrations domain -
+# activate_registration can't function without decrypting an admin's stored
+# SMTP password to send the activation email.
 
 pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
@@ -40,3 +43,23 @@ def create_access_token(subject: str, extra: dict[str, Any] | None = None) -> st
 def decode_access_token(token: str) -> dict[str, Any]:
     """Decode and validate a signed access token."""
     return jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
+
+
+def _credential_cipher() -> Fernet:
+    if settings.SMTP_ENCRYPTION_KEY:
+        return Fernet(settings.SMTP_ENCRYPTION_KEY.encode())
+    digest = hashlib.sha256(settings.JWT_SECRET_KEY.encode()).digest()
+    return Fernet(base64.urlsafe_b64encode(digest))
+
+
+def encrypt_credential(value: str) -> str:
+    """Encrypt a reversible service credential (e.g. SmtpMaster.password_encrypted) for database storage."""
+    return _credential_cipher().encrypt(value.encode()).decode()
+
+
+def decrypt_credential(value: str) -> str:
+    """Decrypt a stored service credential."""
+    try:
+        return _credential_cipher().decrypt(value.encode()).decode()
+    except InvalidToken as exc:
+        raise ValueError("Stored credential cannot be decrypted") from exc

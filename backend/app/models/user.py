@@ -45,7 +45,14 @@ class UserMaster(Base):
     approved_by: Mapped[uuid.UUID | None] = mapped_column(
         PGUUID(as_uuid=True), ForeignKey("user_master.id", ondelete="SET NULL")
     )
-    approved_at: Mapped[datetime | None] = mapped_column(DateTime)
+    # timezone=True: the ported registrations router (Task 57) writes this
+    # via datetime.now(UTC) (a tz-aware value), following IndMatchmaking's
+    # own convention - asyncpg rejects inserting a tz-aware Python datetime
+    # into a naive column outright (unlike psycopg2, which silently
+    # truncates), so this must stay tz-aware. Unlike created_at/updated_at
+    # (server_default=func.now(), never explicitly set by app code), this
+    # column is always set explicitly.
+    approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now(), onupdate=func.now(), nullable=False
