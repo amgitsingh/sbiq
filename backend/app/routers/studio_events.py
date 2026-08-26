@@ -30,7 +30,13 @@ reviewed_by_user_id/reviewed_at were added alongside it - see
 app/models/match.py), so this route is the first real write path for those
 two columns, implemented here rather than delegated to events.py.
 
-Send follows in Task 66.
+Task 66 (this update) adds the send route. Like review, this has no native
+events.py function to fully call-through - QBCals' own send_match_email
+(app/routers/events.py) does the actual send, so this delegates to it
+directly for that part, but its EmailLog audit trail is new (native
+send_match_email doesn't write one; see app/models/matching_admin.py's
+EmailLog docstring on why participant-pair FKs, not user-pair, fit this
+kind of email).
 """
 
 from __future__ import annotations
@@ -45,6 +51,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.models.match import Match
+from app.models.matching_admin import EmailLog
 from app.models.user import UserMaster
 from app.routers import events as events_router
 from app.services.auth.deps import current_admin
@@ -469,3 +476,90 @@ def studio_review_match(
         decision=payload.decision,
         message="Match approved successfully." if payload.decision == "approve" else "Match rejected successfully.",
     )
+
+
+class StudioSendRequest(BaseModel):
+    recipient_id: int = Field(gt=0)
+    counterpart_id: int = Field(gt=0)
+
+
+class StudioSendResult(BaseModel):
+    """Mirrors events.py's SendMatchEmailResult exactly."""
+
+    match_id: int
+    sent_to: str
+    sent_as: str
+
+
+@router.post("/events/{event_id}/send", response_model=StudioSendResult)
+def studio_send_match_email(
+    event_id: int,
+    payload: StudioSendRequest,
+    db: Session = Depends(get_db),
+    current_user: UserMaster = Depends(current_admin),
+    role_name: str | None = Depends(events_router.current_user_role_name),
+) -> StudioSendResult:
+    """Send one match's email_draft, calling QBCals' own send_match_email
+    directly for the real SMTP send (goes to participant_b/counterpart_id,
+    framed as coming from participant_a/recipient_id - "an introduction
+    from A to B", see that function's own docstring), then writes a new
+    EmailLog row as an audit trail - genuinely new, since the native route
+    itself never logs anything.
+
+    recipient_id/counterpart_id name the same roles Task 65's review route
+    uses (recipient_id = participant_a, the match's own selector;
+    counterpart_id = participant_b) for consistency across these two Studio
+    routes - not literally "who the email lands in the inbox of", which is
+    participant_b/counterpart_id here.
+    """
+    event = events_router._get_event_or_404(event_id, db, current_user, role_name)
+    match = (
+        db.query(Match)
+        .filter(
+            Match.event_id == event_id,
+            Match.participant_a_id == payload.recipient_id,
+            Match.participant_b_id == payload.counterpart_id,
+        )
+        .first()
+    )
+
+    native_payload = events_router.SendMatchEmailRequest(
+        participant_a_id=payload.recipient_id, participant_b_id=payload.counterpart_id
+    )
+    try:
+        result = events_router.send_match_email(
+            event_id, native_payload, db=db, current_user=current_user, role_name=role_name
+        )
+    except HTTPException as exc:
+        if match is not None:
+            db.add(
+                EmailLog(
+                    event_id=event_id,
+                    match_id=match.id,
+                    sender_participant_id=payload.recipient_id,
+                    receiver_participant_id=payload.counterpart_id,
+                    subject=f"Match introduction (participant {payload.recipient_id} -> {payload.counterpart_id})",
+                    body=match.email_draft,
+                    status="failed",
+                    error_message=str(exc.detail),
+                )
+            )
+            db.commit()
+        raise
+
+    subject_prefix = "Kennismaking van" if event.content_language == "nl" else "Introduction from"
+    db.add(
+        EmailLog(
+            event_id=event_id,
+            match_id=match.id if match is not None else None,
+            sender_participant_id=payload.recipient_id,
+            receiver_participant_id=payload.counterpart_id,
+            subject=f"{subject_prefix} {result.sent_as}",
+            body=match.email_draft if match is not None else None,
+            status="sent",
+            sent_at=datetime.now(UTC),
+        )
+    )
+    db.commit()
+
+    return StudioSendResult(**result.model_dump())
