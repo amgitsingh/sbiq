@@ -64,13 +64,13 @@ class Match(Base):
     # IndMatchmaking's separate MatchReview table into this one. `status`
     # above already carries the pending/approved/rejected decision; these
     # two add the audit trail (who decided, when) that `status` alone never
-    # had. Set together by the Task 64 review endpoint - never independently.
+    # had. Set together by the Task 65 review endpoint - never independently.
     reviewed_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
         PGUUID(as_uuid=True), ForeignKey("user_master.id", ondelete="SET NULL")
     )
-    # timezone=True: future-proofed for Task 64's review endpoint, which will
-    # follow the same datetime.now(UTC) convention as the rest of the ported
-    # auth/registrations code (see app/models/user.py's approved_at comment).
+    # timezone=True: Task 65's review endpoint follows the same
+    # datetime.now(UTC) convention as the rest of the ported auth/
+    # registrations code (see app/models/user.py's approved_at comment).
     reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     created_at: Mapped[datetime] = mapped_column(

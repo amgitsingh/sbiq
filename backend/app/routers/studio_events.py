@@ -14,29 +14,37 @@ StudioEvent*/StudioEventCreate contract the Studio frontend already expects
 at /studio/events (this repo drops the /api prefix IndMatchmaking used,
 same convention as every other ported router in this phase - see auth.py).
 
-Task 62 ported the three events routes, Task 63 the upload route. Task 64
-(this update) adds enrich/embed/match + their status endpoints. All of
-these stay plain `def` handlers, same as events.py's own style - the
-original plan anticipated needing `run_in_threadpool`/`asyncio.to_thread`
-bridging here, but that was written when these routes were expected to
-stay `async def` (matching the old IndMatchmaking proxy's signatures);
-since they now call QBCals' own sync functions directly instead of
-`await`-ing an HTTP client, there is nothing async to bridge - FastAPI
-already runs a sync `def` route in its threadpool, identical to how
-events.py's own trigger_enrichment/trigger_embedding/trigger_matching work.
-Matches/review/send follow in Task 65.
+Task 62 ported the three events routes, Task 63 the upload route, Task 64
+the enrich/embed/match + status endpoints (all as plain `def` handlers,
+same as events.py's own style - see that update's note on why no
+`run_in_threadpool`/`asyncio.to_thread` bridging is needed once a route
+calls a sync function directly instead of `await`-ing an HTTP client).
+
+Task 65 (this update) adds the review route. Unlike every route above, this
+one has no existing native events.py function to call - QBCals' own routes
+never had a review endpoint of their own, since "review" was purely an
+IndMatchmaking-side concept (the old, now-dropped standalone MatchReview
+table). Per docs/PLAN.md's merge design, that table was folded directly
+onto QBCals' own Match row (status already carried the decision;
+reviewed_by_user_id/reviewed_at were added alongside it - see
+app/models/match.py), so this route is the first real write path for those
+two columns, implemented here rather than delegated to events.py.
+
+Send follows in Task 66.
 """
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from enum import StrEnum
-from typing import Any
+from typing import Any, Literal
 
-from fastapi import APIRouter, Depends, File, Query, Response, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Response, UploadFile, status
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.models.match import Match
 from app.models.user import UserMaster
 from app.routers import events as events_router
 from app.services.auth.deps import current_admin
@@ -393,3 +401,71 @@ def studio_matching_status(
     """Calling QBCals' own get_matching_status directly."""
     result = events_router.get_matching_status(event_id, db=db, current_user=current_user, role_name=role_name)
     return StudioMatchingStatus(**result.model_dump())
+
+
+ReviewDecision = Literal["approve", "reject"]
+
+_DECISION_TO_STATUS = {"approve": "approved", "reject": "rejected"}
+
+
+class StudioReviewRequest(BaseModel):
+    recipient_id: int = Field(gt=0)
+    counterpart_id: int = Field(gt=0)
+    decision: ReviewDecision
+
+
+class StudioReviewResult(BaseModel):
+    success: bool
+    recipient_id: int
+    counterpart_id: int
+    decision: ReviewDecision
+    message: str
+
+
+@router.post("/events/{event_id}/review", response_model=StudioReviewResult)
+def studio_review_match(
+    event_id: int,
+    payload: StudioReviewRequest,
+    db: Session = Depends(get_db),
+    current_user: UserMaster = Depends(current_admin),
+    role_name: str | None = Depends(events_router.current_user_role_name),
+) -> StudioReviewResult:
+    """Approve or reject one directed match pair (recipient_id = the
+    participant whose perspective this is, i.e. participant_a - see
+    events.py's get_participant_matches docstring on why participant_a is
+    always "self"; counterpart_id = participant_b), writing straight onto
+    that row's status/reviewed_by_user_id/reviewed_at - no separate
+    MatchReview table to merge in, since Task 59's schema addition folded
+    that concept directly onto Match itself."""
+    events_router._get_event_or_404(event_id, db, current_user, role_name)
+
+    match = (
+        db.query(Match)
+        .filter(
+            Match.event_id == event_id,
+            Match.participant_a_id == payload.recipient_id,
+            Match.participant_b_id == payload.counterpart_id,
+        )
+        .first()
+    )
+    if match is None:
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                f"No match from participant {payload.recipient_id} to "
+                f"{payload.counterpart_id} in event {event_id}"
+            ),
+        )
+
+    match.status = _DECISION_TO_STATUS[payload.decision]
+    match.reviewed_by_user_id = current_user.id
+    match.reviewed_at = datetime.now(UTC)
+    db.commit()
+
+    return StudioReviewResult(
+        success=True,
+        recipient_id=payload.recipient_id,
+        counterpart_id=payload.counterpart_id,
+        decision=payload.decision,
+        message="Match approved successfully." if payload.decision == "approve" else "Match rejected successfully.",
+    )
