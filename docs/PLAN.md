@@ -707,7 +707,7 @@ in this phase was verified against mocks alone.
 
 | # | Task | Description | Status |
 |---|---|---|---|
-| 50 | **Port RBAC/user models** | `UserMaster`, `RoleMaster`, `PermissionMaster`, `RolePermissionMapping`, `CompanyMaster`, `TagMaster`, `UserTagMapping` into new `app/models/user.py` / `app/models/rbac.py`, using this repo's existing `Base`. Test: models import cleanly, no circular imports. | `pending` |
+| 50 | **Port RBAC/user models** | `UserMaster`, `RoleMaster`, `PermissionMaster`, `RolePermissionMapping`, `CompanyMaster`, `TagMaster`, `UserTagMapping` into new `app/models/user.py` / `app/models/rbac.py`, using this repo's existing `Base`. Test: models import cleanly, no circular imports. | `done` |
 | 51 | **Port remaining new models** | `EventParticipantMapping`, `SmtpMaster`, `MatchProfile`, `EmailLog` into new model files, FK'd to the new integer/UUID targets (not their old IndMatchmaking shapes). Test: same import check as #50. | `pending` |
 | 52 | **Extend Event and Match** | `Event` gains `location`, `owner_user_id` (FK `user_master.id`). `Match` gains `reviewed_by_user_id`, `reviewed_at`. Test: import check; existing `Event(...)`/`Match(...)` construction call sites still work with the new nullable columns. | `pending` |
 | 53 | **Consolidation migration** | One new Alembic migration (continuing QBCals' existing chain) creating every table from #50–52 in QBCals' database. Do not replay IndMatchmaking's own 15 migrations — this single migration recreates their end-state directly. Test: `alembic upgrade head` succeeds on a fresh test DB; `downgrade -1` then `upgrade head` round-trips clean. | `pending` |
