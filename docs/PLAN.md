@@ -700,7 +700,7 @@ in this phase was verified against mocks alone.
 
 | # | Task | Description | Status |
 |---|---|---|---|
-| 48 | **Async SQLAlchemy dependencies** | Add `sqlalchemy[asyncio]`, `asyncpg`, `pyjwt`, `passlib` to `backend/requirements.txt`. Stay on this repo's pip/requirements.txt convention — do not adopt IndMatchmaking's `uv` tooling. Test: `pip install -r requirements.txt` succeeds in a clean venv. | `pending` |
+| 48 | **Async SQLAlchemy dependencies** | Add `sqlalchemy[asyncio]`, `asyncpg`, `pyjwt`, `passlib` to `backend/requirements.txt`. Stay on this repo's pip/requirements.txt convention — do not adopt IndMatchmaking's `uv` tooling. Test: `pip install -r requirements.txt` succeeds in a clean venv. | `done` |
 | 49 | **Async DB session** | New `app/core/async_database.py`: async engine + `AsyncSession` factory + `get_async_db` FastAPI dependency, pointed at the same `DATABASE_URL` as the existing sync engine — one physical database, two SQLAlchemy access styles. Test: a throwaway script opens an async session and runs `SELECT 1`. | `pending` |
 
 ### Stage 8.2 — Database consolidation
