@@ -9,12 +9,19 @@ variable content - reasoning bullets, reciprocal_reason, linkedin_draft -
 comes from the LLM (app/services/matching/llm_matcher.py), generated once at
 matching time and stored on the Match row.
 
-This is a new, additive email - distinct from the existing per-pair
-"POST /{event_id}/matches/send-email" (app/routers/events.py::send_match_email),
-which sends one participant's own outreach email_draft to their counterpart
-and is unaffected by this module (protected by CLAUDE.md's Phase-1 exception).
+Also used by the per-pair "POST /{event_id}/matches/send-email"
+(app/routers/events.py::send_match_email, protected by CLAUDE.md's Phase-1
+exception) - same content/voice, just scoped to one match instead of every
+approved match at once - and by GET /{event_id}/matches and
+GET /{event_id}/participants/{id}/matches as a live "email_draft" preview
+of what a real send would actually contain (compose_single_match_preview
+below), since the LLM no longer generates a separate free-form email_draft
+of its own (see llm_matcher.py's module docstring).
 """
 from __future__ import annotations
+
+from types import SimpleNamespace
+from typing import Any
 
 from app.core.config import settings
 from app.models.event import Event
@@ -186,13 +193,17 @@ def _nl_footer(event: Event) -> str:
 def compose_matches_email(
     event: Event,
     participant: Participant,
-    matches: list[tuple[Match, Participant]],
+    matches: list[tuple[Any, Participant]],
     language: str | None,
 ) -> tuple[str, str]:
     """Build (subject, plain-text body) for one participant's combined
-    matches email. `matches` is [(match row where match.participant_a_id ==
-    participant.id, the matched candidate participant), ...], already
-    filtered/ordered by the caller (app/routers/events.py::send_participant_matches).
+    matches email. `matches` is [(match content, the matched candidate
+    participant), ...], already filtered/ordered by the caller
+    (app/routers/events.py::send_participant_matches). "match content" is
+    normally a real `Match` row, but any object exposing the same
+    `.reasoning`/`.reciprocal_reason`/`.linkedin_draft` attributes works
+    (compose_single_match_preview below passes a plain SimpleNamespace when
+    previewing translated content, without mutating the real ORM row).
 
     language: event.content_language ("en"/"nl"/None) - same generation-time
     convention as everywhere else (llm_matcher, llm_normalizer), not a
@@ -218,3 +229,51 @@ def compose_matches_email(
         parts.append(_en_footer(event))
 
     return subject, "\n\n".join(parts)
+
+
+def compose_single_match_preview(
+    event: Event,
+    recipient: Participant,
+    match: Match,
+    candidate: Participant,
+    language: str | None,
+    *,
+    reasoning: list[str] | None = None,
+    reciprocal_reason: str | None = None,
+    linkedin_draft: str | None = None,
+) -> str | None:
+    """Preview text for exactly what POST /{event_id}/matches/send-email
+    would actually send for this one match pair - the body returned by
+    GET /{event_id}/matches and GET /{event_id}/participants/{id}/matches
+    as `email_draft`, so a caller previewing a match sees the real email,
+    not stale/unused LLM-authored prose (see app/services/matching/
+    llm_matcher.py's module docstring - the LLM no longer generates a
+    free-form email_draft at all; this preview is built the same way the
+    real send is).
+
+    reasoning/reciprocal_reason/linkedin_draft: optional overrides - used by
+    GET /{event_id}/participants/{id}/matches' `?lang=` on-demand
+    translation to preview the *translated* email without writing translated
+    text back onto the real Match row (a plain SimpleNamespace duck-typing
+    Match's 3 relevant attributes is passed to compose_matches_email instead
+    of the row itself). Defaults to the row's own native-language content
+    when omitted.
+
+    Returns None if the effective content is missing (the auto-received/
+    mirror side of a bidirectional match never has real reasoning/
+    reciprocal_reason/linkedin_draft) - same guard send_match_email itself
+    enforces before allowing a real send.
+    """
+    effective_reasoning = reasoning if reasoning is not None else match.reasoning
+    effective_reciprocal_reason = reciprocal_reason if reciprocal_reason is not None else match.reciprocal_reason
+    effective_linkedin_draft = linkedin_draft if linkedin_draft is not None else match.linkedin_draft
+    if not effective_reasoning or not effective_reciprocal_reason or not effective_linkedin_draft:
+        return None
+
+    content = SimpleNamespace(
+        reasoning=effective_reasoning,
+        reciprocal_reason=effective_reciprocal_reason,
+        linkedin_draft=effective_linkedin_draft,
+    )
+    _subject, body = compose_matches_email(event, recipient, [(content, candidate)], language)
+    return body

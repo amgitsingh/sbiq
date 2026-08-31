@@ -60,8 +60,8 @@ class Event(Base):
     # cost_estimator.py (that reads real uploaded participant rows instead).
     expected_participant_count: Mapped[int | None] = mapped_column(Integer)
     # "en" / "nl" - language for LLM-generated content (company.summary,
-    # match reasoning, email_draft, linkedin_draft). None is treated as "en"
-    # everywhere it's read (llm_normalizer.py, llm_matcher.py,
+    # match reasoning, reciprocal_reason, linkedin_draft). None is treated
+    # as "en" everywhere it's read (llm_normalizer.py, llm_matcher.py,
     # events.py::send_match_email) - no behavior change for existing events.
     # Deliberately per-event, not per-participant: a shared reasoning/email
     # artifact between two participants can't have two languages at once.

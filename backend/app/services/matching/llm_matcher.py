@@ -1,3 +1,16 @@
+"""LLM match selection + reasoning.
+
+Note: this module does NOT generate a free-form "email_draft" - it did
+originally, but that content was superseded by
+app/services/matching/participant_email_composer.py's deterministic,
+docs/mail-template.docx-formatted email (real user request: the actual
+sent email must match that template, not free LLM prose). Keeping the LLM
+generate an email nobody sends would be pure wasted cost/latency, so
+"email_draft" was removed from both MatchItem and ReverseDraft entirely -
+reasoning/reciprocal_reason/linkedin_draft are the only per-match LLM
+output now. linkedin_draft is still LLM-authored and still used verbatim
+(the template's "LinkedIn introduction - copy & paste" section).
+"""
 from __future__ import annotations
 
 import json
@@ -10,15 +23,18 @@ from app.services.matching.match_schema import MatchSelection, ReverseDraft
 
 logger = logging.getLogger(__name__)
 
-# Raised from 3_000: drafts are now written in more detail (see SYSTEM_PROMPT),
-# so up to 5 matches' worth of reasoning + longer email/linkedin drafts need
-# more headroom to avoid getting cut off mid-JSON.
-MAX_RESPONSE_TOKENS = 4_500
+# Raised from 3_000 when drafts were first written in more detail; lowered
+# back down after email_draft was dropped from this prompt entirely (the
+# real send email is now composed deterministically - see
+# app/services/matching/participant_email_composer.py - not LLM-authored),
+# leaving reasoning/reciprocal_reason/linkedin_draft as the only per-match
+# output, which need less headroom than before.
+MAX_RESPONSE_TOKENS = 3_000
 MAX_ATTEMPTS = 2
 MAX_MATCHES = 5
-# Reverse-draft calls only ever produce one match's worth of email+linkedin
-# content (no reasoning, no candidate list) - a fraction of MAX_RESPONSE_TOKENS.
-REVERSE_DRAFT_MAX_RESPONSE_TOKENS = 1_200
+# Reverse-draft calls only ever produce one match's worth of content (no
+# reasoning, no candidate list) - a fraction of MAX_RESPONSE_TOKENS.
+REVERSE_DRAFT_MAX_RESPONSE_TOKENS = 800
 
 SYSTEM_PROMPT = """You are a business matchmaking assistant for an event networking \
 platform. You will be given one participant's profile and a shortlist of candidate \
@@ -52,14 +68,6 @@ candidate), never sent to the candidate directly - so write it in THIRD PERSON, 
 naming the candidate explicitly (e.g. "Jane Doe would gain..." / "This could give Acme \
 Corp..."), and NEVER use "you"/"your" to mean the candidate. Do not confuse this with \
 addressing the candidate as if writing to them.>,
-      "email_draft": <a detailed, personalized introduction email from the participant \
-to this candidate, 120-200 words across 3-4 short paragraphs: (1) a warm opening naming \
-the event and how they're connected through it, (2) 2-3 concrete, specific details \
-pulled from the candidate's actual profile - company, role, what they offer or are \
-looking for - that prove this isn't a form letter, (3) a clear statement of the \
-complementary fit between the two profiles, (4) a specific call to action (e.g. \
-propose a 15-20 minute call, or meeting at the event itself). Sign off with the \
-sender's first name, or "[Your name]" if not given.>,
       "linkedin_draft": <a short, specific LinkedIn connection message, 2-4 sentences \
 (roughly 40-80 words), written as if the PARTICIPANT is sending it to the CANDIDATE: a \
 brief self-introduction, naming the event and that they were matched via SBIQ.ai, one \
@@ -80,9 +88,9 @@ bad match.
 - "reciprocal_reason" must be genuinely about the participant's value to the candidate, \
 not a restatement of "reasoning" (which is about the candidate's value to the participant). \
 Write it in third person naming the candidate - never "you"/"your" addressed to the candidate.
-- "email_draft" and "linkedin_draft" must be written from the participant's perspective, \
-addressed to the candidate by name, and must meet the length/structure guidance above - \
-never a one-line or generic-filler draft.
+- "linkedin_draft" must be written from the participant's perspective, addressed to the \
+candidate by name, and must meet the length/structure guidance above - never a one-line or \
+generic-filler draft.
 - Respond with a single JSON object only, matching the shape above exactly. No markdown, \
 no commentary."""
 
@@ -100,7 +108,7 @@ def _language_directive(content_language: str | None) -> str | None:
     name = LANGUAGE_NAMES.get(content_language or "")
     if not name:
         return None
-    return f'Write "reasoning", "email_draft", and "linkedin_draft" in {name}, not English.'
+    return f'Write "reasoning", "reciprocal_reason", and "linkedin_draft" in {name}, not English.'
 
 
 class MatchSelectionError(Exception):
@@ -226,7 +234,7 @@ def select_matches(
     build_matching_prompt.
 
     content_language: "en"/"nl"/None (Event.content_language) - affects
-    reasoning/email_draft/linkedin_draft only.
+    reasoning/reciprocal_reason/linkedin_draft only.
     """
     if not candidates:
         return []
@@ -276,14 +284,6 @@ to the SENDER (explaining their own value to the recipient), never sent to the r
 directly - so write it in THIRD PERSON, always naming the recipient explicitly (e.g. "Jane \
 Doe would gain..." / "This could give Acme Corp..."), and NEVER use "you"/"your" to mean \
 the recipient.>,
-  "email_draft": <a detailed, personalized introduction email from the sender to the \
-recipient, 120-200 words across 3-4 short paragraphs: (1) a warm opening naming the \
-event and how they're connected through it, (2) 2-3 concrete, specific details pulled \
-from the recipient's actual profile - company, role, what they offer or are looking \
-for - that prove this isn't a form letter, (3) a clear statement of the complementary \
-fit between the two profiles (grounded in the reasoning bullets given), (4) a specific \
-call to action (e.g. propose a 15-20 minute call, or meeting at the event itself). Sign \
-off with the sender's first name, or "[Your name]" if not given.>,
   "linkedin_draft": <a short, specific LinkedIn connection message, 2-4 sentences \
 (roughly 40-80 words), written as if the SENDER is sending it to the RECIPIENT: a brief \
 self-introduction, naming the event and that they were matched via SBIQ.ai, one specific \
@@ -294,8 +294,8 @@ personal, not corporate.>
 
 Rules:
 - Write from the sender's perspective, addressed to the recipient by name.
-- Ground the email/linkedin drafts in the reasoning bullets given - don't contradict them \
-or invent a different rationale for why the match works.
+- Ground linkedin_draft in the reasoning bullets given - don't contradict them or invent a \
+different rationale for why the match works.
 - "reciprocal_reason" is about the sender's value to the recipient - the reverse of the \
 reasoning bullets given - not a restatement of them. Write it in third person naming the \
 recipient - never "you"/"your" addressed to the recipient.
@@ -328,12 +328,13 @@ def generate_reverse_draft(
     event_context: str | None = None,
     content_language: str | None = None,
 ) -> dict:
-    """Write the sender's own email_draft/linkedin_draft to the recipient, for the
-    auto-created bidirectional mirror side of a match (see match_writer.store_match).
-    The match itself and its reasoning are already decided by the forward
-    direction's select_matches() call - this only fills in the missing
-    personalized drafts so the mirror row isn't left with null drafts until/
-    unless the recipient's own independent matching run happens to reciprocate.
+    """Write the sender's own reciprocal_reason/linkedin_draft to the recipient,
+    for the auto-created bidirectional mirror side of a match (see
+    match_writer.store_match). The match itself and its reasoning are already
+    decided by the forward direction's select_matches() call - this only
+    fills in the missing personalized content so the mirror row isn't left
+    null until/unless the recipient's own independent matching run happens
+    to reciprocate.
 
     Retries once, same pattern as select_matches. Raises ReverseDraftError if
     both attempts fail - callers should treat that as non-fatal (log and leave

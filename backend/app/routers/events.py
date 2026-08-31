@@ -32,7 +32,7 @@ from app.services.template_generator import generate_participant_template
 from app.services.matching.cost_estimator import estimate_matching_run_cost
 from app.services.email_sender import EmailSendError, send_email
 from app.services.matching.decision_authority import classify_seniority
-from app.services.matching.participant_email_composer import compose_matches_email
+from app.services.matching.participant_email_composer import compose_matches_email, compose_single_match_preview
 from app.services.translation import TranslationError, translate_match_content, translate_text
 from app.workers.embedding_tasks import batch_embed_event
 from app.workers.enrichment_tasks import batch_enrich_event
@@ -1116,8 +1116,14 @@ def list_matches(
     No status filter - returns every pair regardless of MatchStatus
     (pending/approved/rejected). Ordered by id, so pagination is stable
     across calls even as new matches are added between pages.
+
+    email_draft is computed on the fly (compose_single_match_preview) - the
+    actual template email POST /{event_id}/matches/send-email would send for
+    this pair, not stored LLM prose (the LLM no longer generates email_draft
+    at all - see llm_matcher.py). None for a mirror row missing the content
+    needed to compose one.
     """
-    _get_event_or_404(event_id, db, current_user, role_name)
+    event = _get_event_or_404(event_id, db, current_user, role_name)
 
     if limit < 1 or limit > MAX_MATCHES_LIMIT:
         raise HTTPException(status_code=400, detail=f"limit must be between 1 and {MAX_MATCHES_LIMIT}")
@@ -1148,7 +1154,7 @@ def list_matches(
                 score=m.score,
                 reasoning=m.reasoning,
                 reciprocal_reason=m.reciprocal_reason,
-                email_draft=m.email_draft,
+                email_draft=compose_single_match_preview(event, m.participant_a, m, m.participant_b, event.content_language),
                 linkedin_draft=m.linkedin_draft,
                 status=m.status,
                 mutual=is_mutual,
@@ -1169,11 +1175,12 @@ class ParticipantMatchOut(BaseModel):
     status: str
     # True if this recipient's own matching run independently selected this
     # counterpart (a genuine match_writer.store_match row - has real
-    # personalized drafts). False means this match was only auto-received via
-    # CLAUDE.md's bidirectional-matching rule (the counterpart selected this
-    # recipient, not the other way around) - email_draft/linkedin_draft are
-    # null in that case, since they were never generated from this
-    # recipient's perspective. See match_writer.store_match's docstring.
+    # personalized content). False means this match was only auto-received
+    # via CLAUDE.md's bidirectional-matching rule (the counterpart selected
+    # this recipient, not the other way around) - reciprocal_reason/
+    # linkedin_draft (and thus the computed email_draft preview) are null in
+    # that case, since they were never generated from this recipient's
+    # perspective. See match_writer.store_match's docstring.
     self_selected: bool
 
 
@@ -1233,10 +1240,13 @@ def get_participant_matches(
     and act on.
 
     lang: if set and different from the event's native content_language,
-    each match's reasoning/reciprocal_reason/email_draft/linkedin_draft is
-    translated on first request and cached on match.translations - see
-    app/services/translation.py. A mirror row's null reciprocal_reason/
-    email_draft/linkedin_draft stay null (never fabricated by translation).
+    each match's reasoning/reciprocal_reason/linkedin_draft is translated on
+    first request and cached on match.translations - see
+    app/services/translation.py. email_draft is then composed fresh from
+    those (possibly translated) fields via compose_single_match_preview -
+    it's a live preview of the real send, not stored/translated content of
+    its own. A mirror row's null reciprocal_reason/linkedin_draft (and thus
+    email_draft) stay null (never fabricated by translation).
     """
     event = _get_event_or_404(event_id, db, current_user, role_name)
 
@@ -1257,25 +1267,19 @@ def get_participant_matches(
     native_language = _native_language(event)
     match_outs = []
     for m in rows:
-        reasoning, reciprocal_reason, email_draft, linkedin_draft = (
-            m.reasoning,
-            m.reciprocal_reason,
-            m.email_draft,
-            m.linkedin_draft,
-        )
+        reasoning, reciprocal_reason, linkedin_draft = m.reasoning, m.reciprocal_reason, m.linkedin_draft
+        preview_language = native_language
         if lang and lang != native_language and reasoning:
             cached = (m.translations or {}).get(lang)
             if cached is not None:
                 reasoning = cached["reasoning"]
                 reciprocal_reason = cached.get("reciprocal_reason")
-                email_draft = cached["email_draft"]
                 linkedin_draft = cached["linkedin_draft"]
             else:
                 try:
                     translated = translate_match_content(
                         reasoning=reasoning,
                         reciprocal_reason=reciprocal_reason,
-                        email_draft=email_draft,
                         linkedin_draft=linkedin_draft,
                         target_language=lang,
                     )
@@ -1283,11 +1287,22 @@ def get_participant_matches(
                     raise HTTPException(status_code=502, detail=f"Translation failed: {e}")
                 reasoning = translated["reasoning"]
                 reciprocal_reason = translated["reciprocal_reason"]
-                email_draft = translated["email_draft"]
                 linkedin_draft = translated["linkedin_draft"]
                 translations = dict(m.translations or {})
                 translations[lang] = translated
                 m.translations = translations
+            preview_language = lang
+
+        email_draft = compose_single_match_preview(
+            event,
+            participant,
+            m,
+            m.participant_b,
+            preview_language,
+            reasoning=reasoning,
+            reciprocal_reason=reciprocal_reason,
+            linkedin_draft=linkedin_draft,
+        )
 
         match_outs.append(
             ParticipantMatchOut(
@@ -1330,16 +1345,33 @@ def send_match_email(
     current_user: UserMaster = Depends(current_admin),
     role_name: str | None = Depends(current_user_role_name),
 ) -> SendMatchEmailResult:
-    """Send participant A's own match email_draft to participant B, framed as
-    coming from A (display name + Reply-To — see email_sender.send_email's
-    docstring for why the actual `From` address can't be A's real one).
+    """Send the organizer-branded, docs/mail-template.docx-formatted email
+    for ONE match pair to participant A - the same content/voice as
+    send_participant_matches below (built via the same
+    compose_matches_email), just scoped to a single match instead of every
+    approved match at once. Same URL/payload shape as before this rework
+    (participant_a_id, participant_b_id) so no frontend wiring change is
+    needed - only the email's content/framing and the recipient changed.
+
+    CHANGED BEHAVIOR (explicit user request, superseding the original
+    per-pair design): previously sent participant A's own free-form
+    email_draft *to* participant B, framed as coming from A. Now sends the
+    organizer's (settings.EMAIL_ORGANIZER_NAME) templated match email *to*
+    participant A themselves, about their match with B - matching how the
+    combined multi-match endpoint already works, just for one match. B's
+    email is no longer used or required.
+
+    Requires the match to be status="approved" (same precondition as
+    send_participant_matches - the review step exists specifically to gate
+    what gets sent) - this is new here (the pre-rework version had no such
+    gate), flagged since it's a real behavior change from before.
 
     Looks up the match row keyed exactly (participant_a_id, participant_b_id):
     per match_writer.store_match, only the genuine self-selected side
-    (is_bidirectional=False) has a real email_draft — the auto-created mirror
-    row on the reverse pair has a null draft. So this only works in the
-    direction the match was actually generated for; swapping a/b only works
-    if B independently selected A too.
+    (is_bidirectional=False) has real reasoning/reciprocal_reason/
+    linkedin_draft - the auto-created mirror row on the reverse pair has
+    nulls. So this only works in the direction the match was actually
+    generated for; swapping a/b only works if B independently selected A too.
     """
     event = _get_event_or_404(event_id, db, current_user, role_name)
 
@@ -1353,6 +1385,10 @@ def send_match_email(
             status_code=404,
             detail=f"Participant {payload.participant_a_id} not found in event {event_id}",
         )
+    if not participant_a.email:
+        raise HTTPException(
+            status_code=400, detail=f"Participant {participant_a.id} has no email on file"
+        )
 
     participant_b = (
         db.query(Participant)
@@ -1363,10 +1399,6 @@ def send_match_email(
         raise HTTPException(
             status_code=404,
             detail=f"Participant {payload.participant_b_id} not found in event {event_id}",
-        )
-    if not participant_b.email:
-        raise HTTPException(
-            status_code=400, detail=f"Participant {participant_b.id} has no email on file"
         )
 
     match = (
@@ -1386,28 +1418,29 @@ def send_match_email(
                 f"{payload.participant_b_id} in event {event_id}"
             ),
         )
-    if not match.email_draft:
+    if not match.reasoning or not match.reciprocal_reason or not match.linkedin_draft:
         raise HTTPException(
             status_code=400,
             detail=(
-                "This match has no email draft to send — likely the auto-received "
-                "side of a bidirectional match, not participant A's own selection"
+                "This match is missing generated content to send — likely the "
+                "auto-received side of a bidirectional match, not participant A's "
+                "own selection"
             ),
         )
+    if match.status != "approved":
+        raise HTTPException(
+            status_code=400,
+            detail="This match must be approved before sending - use POST /{event_id}/review first",
+        )
 
-    subject = (
-        f"Kennismaking van {participant_a.name}"
-        if event.content_language == "nl"
-        else f"Introduction from {participant_a.name}"
-    )
+    subject, body = compose_matches_email(event, participant_a, [(match, participant_b)], event.content_language)
 
     try:
         send_email(
-            to_email=participant_b.email,
+            to_email=participant_a.email,
             subject=subject,
-            body=match.email_draft,
-            reply_to=participant_a.email,
-            from_display_name=f"{participant_a.name} via QBCals",
+            body=body,
+            from_display_name=f"{settings.EMAIL_ORGANIZER_NAME} via SBIQ.ai",
         )
     except EmailSendError as e:
         # Task 68 (path collapse): logs the failed attempt too - an audit
@@ -1417,10 +1450,10 @@ def send_match_email(
             EmailLog(
                 event_id=event_id,
                 match_id=match.id,
-                sender_participant_id=payload.participant_a_id,
-                receiver_participant_id=payload.participant_b_id,
+                receiver_participant_id=payload.participant_a_id,
+                sender_user_id=current_user.id,
                 subject=subject,
-                body=match.email_draft,
+                body=body,
                 status="failed",
                 error_message=str(e),
             )
@@ -1435,17 +1468,19 @@ def send_match_email(
         EmailLog(
             event_id=event_id,
             match_id=match.id,
-            sender_participant_id=payload.participant_a_id,
-            receiver_participant_id=payload.participant_b_id,
+            receiver_participant_id=payload.participant_a_id,
+            sender_user_id=current_user.id,
             subject=subject,
-            body=match.email_draft,
+            body=body,
             status="sent",
             sent_at=datetime.now(UTC),
         )
     )
     db.commit()
 
-    return SendMatchEmailResult(match_id=match.id, sent_to=participant_b.email, sent_as=participant_a.name)
+    return SendMatchEmailResult(
+        match_id=match.id, sent_to=participant_a.email, sent_as=settings.EMAIL_ORGANIZER_NAME
+    )
 
 
 ReviewDecision = Literal["approve", "reject"]

@@ -51,11 +51,16 @@ class Match(Base):
     # about b's value to a) - added alongside the mail-template.docx rework
     # (docs/PLAN.md, post-Phase-8), not part of the original 4-layer pipeline.
     reciprocal_reason: Mapped[str | None] = mapped_column(Text)
-    email_draft: Mapped[str | None] = mapped_column(Text)
     linkedin_draft: Mapped[str | None] = mapped_column(Text)
+    # No email_draft column - the LLM no longer generates a free-form email
+    # (dropped alongside the mail-template.docx rework, real user request:
+    # "the email draft should contain the actual email that will be sent").
+    # The actual/preview email is composed deterministically at send/read
+    # time from reasoning/reciprocal_reason/linkedin_draft - see
+    # app/services/matching/participant_email_composer.py - never stored.
 
     # On-demand translation cache, keyed by language code:
-    # {"nl": {"reasoning": [...], "email_draft": "...", "linkedin_draft": "..."}}.
+    # {"nl": {"reasoning": [...], "reciprocal_reason": "...", "linkedin_draft": "..."}}.
     # Reset to None whenever store_match overwrites this row's reasoning/
     # drafts (a re-run), so a stale translation of the old content is never
     # served after a rematch.
