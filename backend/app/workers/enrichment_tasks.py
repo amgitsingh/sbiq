@@ -9,7 +9,7 @@ from app.core.config import settings
 from app.core.database import session_scope
 from app.models.enrichment_job import EnrichmentJob, EnrichmentSource, JobStatus
 from app.models.event import Event
-from app.models.participant import EnrichmentStatus, Participant
+from app.models.participant import EnrichmentStatus, Participant, ParticipantStatus
 from app.services.enrichment.company_enrichment import get_company_enrichment
 from app.services.enrichment.linkedin_scraper import scrape_linkedin_profile
 from app.services.enrichment.llm_normalizer import (
@@ -95,6 +95,57 @@ def _normalize_with_one_extra_retry(
         )
 
 
+# The one flagged_reasons value that's safe to auto-resolve once enrichment
+# finds real signal - must match validation.py's exact string. Deliberately
+# NOT auto-resolving tier-ambiguity or duplicate-submission flags (those
+# genuinely need a human: tier affects billing/priority, a duplicate
+# submission needs someone to confirm which answer is authoritative) - only
+# unlocked when this is the row's SOLE flagged reason (see
+# _maybe_unlock_review_status).
+_BLANK_INTENT_FLAG_REASON = "no looking_for or offerings - needs manual review"
+
+
+def _has_usable_enrichment_signal(profile: dict) -> bool:
+    """True if enrichment found any real company-level content to go on,
+    even though the participant's own looking_for/offerings stayed blank
+    (those two fields are never LLM-inferred - see llm_normalizer.py's
+    verbatim guarantee, so they're never a source of signal here).
+    """
+    company = (profile or {}).get("company") or {}
+    return bool(
+        company.get("summary")
+        or company.get("industry")
+        or company.get("products")
+        or company.get("services")
+    )
+
+
+def _maybe_unlock_review_status(participant: Participant, profile: dict) -> None:
+    """Real client request: participants who left both looking_for and
+    offerings blank on the signup form were permanently stuck un-matchable
+    (participant_status stayed "review" forever, set once at ingestion -
+    see match_participant's eligibility check), even when enrichment later
+    found a real company profile for them. Flips status back to "eligible"
+    once enrichment actually finds something to go on - narrowly scoped to
+    ONLY the blank-intent-fields case (flagged_reasons must be exactly that
+    one reason - a row also flagged for tier ambiguity or a duplicate
+    submission is left alone; those need a human, not enrichment).
+
+    Idempotent/no-op if the participant isn't currently "review", or the
+    flag was for a different/additional reason, or enrichment found nothing
+    usable - safe to call unconditionally after every enrichment run
+    (including cache-reuse hits).
+    """
+    if participant.participant_status != ParticipantStatus.review:
+        return
+    if participant.flagged_reasons != [_BLANK_INTENT_FLAG_REASON]:
+        return
+    if not _has_usable_enrichment_signal(profile):
+        return
+    participant.participant_status = ParticipantStatus.eligible
+    logger.info(f"Participant {participant.id} unlocked for matching - enrichment found usable signal")
+
+
 def _embed_and_store(db: Session, participant: Participant, profile: dict) -> None:
     """Generate and upsert this participant's embedding for their event.
 
@@ -163,6 +214,7 @@ def enrich_participant(self, participant_id: int) -> dict:
                 # summary is no longer valid for this new content.
                 participant.profile_translations = None
                 participant.enrichment_status = EnrichmentStatus.done
+                _maybe_unlock_review_status(participant, profile)
                 db.commit()
 
                 _embed_and_store(db, participant, profile)
@@ -236,6 +288,7 @@ def enrich_participant(self, participant_id: int) -> dict:
         # longer valid for this new content.
         participant.profile_translations = None
         participant.enrichment_status = EnrichmentStatus.done
+        _maybe_unlock_review_status(participant, profile)
         db.commit()
 
         upsert_enriched_profile(db, participant.email, profile)

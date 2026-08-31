@@ -121,6 +121,18 @@ class Participant(Base):
     # organizer-specific question with no dedicated column is never lost.
     raw_source_data: Mapped[dict | None] = mapped_column(JSON)
 
+    # Exact reason strings from validation.validate_rows (e.g. "no
+    # looking_for or offerings - needs manual review", tier-ambiguity, or
+    # duplicate-submission notes) - why participant_status was set to
+    # "review" at ingestion. Set once, at upload time, never touched again.
+    # Added so enrichment_tasks.py's eligibility-unlock check (real client
+    # request: too many participants stuck un-matchable just for leaving the
+    # intent fields blank on the form) can tell "review because the form was
+    # blank" apart from "review because of tier ambiguity/duplicate
+    # submission" - only the former should ever be auto-resolved once
+    # enrichment finds real signal; the latter genuinely need a human.
+    flagged_reasons: Mapped[list | None] = mapped_column(JSON)
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now(), nullable=False
     )

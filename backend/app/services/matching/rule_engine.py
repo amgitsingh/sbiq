@@ -26,16 +26,28 @@ DECISION_AUTHORITY_WEIGHT = 0.10
 SIMILARITY_POOL_SIZE = 20  # Task 24's initial vector-search candidate pool
 RESULT_TOP_N = 10  # narrowed shortlist size, per CLAUDE.md's "5-10 candidates"
 
-# Sponsors processed first, then premium, then business/normal - per CLAUDE.md's
-# Priority & Eligibility Rules table. Non-members are deliberately absent: they
-# get 0 matches allocated (candidate-only), so they never receive a shortlist
-# of their own, even though they can still appear *in* someone else's.
+# Sponsors processed first, then premium, then business/normal, then
+# non-member last. Non-member was originally deliberately absent here (0
+# matches allocated, candidate-only) per CLAUDE.md's Priority & Eligibility
+# Rules table - real client feedback found that left too large a share of a
+# real participant list (38% on one real event) permanently un-matchable,
+# so non-members now get a capped quota of NON_MEMBER_MATCH_QUOTA instead
+# of zero (see matching_tasks.match_participant, which enforces the cap
+# after the LLM's normal selection). Still processed last/lowest priority.
 TIER_PROCESSING_ORDER = [
     MembershipTier.sponsor,
     MembershipTier.premium_member,
     MembershipTier.business_member,
     MembershipTier.normal_member,
+    MembershipTier.non_member,
 ]
+
+# Non-members' match cap - a deliberately small taste of the platform's
+# value (vs. 0 before) rather than parity with paying tiers, preserving the
+# membership-tier incentive to upgrade. Enforced in matching_tasks.py after
+# the LLM's own 0-5 selection, not by asking the LLM for fewer - keeps the
+# LLM prompt/schema tier-agnostic.
+NON_MEMBER_MATCH_QUOTA = 1
 
 
 def _normalize_company(name: str | None) -> str:
@@ -157,23 +169,27 @@ def rank_candidates(db: Session, *, participant: Participant, top_n: int = RESUL
 def run_rule_engine_for_event(db: Session, *, event_id: int) -> dict[int, list[dict]]:
     """Rank candidates for every eligible participant in an event.
 
-    Skips two groups entirely as the *primary* subject (they never get a
-    shortlist of their own) - both per CLAUDE.md's Priority & Eligibility
-    Rules table:
-    - non-members (0 matches allocated - candidate-only)
-    - participants flagged for review (no looking_for and no offerings - "not
-      auto-matched")
-    Neither group is excluded from *other* participants' candidate pools -
-    non-members can still appear as a candidate, and a review-flagged
-    participant's blank intent fields already zero out their token overlap
-    score naturally, so no extra filtering is needed there.
+    Skips participants flagged for review as the *primary* subject (they
+    never get a shortlist of their own) - blank looking_for/offerings (or
+    tier ambiguity, or an unresolved duplicate submission) means "not
+    auto-matched" per CLAUDE.md's Priority & Eligibility Rules table. Not
+    excluded from *other* participants' candidate pools though - a
+    review-flagged participant's blank intent fields already zero out their
+    token overlap score naturally, so no extra filtering is needed there.
+    (enrichment_tasks.py can later flip a blank-intent-fields-only review
+    flag back to eligible once real enrichment signal is found - see
+    _maybe_unlock_review_status - after which this function treats them
+    normally.)
 
-    Processes sponsors first, then premium, then business/normal (never
-    non-members, per above). A pair's score is computed once and reused for
-    both directions via pair_cache, since score_pair is symmetric - this is
-    the "A->B = B->A counted once" deduplication from CLAUDE.md's rule engine
-    bullets, applied as a computation-cache rather than a result exclusion
-    (the same pair can legitimately appear in both participants' shortlists).
+    Non-members ARE included as a primary subject (unlike the above) - capped
+    to NON_MEMBER_MATCH_QUOTA post-selection in matching_tasks.py, not
+    excluded here entirely. Processes sponsors first, then premium, then
+    business/normal, then non-member last (TIER_PROCESSING_ORDER). A pair's
+    score is computed once and reused for both directions via pair_cache,
+    since score_pair is symmetric - this is the "A->B = B->A counted once"
+    deduplication from CLAUDE.md's rule engine bullets, applied as a
+    computation-cache rather than a result exclusion (the same pair can
+    legitimately appear in both participants' shortlists).
     """
     participants = (
         db.query(Participant)

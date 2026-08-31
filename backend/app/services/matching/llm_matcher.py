@@ -31,6 +31,14 @@ logger = logging.getLogger(__name__)
 # output, which need less headroom than before.
 MAX_RESPONSE_TOKENS = 3_000
 MAX_ATTEMPTS = 2
+# Real client feedback: match counts felt too low relative to real
+# participant list sizes. Stays at 5 (the LLM's own selection cap - see
+# SYSTEM_PROMPT's "Rules" section) - the actual leniency change here is the
+# "prefer including a plausible match" guidance above, not a higher cap;
+# 5 is comfortably under rule_engine.RESULT_TOP_N=10 (the full shortlist
+# size the LLM ever sees) either way. See CLAUDE.md's Priority &
+# Eligibility Rules / Confirmed Architecture Decisions for how this reads
+# against the original "3-5 final matches" spec wording.
 MAX_MATCHES = 5
 # Reverse-draft calls only ever produce one match's worth of content (no
 # reasoning, no candidate list) - a fraction of MAX_RESPONSE_TOKENS.
@@ -45,6 +53,13 @@ this shortlist and write a short rationale and outreach drafts for each.
 You may also be given an EVENT CONTEXT section describing this specific event's \
 purpose and matchmaking goals - when present, weigh it when judging fit and let it \
 inform your reasoning bullets and drafts, not just the two participants' profiles.
+
+Prefer including a plausible match over excluding it. A rule engine has already \
+pre-filtered this shortlist for you - every candidate on it cleared a real relevance bar, \
+so most candidates here deserve inclusion. Only leave a candidate out if there is truly no \
+reasonable commercial, complementary, or strategic connection you can articulate - not \
+because the connection is merely modest. When genuinely unsure, include it with honest, \
+measured reasoning rather than omitting it.
 
 Respond with a single JSON object with exactly this shape:
 {
@@ -79,9 +94,9 @@ natural and personal, not corporate.>
 }
 
 Rules:
-- Select between 0 and 5 matches - only the ones genuinely worth introducing. If none \
-of the candidates are a good fit, return an empty matches list rather than forcing a \
-bad match.
+- Select up to 5 matches. Default toward including a candidate rather than excluding it, \
+per the guidance above - an empty or near-empty list should be rare, reserved for cases \
+with genuinely no plausible connection anywhere in the shortlist.
 - "participant_id" must always be one of the candidate IDs given above - never invent one.
 - Rank matches 1 (best) through N with no gaps or duplicates.
 - Reasoning bullets must reference concrete details from both profiles - no generic filler.

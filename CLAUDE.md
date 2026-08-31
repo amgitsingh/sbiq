@@ -151,9 +151,17 @@ Deterministic scoring on top of similarity results narrows to **5–10 candidate
 ### Step 5 — LLM Reasoning
 Called once per participant on their 5–10 rule-engine candidates:
 - Reads full enriched JSON profile + candidate shortlist
-- Selects best **3–5 final matches**
+- Selects best **3–5 final matches** — cap unchanged, but the LLM now
+  defaults toward including a plausible candidate rather than excluding it
+  (real client feedback that match counts felt too low relative to real
+  participant-list sizes; the rule-engine shortlist has already
+  pre-filtered for relevance, so most candidates on it deserve inclusion —
+  see `app/services/matching/llm_matcher.py`'s `SYSTEM_PROMPT`)
 - Generates reasoning bullets per match
-- Writes personalized outreach email + LinkedIn intro draft
+- Writes a LinkedIn intro draft (no separate outreach email draft — the
+  actual sent email is composed deterministically from a fixed template,
+  `docs/mail-template.docx`, not LLM-authored — see
+  `app/services/matching/participant_email_composer.py`)
 
 **Design principle:** Enrichment makes profiles rich enough for meaningful semantic search. Vector search handles semantic breadth cheaply at scale. The rule engine applies business logic deterministically. The LLM only sees a tiny pre-filtered set — cost stays low even for 300+ participant events.
 
@@ -165,15 +173,15 @@ Called once per participant on their 5–10 rule-engine candidates:
 | Premium Member | 2 | 100+ |
 | Business Member | 1 | Standard |
 | Normal Member | 1 | Standard |
-| Non-member | 0 (can appear as candidate only) | Lowest |
+| Non-member | 1 (`NON_MEMBER_MATCH_QUOTA`, capped post-LLM-selection — real client feedback that 0 left too large a share of a real participant list permanently un-matchable, while still keeping the tier below every paying tier) | Lowest |
 
-Participants with no `looking_for` AND no `offers` text are flagged for admin review, not auto-matched.
+Participants with no `looking_for` AND no `offers` text are flagged for admin review, not auto-matched — unless enrichment later finds real company/professional signal about them anyway, in which case they're unlocked for matching automatically (`app/workers/enrichment_tasks.py::_maybe_unlock_review_status`). Not applied if the review flag was for a different reason (ambiguous membership tier, unresolved duplicate submission) — those still need a human.
 
 ## Data Model (core tables)
 
 - **events** — id, name, date, description, matching_rules, status
 - **participants** — id, event_id, name, company, sector, company_size, membership_tier, looking_for, offers, linkedin_url, email, status (eligible/limited/review)
-- **matches** — id, event_id, participant_a_id, participant_b_id, score, reasoning_bullets (JSON), email_draft, linkedin_draft, status (pending/approved/rejected)
+- **matches** — id, event_id, participant_a_id, participant_b_id, score, reasoning_bullets (JSON), reciprocal_reason, linkedin_draft, status (pending/approved/rejected) — no `email_draft` column; the sent email is composed on the fly from a fixed template (`docs/mail-template.docx`)
 
 ## CSV Ingestion Notes
 
@@ -201,12 +209,12 @@ AI_MAX_TOKENS_PER_RUN=...               # cost cap
 | LinkedIn enrichment | Best-effort Playwright scrape — skip gracefully if blocked, not a hard dependency |
 | Async enrichment | Celery + Redis — enrichment runs as background jobs, never blocks the request |
 | Matching direction | Bidirectional — if A→B is selected, B automatically receives A; enforced at write time |
-| Match quota | 3 for all tiers (flat) — tier differentiation wired in later |
+| Match quota | Up to 5, LLM discretion (already a deviation from the original flat-3-for-all-tiers plan) for paying tiers, with the LLM now biased toward inclusion over exclusion (real client feedback); non-members capped to 1 post-selection (`NON_MEMBER_MATCH_QUOTA`) — see Priority & Eligibility Rules above |
 | Enrichment failure | Per-source independence — if any source fails, log and proceed with partial data |
 | Company enrichment | Deduplicated by domain/company name — shared across participants from same company |
 | Vector search scope | Always filtered by `event_id` via WHERE clause — never cross-event |
 | `looking_for` / `offerings` | Verbatim from Excel — LLM normalization must never modify these two fields |
-| LLM output | JSON mode enforced — fixed schema with `matches[].participant_id`, `.rank`, `.reasoning[]`, `.email_draft`, `.linkedin_draft` |
+| LLM output | JSON mode enforced — fixed schema with `matches[].participant_id`, `.rank`, `.reasoning[]`, `.reciprocal_reason`, `.linkedin_draft` (no `.email_draft` — the sent email is composed deterministically from `docs/mail-template.docx`, not LLM-authored) |
 | Cost visibility | Estimated cost shown in admin panel before triggering matching run |
 
 ## Phase Boundaries (strict)
