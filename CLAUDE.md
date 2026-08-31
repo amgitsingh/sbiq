@@ -151,12 +151,19 @@ Deterministic scoring on top of similarity results narrows to **5–10 candidate
 ### Step 5 — LLM Reasoning
 Called once per participant on their 5–10 rule-engine candidates:
 - Reads full enriched JSON profile + candidate shortlist
-- Selects best **3–5 final matches** — cap unchanged, but the LLM now
-  defaults toward including a plausible candidate rather than excluding it
-  (real client feedback that match counts felt too low relative to real
-  participant-list sizes; the rule-engine shortlist has already
-  pre-filtered for relevance, so most candidates on it deserve inclusion —
-  see `app/services/matching/llm_matcher.py`'s `SYSTEM_PROMPT`)
+- Selects up to a **per-membership-tier ceiling** (real client-specified
+  numbers — see Priority & Eligibility Rules below), not a flat cap for
+  everyone — a real business requirement, not just an LLM prompt tweak:
+  `app/services/matching/rule_engine.py`'s `MATCH_QUOTA_BY_TIER` is passed
+  as `max_matches` into `llm_matcher.select_matches` per participant
+  (`app/workers/matching_tasks.py`), and enforced there (a response
+  exceeding it fails validation and retries, not silently truncated). The
+  LLM defaults toward including a plausible candidate rather than excluding
+  it up to that ceiling — "up to N," not "exactly N": it can still return
+  fewer if it genuinely finds no more good candidates — since the
+  rule-engine shortlist has already pre-filtered for relevance, so most
+  candidates on it deserve inclusion (see `app/services/matching/
+  llm_matcher.py`'s `SYSTEM_PROMPT`)
 - Generates reasoning bullets per match
 - Writes a LinkedIn intro draft (no separate outreach email draft — the
   actual sent email is composed deterministically from a fixed template,
@@ -169,11 +176,13 @@ Called once per participant on their 5–10 rule-engine candidates:
 
 | Tier | Matches Allocated | Priority Score |
 |---|---|---|
-| Sponsor | 3 | Highest |
-| Premium Member | 2 | 100+ |
-| Business Member | 1 | Standard |
-| Normal Member | 1 | Standard |
-| Non-member | 1 (`NON_MEMBER_MATCH_QUOTA`, capped post-LLM-selection — real client feedback that 0 left too large a share of a real participant list permanently un-matchable, while still keeping the tier below every paying tier) | Lowest |
+| Sponsor | Up to 3 | Highest |
+| Premium Member | Up to 2 | 100+ |
+| Business Member | Up to 1 | Standard |
+| Normal Member | Up to 1 | Standard |
+| Non-member | 0 own quota — candidate-only (can still be selected by another tier's own run and appear in that match; just never gets a shortlist/LLM call of its own — `app/services/matching/rule_engine.py`'s `MATCH_QUOTA_BY_TIER` has no non-member entry) | Lowest |
+
+"Up to N" is a ceiling per real client direction, not a mandatory fixed count — a tier's participants can still end up with fewer if the LLM genuinely finds no more good candidates for them (never a forced weak match just to hit the number). An earlier attempt to give non-members a small quota of their own (1) was explicitly reversed by the client — 0 own quota, candidate-only, is the confirmed real requirement.
 
 Participants with no `looking_for` AND no `offers` text are flagged for admin review, not auto-matched — unless enrichment later finds real company/professional signal about them anyway, in which case they're unlocked for matching automatically (`app/workers/enrichment_tasks.py::_maybe_unlock_review_status`). Not applied if the review flag was for a different reason (ambiguous membership tier, unresolved duplicate submission) — those still need a human.
 
@@ -209,7 +218,7 @@ AI_MAX_TOKENS_PER_RUN=...               # cost cap
 | LinkedIn enrichment | Best-effort Playwright scrape — skip gracefully if blocked, not a hard dependency |
 | Async enrichment | Celery + Redis — enrichment runs as background jobs, never blocks the request |
 | Matching direction | Bidirectional — if A→B is selected, B automatically receives A; enforced at write time |
-| Match quota | Up to 5, LLM discretion (already a deviation from the original flat-3-for-all-tiers plan) for paying tiers, with the LLM now biased toward inclusion over exclusion (real client feedback); non-members capped to 1 post-selection (`NON_MEMBER_MATCH_QUOTA`) — see Priority & Eligibility Rules above |
+| Match quota | Per-tier ceiling ("up to N," LLM discretion within it — Sponsor 3, Premium 2, Business/Normal 1, real client-specified numbers), with the LLM biased toward inclusion over exclusion up to that ceiling; non-members have no own quota (candidate-only) — see Priority & Eligibility Rules above and `rule_engine.MATCH_QUOTA_BY_TIER` |
 | Enrichment failure | Per-source independence — if any source fails, log and proceed with partial data |
 | Company enrichment | Deduplicated by domain/company name — shared across participants from same company |
 | Vector search scope | Always filtered by `event_id` via WHERE clause — never cross-event |

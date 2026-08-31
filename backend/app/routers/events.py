@@ -32,6 +32,7 @@ from app.services.matching.cost_estimator import estimate_matching_run_cost
 from app.services.email_sender import EmailSendError, send_email
 from app.services.matching.decision_authority import classify_seniority
 from app.services.matching.participant_email_composer import compose_matches_email, compose_single_match_preview
+from app.services.matching.rule_engine import MATCH_QUOTA_BY_TIER
 from app.services.translation import TranslationError, translate_match_content, translate_text
 from app.workers.embedding_tasks import batch_embed_event
 from app.workers.enrichment_tasks import batch_enrich_event
@@ -981,15 +982,15 @@ def get_matching_status(
     role_name: str | None = Depends(current_user_role_name),
 ) -> MatchingStatusSummary:
     """Per-participant matching status, mirroring get_enrichment_status's
-    shape. `eligible` mirrors batch_match_event's own dispatch filter exactly
-    (participant_status != review) - review-flagged participants are never
-    dispatched as the primary subject (per CLAUDE.md's Priority &
+    shape. `eligible` mirrors batch_match_event's own dispatch filter
+    exactly (participant_status != review AND membership_tier has a real
+    quota in rule_engine.MATCH_QUOTA_BY_TIER) - review-flagged participants
+    and non-members (0 own quota, "candidate-only" - real client direction)
+    are never dispatched as the primary subject (per CLAUDE.md's Priority &
     Eligibility Rules), so their matching_status just stays at its default
-    ('pending') forever, not a sign anything is stuck. Non-members ARE
-    eligible/dispatched (real client feedback - see rule_engine.py's
-    NON_MEMBER_MATCH_QUOTA), just capped to 1 match post-selection rather
-    than excluded outright, so they're no longer excluded from this flag
-    either.
+    ('pending') forever, not a sign anything is stuck. Neither group loses
+    their own *candidacy* though - match_count below can still be >0 for
+    them via a genuine pick from someone else's own run.
 
     match_count is this participant's own row count as participant_a_id
     (GET /{event_id}/participants/{participant_id}/matches uses the same
@@ -1012,7 +1013,9 @@ def get_matching_status(
     eligible_count = 0
     participants_out = []
     for p in participants:
-        is_eligible = p.participant_status != ParticipantStatus.review
+        is_eligible = p.participant_status != ParticipantStatus.review and MATCH_QUOTA_BY_TIER.get(
+            p.membership_tier, 0
+        ) > 0
         if is_eligible:
             eligible_count += 1
             counts[p.matching_status] += 1
@@ -1199,13 +1202,11 @@ def _no_matches_message(participant: Participant) -> str:
     """Explain an empty match list for one participant.
 
     Mirrors get_matching_status's own eligibility check (participant_status
-    != review) so the reason given here is never inconsistent with what
-    that endpoint reports. Non-members get no special-cased message anymore
-    (real client feedback: they're matched like anyone else now, just
-    capped to NON_MEMBER_MATCH_QUOTA post-selection - not excluded) - an
-    empty list for a non-member falls through to the same reasons as any
-    other participant.
+    != review AND membership_tier has a real quota) so the reason given
+    here is never inconsistent with what that endpoint reports.
     """
+    if MATCH_QUOTA_BY_TIER.get(participant.membership_tier, 0) == 0:
+        return "This participant's tier has no match quota and is not eligible to receive matches."
     if participant.participant_status == ParticipantStatus.review:
         return "This participant is flagged for admin review and has not been matched yet."
     if participant.matching_status in (MatchingStatus.pending, MatchingStatus.matching):

@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.models.participant import EnrichmentStatus, Participant, ParticipantStatus
 from app.services.embedding import serialize_profile_to_text
+from app.services.matching.rule_engine import MATCH_QUOTA_BY_TIER
 
 # Rough English-text heuristic (~4 chars/token) - not a real tokenizer. This
 # project has no tiktoken dependency; per CLAUDE.md's cost-visibility goal
@@ -57,12 +58,10 @@ def estimate_matching_run_cost(db: Session, *, event_id: int) -> dict:
     done) participant, since Task 23 embeds all of them unconditionally.
     LLM reasoning cost is estimated only against participants who'll actually
     receive a rule-engine shortlist and an LLM call - excludes review-flagged
-    participants (not auto-matched), mirroring batch_match_event's own
-    filtering exactly. Non-members ARE included here (unlike before - real
-    client feedback, see rule_engine.NON_MEMBER_MATCH_QUOTA): they now
-    dispatch a real LLM call same as any other tier, just capped to 1 match
-    post-selection - the LLM cost is incurred regardless of that cap, so
-    excluding them from this estimate would under-count real spend.
+    participants (not auto-matched) and any tier with no entry in
+    rule_engine.MATCH_QUOTA_BY_TIER (currently just non-member - real client
+    direction: "candidate-only", no own outbound run/LLM call at all),
+    mirroring batch_match_event's own filtering exactly.
 
     Character lengths are real, computed from each participant's actual
     stored structured_profile via the same serialize_profile_to_text used to
@@ -91,7 +90,11 @@ def estimate_matching_run_cost(db: Session, *, event_id: int) -> dict:
     embedding_tokens = avg_profile_tokens * participant_count
     embedding_cost = (embedding_tokens / 1000) * EMBEDDING_PRICE_PER_1K_TOKENS
 
-    matching_eligible_count = sum(1 for p in enriched if p.participant_status != ParticipantStatus.review)
+    matching_eligible_count = sum(
+        1
+        for p in enriched
+        if p.participant_status != ParticipantStatus.review and MATCH_QUOTA_BY_TIER.get(p.membership_tier, 0) > 0
+    )
 
     avg_prompt_tokens = avg_profile_tokens * (1 + CANDIDATES_PER_PROMPT)
     llm_input_price, llm_output_price = _llm_pricing()

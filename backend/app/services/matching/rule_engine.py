@@ -26,28 +26,42 @@ DECISION_AUTHORITY_WEIGHT = 0.10
 SIMILARITY_POOL_SIZE = 20  # Task 24's initial vector-search candidate pool
 RESULT_TOP_N = 10  # narrowed shortlist size, per CLAUDE.md's "5-10 candidates"
 
-# Sponsors processed first, then premium, then business/normal, then
-# non-member last. Non-member was originally deliberately absent here (0
-# matches allocated, candidate-only) per CLAUDE.md's Priority & Eligibility
-# Rules table - real client feedback found that left too large a share of a
-# real participant list (38% on one real event) permanently un-matchable,
-# so non-members now get a capped quota of NON_MEMBER_MATCH_QUOTA instead
-# of zero (see matching_tasks.match_participant, which enforces the cap
-# after the LLM's normal selection). Still processed last/lowest priority.
+# Sponsors processed first, then premium, then business/normal - per
+# CLAUDE.md's Priority & Eligibility Rules table. Non-member is deliberately
+# ABSENT here (0 own quota, "candidate-only" per that table's exact
+# wording - confirmed again by real client direction after a prior attempt
+# to give them a small quota was explicitly reversed): they never get their
+# own outbound matching run/shortlist, but CAN still be selected as a
+# candidate by a paying-tier participant's own run, and will receive a
+# real auto-created mirror match in that case (match_writer.store_match) -
+# "candidate-only" describes exactly that: visible as a pick, never a
+# picker.
 TIER_PROCESSING_ORDER = [
     MembershipTier.sponsor,
     MembershipTier.premium_member,
     MembershipTier.business_member,
     MembershipTier.normal_member,
-    MembershipTier.non_member,
 ]
 
-# Non-members' match cap - a deliberately small taste of the platform's
-# value (vs. 0 before) rather than parity with paying tiers, preserving the
-# membership-tier incentive to upgrade. Enforced in matching_tasks.py after
-# the LLM's own 0-5 selection, not by asking the LLM for fewer - keeps the
-# LLM prompt/schema tier-agnostic.
-NON_MEMBER_MATCH_QUOTA = 1
+# Real client-specified per-tier match CEILINGS ("up to N", not a mandatory
+# fixed count - the LLM can still return fewer if it genuinely finds no
+# more good candidates, same "prefer inclusion but never force a bad
+# match" philosophy as llm_matcher.SYSTEM_PROMPT). Passed as max_matches
+# into llm_matcher.select_matches per participant (matching_tasks.py),
+# replacing the old flat MAX_MATCHES=5-for-everyone cap. A tier with no
+# entry here (i.e. non-member) is treated as 0 by
+# matching_tasks.match_participant, which skips dispatching it as a
+# primary subject entirely - never even calls the LLM for a guaranteed-
+# zero result. Keyed by the plain string .value, not the MembershipTier
+# enum member itself - Participant.membership_tier is stored/read as
+# Mapped[str] (same convention TIER_PROCESSING_ORDER's own by_tier dict
+# already uses via tier.value), not the enum type.
+MATCH_QUOTA_BY_TIER: dict[str, int] = {
+    MembershipTier.sponsor.value: 3,
+    MembershipTier.premium_member.value: 2,
+    MembershipTier.business_member.value: 1,
+    MembershipTier.normal_member.value: 1,
+}
 
 
 def _normalize_company(name: str | None) -> str:
@@ -181,15 +195,22 @@ def run_rule_engine_for_event(db: Session, *, event_id: int) -> dict[int, list[d
     _maybe_unlock_review_status - after which this function treats them
     normally.)
 
-    Non-members ARE included as a primary subject (unlike the above) - capped
-    to NON_MEMBER_MATCH_QUOTA post-selection in matching_tasks.py, not
-    excluded here entirely. Processes sponsors first, then premium, then
-    business/normal, then non-member last (TIER_PROCESSING_ORDER). A pair's
-    score is computed once and reused for both directions via pair_cache,
-    since score_pair is symmetric - this is the "A->B = B->A counted once"
-    deduplication from CLAUDE.md's rule engine bullets, applied as a
-    computation-cache rather than a result exclusion (the same pair can
-    legitimately appear in both participants' shortlists).
+    Non-members are NOT excluded from this function specifically (it groups
+    by whatever tier is present in `participants`) - matching_tasks.py's
+    batch_match_event is what actually never dispatches them as a primary
+    subject (TIER_PROCESSING_ORDER has no non-member entry), so in practice
+    this function is simply never called for one. They remain fully valid
+    candidates in everyone else's pool either way (MATCH_QUOTA_BY_TIER's
+    absence of a non-member entry is about their own outbound quota, not
+    their candidacy).
+
+    Processes sponsors first, then premium, then business/normal
+    (TIER_PROCESSING_ORDER). A pair's score is computed once and reused for
+    both directions via pair_cache, since score_pair is symmetric - this is
+    the "A->B = B->A counted once" deduplication from CLAUDE.md's rule
+    engine bullets, applied as a computation-cache rather than a result
+    exclusion (the same pair can legitimately appear in both participants'
+    shortlists).
     """
     participants = (
         db.query(Participant)

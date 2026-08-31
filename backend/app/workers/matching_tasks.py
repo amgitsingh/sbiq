@@ -3,11 +3,11 @@ from typing import cast
 
 from app.core.database import session_scope
 from app.models.event import Event
-from app.models.participant import MatchingStatus, MembershipTier, Participant, ParticipantStatus
+from app.models.participant import MatchingStatus, Participant, ParticipantStatus
 from app.models.participant_embedding import ParticipantEmbedding
 from app.services.matching.llm_matcher import MatchSelectionError, build_event_context, select_matches
 from app.services.matching.match_writer import store_match
-from app.services.matching.rule_engine import NON_MEMBER_MATCH_QUOTA, TIER_PROCESSING_ORDER, rank_candidates
+from app.services.matching.rule_engine import MATCH_QUOTA_BY_TIER, TIER_PROCESSING_ORDER, rank_candidates
 from app.workers.celery_app import celery_app
 
 logger = logging.getLogger(__name__)
@@ -28,12 +28,15 @@ def match_participant(self, participant_id: int, event_id: int) -> dict:
     (see llm_matcher.build_event_context) so reasoning/drafts are grounded in
     this event's actual purpose, not generated from participant profiles alone.
 
-    Skips (doesn't fail) review-flagged participants even if called
-    directly - same eligibility rule Task 28's batch entry point enforces,
-    kept here too since this task can be invoked on its own, not only via
-    batch_match_event. Non-members are NOT skipped (unlike before) - they're
-    matched normally, then capped to NON_MEMBER_MATCH_QUOTA post-selection
-    below, a deliberate small taste of the platform rather than zero.
+    Skips (doesn't fail) review-flagged participants, and any tier with no
+    entry in rule_engine.MATCH_QUOTA_BY_TIER (currently just non-member -
+    real client direction: they stay "candidate-only", 0 own outbound
+    quota, matching CLAUDE.md's original wording - a prior attempt to give
+    them a small quota was explicitly reversed), even if called directly -
+    same eligibility rule batch_match_event's batch entry point enforces,
+    kept here too since this task can be invoked on its own. Non-members
+    can still be genuinely selected by someone else's own run though - that
+    path is entirely unaffected, this only skips their own dispatch.
 
     No Celery-level autoretry - llm_matcher.select_matches already retries
     once internally, and everything else here (rule engine, DB writes) is
@@ -48,6 +51,13 @@ def match_participant(self, participant_id: int, event_id: int) -> dict:
 
         if participant.participant_status == ParticipantStatus.review:
             return {"participant_id": participant_id, "status": "skipped", "reason": "not eligible for matching"}
+
+        max_matches = MATCH_QUOTA_BY_TIER.get(participant.membership_tier, 0)
+        if max_matches == 0:
+            # No LLM call at all for a guaranteed-zero-quota tier - not
+            # just a post-hoc truncation to 0, which would waste a real
+            # LLM call for nothing.
+            return {"participant_id": participant_id, "status": "skipped", "reason": "no quota for this tier"}
 
         if not participant.structured_profile:
             return {"participant_id": participant_id, "status": "skipped", "reason": "not enriched"}
@@ -83,18 +93,14 @@ def match_participant(self, participant_id: int, event_id: int) -> dict:
         content_language = event.content_language if event else None
 
         try:
-            selected = select_matches(structured_profile, candidates_with_profile, event_context, content_language)
+            selected = select_matches(
+                structured_profile, candidates_with_profile, event_context, content_language, max_matches
+            )
         except MatchSelectionError as e:
             logger.warning(f"Match selection failed for participant {participant_id}: {e}")
             participant.matching_status = MatchingStatus.failed
             db.commit()
             raise
-
-        if participant.membership_tier == MembershipTier.non_member and len(selected) > NON_MEMBER_MATCH_QUOTA:
-            # Enforced here, not by asking the LLM for fewer - keeps the LLM
-            # prompt/schema tier-agnostic. Keep the LLM's own best-ranked
-            # pick(s), not an arbitrary subset.
-            selected = sorted(selected, key=lambda m: m["rank"])[:NON_MEMBER_MATCH_QUOTA]
 
         composite_by_id = {c["participant_id"]: c["composite_score"] for c in candidates}
         profile_by_id = {c["participant_id"]: c["profile"] for c in candidates_with_profile}
@@ -127,13 +133,13 @@ def match_participant(self, participant_id: int, event_id: int) -> dict:
 )
 def batch_match_event(self, event_id: int) -> dict:
     """Fan out match_participant for every embedded, matching-eligible
-    participant in an event, sponsors first, non-members last
-    (TIER_PROCESSING_ORDER - same priority order the rule engine's batch
-    entry point uses). Review-flagged participants are never dispatched -
-    "not auto-matched" per CLAUDE.md's Priority & Eligibility Rules table.
-    Non-members ARE dispatched (unlike before - real client feedback that 0
-    matches for over a third of a real participant list was too harsh) -
-    match_participant caps them to NON_MEMBER_MATCH_QUOTA post-selection.
+    participant in an event, sponsors first (TIER_PROCESSING_ORDER - same
+    priority order the rule engine's batch entry point uses; non-member has
+    no entry, so it's never dispatched here at all). Review-flagged
+    participants are also never dispatched - "not auto-matched" per
+    CLAUDE.md's Priority & Eligibility Rules table. Neither group loses
+    their own *candidacy* though - they can still be genuinely selected by
+    a dispatched participant's own run.
 
     "Embedded" is enforced with a join against participant_embeddings rather
     than trusting enrichment_status alone - a participant can be

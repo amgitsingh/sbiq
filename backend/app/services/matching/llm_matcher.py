@@ -31,20 +31,23 @@ logger = logging.getLogger(__name__)
 # output, which need less headroom than before.
 MAX_RESPONSE_TOKENS = 3_000
 MAX_ATTEMPTS = 2
-# Real client feedback: match counts felt too low relative to real
-# participant list sizes. Stays at 5 (the LLM's own selection cap - see
-# SYSTEM_PROMPT's "Rules" section) - the actual leniency change here is the
-# "prefer including a plausible match" guidance above, not a higher cap;
-# 5 is comfortably under rule_engine.RESULT_TOP_N=10 (the full shortlist
-# size the LLM ever sees) either way. See CLAUDE.md's Priority &
-# Eligibility Rules / Confirmed Architecture Decisions for how this reads
-# against the original "3-5 final matches" spec wording.
-MAX_MATCHES = 5
+# Fallback only, for a caller that doesn't specify max_matches (e.g. an ad
+# hoc script) - every real call site (matching_tasks.py) passes an explicit
+# per-tier ceiling instead (rule_engine.MATCH_QUOTA_BY_TIER: real
+# client-specified numbers - Sponsor up to 3, Premium up to 2, Business/
+# Normal up to 1). Comfortably under rule_engine.RESULT_TOP_N=10 (the full
+# shortlist size the LLM ever sees) either way.
+DEFAULT_MAX_MATCHES = 5
 # Reverse-draft calls only ever produce one match's worth of content (no
 # reasoning, no candidate list) - a fraction of MAX_RESPONSE_TOKENS.
 REVERSE_DRAFT_MAX_RESPONSE_TOKENS = 800
 
-SYSTEM_PROMPT = """You are a business matchmaking assistant for an event networking \
+# {MAX_MATCHES} is substituted via a plain string .replace() at call time
+# (_build_system_prompt), not str.format() - this template's JSON schema
+# block below is full of literal { } that would need escaping for
+# .format() to work, so a unique sentinel token + .replace() sidesteps
+# that entirely.
+SYSTEM_PROMPT_TEMPLATE = """You are a business matchmaking assistant for an event networking \
 platform. You will be given one participant's profile and a shortlist of candidate \
 profiles that a deterministic rule engine has already pre-filtered for them, along \
 with each candidate's rule-engine score. Your job is to select the best matches from \
@@ -94,9 +97,10 @@ natural and personal, not corporate.>
 }
 
 Rules:
-- Select up to 5 matches. Default toward including a candidate rather than excluding it, \
-per the guidance above - an empty or near-empty list should be rare, reserved for cases \
-with genuinely no plausible connection anywhere in the shortlist.
+- Select up to {MAX_MATCHES} matches. Default toward including a candidate rather than \
+excluding it, per the guidance above - an empty or near-empty list should be rare, reserved \
+for cases with genuinely no plausible connection anywhere in the shortlist. {MAX_MATCHES} is \
+a ceiling, not a target - never invent a weaker match just to reach it.
 - "participant_id" must always be one of the candidate IDs given above - never invent one.
 - Rank matches 1 (best) through N with no gaps or duplicates.
 - Reasoning bullets must reference concrete details from both profiles - no generic filler.
@@ -108,6 +112,10 @@ candidate by name, and must meet the length/structure guidance above - never a o
 generic-filler draft.
 - Respond with a single JSON object only, matching the shape above exactly. No markdown, \
 no commentary."""
+
+
+def _build_system_prompt(max_matches: int) -> str:
+    return SYSTEM_PROMPT_TEMPLATE.replace("{MAX_MATCHES}", str(max_matches))
 
 
 # Only Dutch needs an entry - English is the prompt's implicit default, so
@@ -199,9 +207,9 @@ def build_matching_prompt(
     return "\n".join(lines)
 
 
-def _validate_selection(selection: MatchSelection, valid_ids: set[int]) -> None:
-    if len(selection.matches) > MAX_MATCHES:
-        raise ValueError(f"LLM returned {len(selection.matches)} matches, max is {MAX_MATCHES}")
+def _validate_selection(selection: MatchSelection, valid_ids: set[int], max_matches: int) -> None:
+    if len(selection.matches) > max_matches:
+        raise ValueError(f"LLM returned {len(selection.matches)} matches, max is {max_matches}")
 
     seen_ids: set[int] = set()
     seen_ranks: set[int] = set()
@@ -234,13 +242,14 @@ def select_matches(
     candidates: list[dict],
     event_context: str | None = None,
     content_language: str | None = None,
+    max_matches: int = DEFAULT_MAX_MATCHES,
 ) -> list[dict]:
     """Send a participant's profile + their rule-engine candidate shortlist to
     the LLM (JSON mode enforced) and return the selected matches as plain
     dicts. Retries once on any failure - invalid JSON, schema validation
     failure, or a business-rule violation (bad participant_id, duplicate
-    rank, wrong reasoning-bullet count). Raises MatchSelectionError if both
-    attempts fail.
+    rank, wrong reasoning-bullet count, or exceeding max_matches). Raises
+    MatchSelectionError if both attempts fail.
 
     Returns [] immediately, with no LLM call, if given no candidates - nothing
     to select from.
@@ -250,6 +259,12 @@ def select_matches(
 
     content_language: "en"/"nl"/None (Event.content_language) - affects
     reasoning/reciprocal_reason/linkedin_draft only.
+
+    max_matches: this participant's own tier ceiling (real client-specified
+    numbers - see rule_engine.MATCH_QUOTA_BY_TIER), substituted into the
+    prompt and enforced by _validate_selection - NOT a post-hoc truncation,
+    the LLM is asked for at most this many and a response exceeding it is
+    treated as a validation failure (retried once, then raises).
     """
     if not candidates:
         return []
@@ -257,7 +272,8 @@ def select_matches(
     valid_ids = {c["participant_id"] for c in candidates}
     user_prompt = build_matching_prompt(participant_profile, candidates, event_context)
     language_directive = _language_directive(content_language)
-    system_prompt = f"{SYSTEM_PROMPT}\n\n{language_directive}" if language_directive else SYSTEM_PROMPT
+    base_prompt = _build_system_prompt(max_matches)
+    system_prompt = f"{base_prompt}\n\n{language_directive}" if language_directive else base_prompt
 
     last_error: Exception | None = None
     for attempt in range(1, MAX_ATTEMPTS + 1):
@@ -269,7 +285,7 @@ def select_matches(
             )
             parsed = json.loads(strip_markdown_fence(raw))
             selection = MatchSelection.model_validate(parsed)
-            _validate_selection(selection, valid_ids)
+            _validate_selection(selection, valid_ids, max_matches)
         except Exception as e:
             last_error = e
             logger.warning(f"Match selection attempt {attempt}/{MAX_ATTEMPTS} failed: {e}")
