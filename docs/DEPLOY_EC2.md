@@ -376,6 +376,16 @@ alembic upgrade head              # only if new migrations exist
 sudo systemctl restart qbcals-api qbcals-worker-enrichment qbcals-worker-matching
 ```
 
+Or run `~/SBIQ/redeploy.sh` (committed at the repo root) to do all of the
+above in one go - it refuses to run over uncommitted local changes, only
+runs `pip install`/`alembic upgrade head` when `requirements.txt` actually
+changed or the DB isn't already at head, restarts the three services, and
+waits for `/health` to come back before reporting success:
+
+```bash
+~/SBIQ/redeploy.sh
+```
+
 ## Things worth knowing before you flip this on for real traffic
 
 - **CORS is wide open by default** (`ALLOWED_CORS_ORIGINS=*` in `.env`) — fine
