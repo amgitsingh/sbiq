@@ -102,6 +102,7 @@ def match_participant(self, participant_id: int, event_id: int) -> dict:
                 rank=m["rank"],
                 score=composite_by_id[m["participant_id"]],
                 reasoning=m["reasoning"],
+                reciprocal_reason=m["reciprocal_reason"],
                 email_draft=m["email_draft"],
                 linkedin_draft=m["linkedin_draft"],
                 participant_a_profile=structured_profile,

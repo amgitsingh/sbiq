@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.async_database import get_async_db
+from app.core.config import settings
 from app.core.database import get_db
 from app.models.enrichment_job import EnrichmentJob
 from app.models.event import Event
@@ -31,6 +32,7 @@ from app.services.template_generator import generate_participant_template
 from app.services.matching.cost_estimator import estimate_matching_run_cost
 from app.services.email_sender import EmailSendError, send_email
 from app.services.matching.decision_authority import classify_seniority
+from app.services.matching.participant_email_composer import compose_matches_email
 from app.services.translation import TranslationError, translate_match_content, translate_text
 from app.workers.embedding_tasks import batch_embed_event
 from app.workers.enrichment_tasks import batch_enrich_event
@@ -1050,6 +1052,7 @@ class MatchOut(BaseModel):
     rank: int | None = None
     score: float | None = None
     reasoning: list[str] | None = None
+    reciprocal_reason: str | None = None
     email_draft: str | None = None
     linkedin_draft: str | None = None
     status: str
@@ -1144,6 +1147,7 @@ def list_matches(
                 rank=m.rank,
                 score=m.score,
                 reasoning=m.reasoning,
+                reciprocal_reason=m.reciprocal_reason,
                 email_draft=m.email_draft,
                 linkedin_draft=m.linkedin_draft,
                 status=m.status,
@@ -1159,6 +1163,7 @@ class ParticipantMatchOut(BaseModel):
     rank: int | None = None
     score: float | None = None
     reasoning: list[str] | None = None
+    reciprocal_reason: str | None = None
     email_draft: str | None = None
     linkedin_draft: str | None = None
     status: str
@@ -1228,10 +1233,10 @@ def get_participant_matches(
     and act on.
 
     lang: if set and different from the event's native content_language,
-    each match's reasoning/email_draft/linkedin_draft is translated on first
-    request and cached on match.translations - see
-    app/services/translation.py. A mirror row's null email_draft/
-    linkedin_draft stay null (never fabricated by translation).
+    each match's reasoning/reciprocal_reason/email_draft/linkedin_draft is
+    translated on first request and cached on match.translations - see
+    app/services/translation.py. A mirror row's null reciprocal_reason/
+    email_draft/linkedin_draft stay null (never fabricated by translation).
     """
     event = _get_event_or_404(event_id, db, current_user, role_name)
 
@@ -1252,17 +1257,24 @@ def get_participant_matches(
     native_language = _native_language(event)
     match_outs = []
     for m in rows:
-        reasoning, email_draft, linkedin_draft = m.reasoning, m.email_draft, m.linkedin_draft
+        reasoning, reciprocal_reason, email_draft, linkedin_draft = (
+            m.reasoning,
+            m.reciprocal_reason,
+            m.email_draft,
+            m.linkedin_draft,
+        )
         if lang and lang != native_language and reasoning:
             cached = (m.translations or {}).get(lang)
             if cached is not None:
                 reasoning = cached["reasoning"]
+                reciprocal_reason = cached.get("reciprocal_reason")
                 email_draft = cached["email_draft"]
                 linkedin_draft = cached["linkedin_draft"]
             else:
                 try:
                     translated = translate_match_content(
                         reasoning=reasoning,
+                        reciprocal_reason=reciprocal_reason,
                         email_draft=email_draft,
                         linkedin_draft=linkedin_draft,
                         target_language=lang,
@@ -1270,6 +1282,7 @@ def get_participant_matches(
                 except TranslationError as e:
                     raise HTTPException(status_code=502, detail=f"Translation failed: {e}")
                 reasoning = translated["reasoning"]
+                reciprocal_reason = translated["reciprocal_reason"]
                 email_draft = translated["email_draft"]
                 linkedin_draft = translated["linkedin_draft"]
                 translations = dict(m.translations or {})
@@ -1282,6 +1295,7 @@ def get_participant_matches(
                 rank=m.rank,
                 score=m.score,
                 reasoning=reasoning,
+                reciprocal_reason=reciprocal_reason,
                 email_draft=email_draft,
                 linkedin_draft=linkedin_draft,
                 status=m.status,
@@ -1505,6 +1519,107 @@ def review_match(
         counterpart_id=payload.counterpart_id,
         decision=payload.decision,
         message="Match approved successfully." if payload.decision == "approve" else "Match rejected successfully.",
+    )
+
+
+class SendParticipantMatchesResult(BaseModel):
+    participant_id: int
+    sent_to: str
+    match_count: int
+
+
+@router.post("/{event_id}/participants/{participant_id}/send-matches", response_model=SendParticipantMatchesResult)
+def send_participant_matches(
+    event_id: int,
+    participant_id: int,
+    db: Session = Depends(get_db),
+    current_user: UserMaster = Depends(current_admin),
+    role_name: str | None = Depends(current_user_role_name),
+) -> SendParticipantMatchesResult:
+    """Send ONE combined email to a participant listing every one of their
+    approved matches together, formatted per docs/mail-template.docx - a
+    genuinely different email from send_match_email above (that one sends
+    participant A's own outreach draft *to* their counterpart B; this one
+    is the event organizer emailing the participant *about* their matches,
+    with ready-to-use LinkedIn intro text for each one).
+
+    Only status="approved" matches are included (deliberate judgment call -
+    review exists precisely to gate what an admin is comfortable actually
+    sending; a rejected or still-pending match should never land in this
+    email). 400s if the participant has zero approved matches. Only
+    participant_a_id == participant_id rows are eligible - the same
+    self-selected-vs-mirror distinction as get_participant_matches (a
+    mirror/bidirectional-only row may have null reasoning/linkedin_draft,
+    so it's excluded even if somehow marked approved).
+    """
+    event = _get_event_or_404(event_id, db, current_user, role_name)
+
+    participant = (
+        db.query(Participant).filter(Participant.id == participant_id, Participant.event_id == event_id).first()
+    )
+    if participant is None:
+        raise HTTPException(status_code=404, detail=f"Participant {participant_id} not found in event {event_id}")
+    if not participant.email:
+        raise HTTPException(status_code=400, detail=f"Participant {participant_id} has no email on file")
+
+    rows = (
+        db.query(Match)
+        .filter(
+            Match.event_id == event_id,
+            Match.participant_a_id == participant_id,
+            Match.status == "approved",
+            Match.is_bidirectional.is_(False),
+        )
+        .options(joinedload(Match.participant_b))
+        .order_by(Match.score.desc().nulls_last(), Match.rank.asc().nulls_last())
+        .all()
+    )
+    if not rows:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Participant {participant_id} has no approved matches to send",
+        )
+
+    matches_with_candidates = [(m, m.participant_b) for m in rows]
+    subject, body = compose_matches_email(event, participant, matches_with_candidates, event.content_language)
+
+    try:
+        send_email(
+            to_email=participant.email,
+            subject=subject,
+            body=body,
+            from_display_name=f"{settings.EMAIL_ORGANIZER_NAME} via SBIQ.ai",
+        )
+    except EmailSendError as e:
+        db.add(
+            EmailLog(
+                event_id=event_id,
+                receiver_participant_id=participant_id,
+                sender_user_id=current_user.id,
+                subject=subject,
+                body=body,
+                status="failed",
+                error_message=str(e),
+            )
+        )
+        db.commit()
+        raise HTTPException(status_code=502, detail=f"Failed to send email: {e}")
+
+    db.add(
+        EmailLog(
+            event_id=event_id,
+            receiver_participant_id=participant_id,
+            sender_user_id=current_user.id,
+            subject=subject,
+            body=body,
+            status="sent",
+            sent_at=datetime.now(UTC),
+        )
+    )
+    db.commit()
+
+    return SendParticipantMatchesResult(
+        participant_id=participant_id, sent_to=participant.email, match_count=len(rows)
     )
 
 

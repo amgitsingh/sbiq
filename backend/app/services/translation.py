@@ -25,14 +25,15 @@ proper nouns). Respond with a single JSON object of exactly this shape: \
 
 _MATCH_SYSTEM_PROMPT = """You are a professional translator for a business \
 matchmaking platform. You will be given a JSON object with "reasoning" (a \
-list of short strings), "email_draft" (a string or null), and \
-"linkedin_draft" (a string or null). Translate every non-null string value \
-into {language}, preserving tone, meaning, and any names/companies exactly \
-as written (do not translate proper nouns). Preserve nulls as null - do not \
-invent content for a null field. Respond with a single JSON object of \
-exactly the same shape: {{"reasoning": [<string>, ...], "email_draft": \
-<string or null>, "linkedin_draft": <string or null>}}. No markdown, no \
-commentary."""
+list of short strings), "reciprocal_reason" (a string or null), \
+"email_draft" (a string or null), and "linkedin_draft" (a string or null). \
+Translate every non-null string value into {language}, preserving tone, \
+meaning, and any names/companies exactly as written (do not translate \
+proper nouns). Preserve nulls as null - do not invent content for a null \
+field. Respond with a single JSON object of exactly the same shape: \
+{{"reasoning": [<string>, ...], "reciprocal_reason": <string or null>, \
+"email_draft": <string or null>, "linkedin_draft": <string or null>}}. \
+No markdown, no commentary."""
 
 
 class TranslationError(Exception):
@@ -70,25 +71,32 @@ def translate_text(text: str, target_language: str) -> str:
 def translate_match_content(
     *,
     reasoning: list[str],
+    reciprocal_reason: str | None,
     email_draft: str | None,
     linkedin_draft: str | None,
     target_language: str,
 ) -> dict:
-    """Translate a match's reasoning/email_draft/linkedin_draft into
-    target_language in one LLM call (cheaper than three separate calls, same
-    "bundle fields into one call" convention llm_normalizer's
-    WEB_SEARCH_ADDENDUM already uses).
+    """Translate a match's reasoning/reciprocal_reason/email_draft/
+    linkedin_draft into target_language in one LLM call (cheaper than four
+    separate calls, same "bundle fields into one call" convention
+    llm_normalizer's WEB_SEARCH_ADDENDUM already uses).
 
-    email_draft/linkedin_draft may be None (the bidirectional-mirror-row
-    case, which never has real drafts) - the prompt is instructed to
-    preserve nulls, not invent content for them; also enforced here
-    afterward, so a model slip can't turn a null into fabricated text.
+    reciprocal_reason/email_draft/linkedin_draft may be None (the
+    bidirectional-mirror-row case, which never has real drafts) - the
+    prompt is instructed to preserve nulls, not invent content for them;
+    also enforced here afterward, so a model slip can't turn a null into
+    fabricated text.
 
     Retries once on any failure. Raises TranslationError if both attempts fail.
     """
     system_prompt = _MATCH_SYSTEM_PROMPT.format(language=_language_name(target_language))
     user_prompt = json.dumps(
-        {"reasoning": reasoning, "email_draft": email_draft, "linkedin_draft": linkedin_draft}
+        {
+            "reasoning": reasoning,
+            "reciprocal_reason": reciprocal_reason,
+            "email_draft": email_draft,
+            "linkedin_draft": linkedin_draft,
+        }
     )
 
     last_error: Exception | None = None
@@ -105,6 +113,7 @@ def translate_match_content(
                 "reasoning": translated_reasoning,
                 # Enforced regardless of what the model returned - a null
                 # input field must stay null, never fabricated.
+                "reciprocal_reason": parsed.get("reciprocal_reason") if reciprocal_reason is not None else None,
                 "email_draft": parsed.get("email_draft") if email_draft is not None else None,
                 "linkedin_draft": parsed.get("linkedin_draft") if linkedin_draft is not None else None,
             }

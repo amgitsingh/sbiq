@@ -40,8 +40,17 @@ class Match(Base):
     rank: Mapped[int | None] = mapped_column(Integer)
     score: Mapped[float | None] = mapped_column(Float)
 
-    # LLM output — array of reasoning bullet strings
+    # LLM output — array of exactly 3 reasoning bullets, in a fixed order
+    # (commercial opportunity, complementary expertise, strategic
+    # opportunity) matching docs/mail-template.docx's "Why we believe you
+    # should meet" section - see llm_matcher.SYSTEM_PROMPT.
     reasoning: Mapped[list | None] = mapped_column(JSON)
+    # One sentence, from participant_a's perspective, on why participant_a
+    # might be valuable *to* participant_b - the template's "Why you could
+    # be interesting to [them]" section. Distinct from reasoning (which is
+    # about b's value to a) - added alongside the mail-template.docx rework
+    # (docs/PLAN.md, post-Phase-8), not part of the original 4-layer pipeline.
+    reciprocal_reason: Mapped[str | None] = mapped_column(Text)
     email_draft: Mapped[str | None] = mapped_column(Text)
     linkedin_draft: Mapped[str | None] = mapped_column(Text)
 

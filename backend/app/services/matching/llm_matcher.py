@@ -36,7 +36,22 @@ Respond with a single JSON object with exactly this shape:
     {
       "participant_id": <int, MUST be one of the candidate IDs given>,
       "rank": <int, 1 = best match, no gaps or duplicates>,
-      "reasoning": [<exactly 3 short bullet strings explaining why this is a good match>],
+      "reasoning": [<EXACTLY 3 short bullet strings, in this fixed order and meaning - \
+never reorder or merge them: \
+(1) a concrete COMMERCIAL opportunity - e.g. a plausible client, revenue, or sales \
+relationship between them; \
+(2) COMPLEMENTARY EXPERTISE - specific skills, services, or network each side has that \
+would strengthen the other; \
+(3) a STRATEGIC opportunity - potential partnership, collaboration, growth, innovation, \
+or access to a relevant network.>],
+      "reciprocal_reason": <one specific sentence describing why the PARTICIPANT would be \
+valuable *to the candidate*, grounded in the participant's own expertise, network, \
+customers, market position, or offerings - the reverse direction of "reasoning" above. \
+CRITICAL: this text is shown to the PARTICIPANT (explaining their own value to the \
+candidate), never sent to the candidate directly - so write it in THIRD PERSON, always \
+naming the candidate explicitly (e.g. "Jane Doe would gain..." / "This could give Acme \
+Corp..."), and NEVER use "you"/"your" to mean the candidate. Do not confuse this with \
+addressing the candidate as if writing to them.>,
       "email_draft": <a detailed, personalized introduction email from the participant \
 to this candidate, 120-200 words across 3-4 short paragraphs: (1) a warm opening naming \
 the event and how they're connected through it, (2) 2-3 concrete, specific details \
@@ -45,10 +60,12 @@ looking for - that prove this isn't a form letter, (3) a clear statement of the 
 complementary fit between the two profiles, (4) a specific call to action (e.g. \
 propose a 15-20 minute call, or meeting at the event itself). Sign off with the \
 sender's first name, or "[Your name]" if not given.>,
-      "linkedin_draft": <a detailed LinkedIn message, 3-5 sentences (roughly 60-100 \
-words) - more than a bare connection note: a brief self-introduction, one specific \
-detail referencing the candidate's profile, the complementary fit, and a suggestion \
-to connect or chat briefly.>
+      "linkedin_draft": <a short, specific LinkedIn connection message, 2-4 sentences \
+(roughly 40-80 words), written as if the PARTICIPANT is sending it to the CANDIDATE: a \
+brief self-introduction, naming the event and that they were matched via SBIQ.ai, one \
+specific reason for the match, and a suggestion to connect/chat at or before the event. \
+This is used verbatim as copy-paste text the participant sends themselves - keep it \
+natural and personal, not corporate.>
     }
   ]
 }
@@ -60,6 +77,9 @@ bad match.
 - "participant_id" must always be one of the candidate IDs given above - never invent one.
 - Rank matches 1 (best) through N with no gaps or duplicates.
 - Reasoning bullets must reference concrete details from both profiles - no generic filler.
+- "reciprocal_reason" must be genuinely about the participant's value to the candidate, \
+not a restatement of "reasoning" (which is about the candidate's value to the participant). \
+Write it in third person naming the candidate - never "you"/"your" addressed to the candidate.
 - "email_draft" and "linkedin_draft" must be written from the participant's perspective, \
 addressed to the candidate by name, and must meet the length/structure guidance above - \
 never a one-line or generic-filler draft.
@@ -179,6 +199,9 @@ def _validate_selection(selection: MatchSelection, valid_ids: set[int]) -> None:
                 f"got {len(m.reasoning)}"
             )
 
+        if not m.reciprocal_reason or not m.reciprocal_reason.strip():
+            raise ValueError(f"Empty reciprocal_reason for participant_id {m.participant_id}")
+
     if seen_ranks and sorted(seen_ranks) != list(range(1, len(seen_ranks) + 1)):
         raise ValueError(f"Ranks must be a contiguous sequence starting at 1, got {sorted(seen_ranks)}")
 
@@ -245,6 +268,14 @@ they are a good match, that decision is already made.
 
 Respond with a single JSON object with exactly this shape:
 {
+  "reciprocal_reason": <one specific sentence describing why the SENDER would be valuable \
+*to the recipient*, grounded in the sender's own expertise, network, customers, market \
+position, or offerings. Do not just restate the reasoning bullets given (those are about \
+the recipient's value to the sender, the reverse direction). CRITICAL: this text is shown \
+to the SENDER (explaining their own value to the recipient), never sent to the recipient \
+directly - so write it in THIRD PERSON, always naming the recipient explicitly (e.g. "Jane \
+Doe would gain..." / "This could give Acme Corp..."), and NEVER use "you"/"your" to mean \
+the recipient.>,
   "email_draft": <a detailed, personalized introduction email from the sender to the \
 recipient, 120-200 words across 3-4 short paragraphs: (1) a warm opening naming the \
 event and how they're connected through it, (2) 2-3 concrete, specific details pulled \
@@ -253,16 +284,21 @@ for - that prove this isn't a form letter, (3) a clear statement of the compleme
 fit between the two profiles (grounded in the reasoning bullets given), (4) a specific \
 call to action (e.g. propose a 15-20 minute call, or meeting at the event itself). Sign \
 off with the sender's first name, or "[Your name]" if not given.>,
-  "linkedin_draft": <a detailed LinkedIn message, 3-5 sentences (roughly 60-100 words) - \
-more than a bare connection note: a brief self-introduction, one specific detail \
-referencing the recipient's profile, the complementary fit, and a suggestion to connect \
-or chat briefly.>
+  "linkedin_draft": <a short, specific LinkedIn connection message, 2-4 sentences \
+(roughly 40-80 words), written as if the SENDER is sending it to the RECIPIENT: a brief \
+self-introduction, naming the event and that they were matched via SBIQ.ai, one specific \
+reason for the match, and a suggestion to connect/chat at or before the event. This is \
+used verbatim as copy-paste text the sender sends themselves - keep it natural and \
+personal, not corporate.>
 }
 
 Rules:
 - Write from the sender's perspective, addressed to the recipient by name.
-- Ground both drafts in the reasoning bullets given - don't contradict them or invent a \
-different rationale.
+- Ground the email/linkedin drafts in the reasoning bullets given - don't contradict them \
+or invent a different rationale for why the match works.
+- "reciprocal_reason" is about the sender's value to the recipient - the reverse of the \
+reasoning bullets given - not a restatement of them. Write it in third person naming the \
+recipient - never "you"/"your" addressed to the recipient.
 - Meet the length/structure guidance above - never a one-line or generic-filler draft.
 - Respond with a single JSON object only, matching the shape above exactly. No markdown, \
 no commentary."""

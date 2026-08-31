@@ -98,6 +98,14 @@ class Settings(BaseSettings):
     # Link included in activation emails - the frontend's login page.
     MATCHMAKING_APPLICATION_URL: str = "http://localhost:8024/login"
 
+    # Display name for the organizer sending the combined per-participant
+    # matches email (docs/mail-template.docx, app/services/matching/
+    # participant_email_composer.py) - "MeerBusiness Amsterdam" matches the
+    # literal template given and this deployment's real first client. Kept
+    # configurable rather than hardcoded so a future event for a different
+    # organizer doesn't require a code change.
+    EMAIL_ORGANIZER_NAME: str = "MeerBusiness Amsterdam"
+
     # Gates X-API-Key enforcement on /external/* (Task 61) - those routes
     # stay open (no check) if unset, same "off means skip the check, not
     # error" convention as every other optional toggle in this file. Set a
