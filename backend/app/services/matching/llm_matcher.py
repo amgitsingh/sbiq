@@ -229,9 +229,21 @@ def _validate_selection(selection: MatchSelection, valid_ids: set[int], max_matc
                 f"Expected exactly 3 reasoning bullets for participant_id {m.participant_id}, "
                 f"got {len(m.reasoning)}"
             )
+        if any(not bullet or not bullet.strip() for bullet in m.reasoning):
+            raise ValueError(f"Blank reasoning bullet for participant_id {m.participant_id}")
 
         if not m.reciprocal_reason or not m.reciprocal_reason.strip():
             raise ValueError(f"Empty reciprocal_reason for participant_id {m.participant_id}")
+
+        # A blank linkedin_draft passes pydantic's plain `str` type check but
+        # silently breaks the combined email draft downstream
+        # (participant_email_composer.py's compose_matches_email treats a
+        # falsy field as "no real content for this match" and drops it) -
+        # must be caught here, same as the reciprocal_reason check above, so
+        # a genuinely blank draft triggers a retry instead of shipping a
+        # match nothing can be sent for.
+        if not m.linkedin_draft or not m.linkedin_draft.strip():
+            raise ValueError(f"Empty linkedin_draft for participant_id {m.participant_id}")
 
     if seen_ranks and sorted(seen_ranks) != list(range(1, len(seen_ranks) + 1)):
         raise ValueError(f"Ranks must be a contiguous sequence starting at 1, got {sorted(seen_ranks)}")
