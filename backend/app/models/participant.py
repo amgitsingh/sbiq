@@ -63,7 +63,15 @@ class Participant(Base):
 
     # Segmentation
     sector: Mapped[str | None] = mapped_column(String(255))
-    company_size: Mapped[str | None] = mapped_column(String(50))
+    # Free text, not enforced numeric (see header_mapper's "company size"
+    # canonical field and sector_size.company_size_score, which parses a
+    # number out of whatever string is here) - widened from String(50) after
+    # a real upload hit StringDataRightTruncation on a legitimate long-form
+    # answer ("Organization is in liaison with several secondary schools and
+    # the Vrije Universiteit"), which failed the entire batch insert, not
+    # just that one row. 255 matches this table's other free-text columns
+    # (sector/company/designation).
+    company_size: Mapped[str | None] = mapped_column(String(255))
     membership_tier: Mapped[str] = mapped_column(
         Enum(MembershipTier, values_callable=lambda e: [x.value for x in e], native_enum=False),
         default=MembershipTier.normal_member,
