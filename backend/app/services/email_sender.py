@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import html as html_module
+import re
 import smtplib
 from email.message import EmailMessage
 
@@ -12,20 +14,36 @@ from app.core.config import settings
 # errors, it doesn't silently fall back.
 _IMPLICIT_TLS_PORT = 465
 
+_TAG_RE = re.compile(r"<[^>]+>")
+
 
 class EmailSendError(Exception):
     """Raised when SMTP configuration is missing or the send itself fails."""
+
+
+def _html_to_plain(html_body: str) -> str:
+    """Derive a plain-text fallback from the controlled <p>/<strong>/<br>
+    markup participant_email_composer.py produces - good enough since the
+    input is always our own simple, attribute-free markup, not arbitrary
+    HTML. Used for the multipart/alternative's plain part (required for
+    deliverability - an HTML-only email is more likely to be spam-flagged),
+    never shown to a user on its own.
+    """
+    text = html_body.replace("<br>", "\n").replace("</p>", "\n\n")
+    text = _TAG_RE.sub("", text)
+    return html_module.unescape(text).strip()
 
 
 def send_email(
     *,
     to_email: str,
     subject: str,
-    body: str,
+    html_body: str,
     reply_to: str | None = None,
     from_display_name: str | None = None,
 ) -> None:
-    """Send a plain-text email via SMTP (app.core.config settings).
+    """Send an HTML email via SMTP (app.core.config settings), with a plain-
+    text fallback derived automatically for the multipart/alternative.
 
     The `From` address is always SMTP_FROM_EMAIL, never a participant's real
     address — most mail servers reject or spam-flag a `From` outside the
@@ -47,7 +65,8 @@ def send_email(
     msg["To"] = to_email
     if reply_to:
         msg["Reply-To"] = reply_to
-    msg.set_content(body)
+    msg.set_content(_html_to_plain(html_body))
+    msg.add_alternative(html_body, subtype="html")
 
     try:
         smtp_cls = smtplib.SMTP_SSL if settings.SMTP_PORT == _IMPLICIT_TLS_PORT else smtplib.SMTP

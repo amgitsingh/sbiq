@@ -1,5 +1,6 @@
 import uuid
 from datetime import UTC, datetime
+from types import SimpleNamespace
 from typing import Literal
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Response, UploadFile, status
@@ -1174,7 +1175,6 @@ class ParticipantMatchOut(BaseModel):
     score: float | None = None
     reasoning: list[str] | None = None
     reciprocal_reason: str | None = None
-    email_draft: str | None = None
     linkedin_draft: str | None = None
     status: str
     # True if this recipient's own matching run independently selected this
@@ -1182,15 +1182,24 @@ class ParticipantMatchOut(BaseModel):
     # personalized content). False means this match was only auto-received
     # via CLAUDE.md's bidirectional-matching rule (the counterpart selected
     # this recipient, not the other way around) - reciprocal_reason/
-    # linkedin_draft (and thus the computed email_draft preview) are null in
-    # that case, since they were never generated from this recipient's
-    # perspective. See match_writer.store_match's docstring.
+    # linkedin_draft are null in that case, since they were never generated
+    # from this recipient's perspective. See match_writer.store_match's
+    # docstring.
     self_selected: bool
 
 
 class ParticipantMatchesOut(BaseModel):
     recipient: MatchParticipantOut
     matches: list[ParticipantMatchOut]
+    # ONE combined preview (compose_matches_email) of the real
+    # POST /{event_id}/participants/{id}/send-matches email - every
+    # self-selected match with real generated content, in the same order as
+    # `matches`, each with its own reasoning/reciprocal_reason section (not
+    # one email_draft per match - a participant gets a single email
+    # listing all of their matches together). None if this participant has
+    # no self-selected match with real content yet (mirrors send-matches'
+    # own "nothing to send" case, just without raising).
+    email_draft: str | None = None
     # Human-readable explanation, set only when matches is empty - distinguishes
     # "not eligible to be matched" / "matching hasn't run yet" / "matching
     # failed" / "ran fine but genuinely found nothing" instead of leaving the
@@ -1246,11 +1255,12 @@ def get_participant_matches(
     lang: if set and different from the event's native content_language,
     each match's reasoning/reciprocal_reason/linkedin_draft is translated on
     first request and cached on match.translations - see
-    app/services/translation.py. email_draft is then composed fresh from
-    those (possibly translated) fields via compose_single_match_preview -
+    app/services/translation.py. The combined email_draft is then composed
+    fresh from those (possibly translated) fields via compose_matches_email -
     it's a live preview of the real send, not stored/translated content of
-    its own. A mirror row's null reciprocal_reason/linkedin_draft (and thus
-    email_draft) stay null (never fabricated by translation).
+    its own. A mirror row's null reciprocal_reason/linkedin_draft are never
+    fabricated by translation, and such rows are excluded from email_draft
+    (same self-selected-only filter as send_participant_matches).
     """
     event = _get_event_or_404(event_id, db, current_user, role_name)
 
@@ -1269,10 +1279,11 @@ def get_participant_matches(
     )
 
     native_language = _native_language(event)
+    preview_language = lang if lang and lang != native_language else native_language
     match_outs = []
+    combined_content: list[tuple[SimpleNamespace, Participant]] = []
     for m in rows:
         reasoning, reciprocal_reason, linkedin_draft = m.reasoning, m.reciprocal_reason, m.linkedin_draft
-        preview_language = native_language
         if lang and lang != native_language and reasoning:
             cached = (m.translations or {}).get(lang)
             if cached is not None:
@@ -1295,18 +1306,6 @@ def get_participant_matches(
                 translations = dict(m.translations or {})
                 translations[lang] = translated
                 m.translations = translations
-            preview_language = lang
-
-        email_draft = compose_single_match_preview(
-            event,
-            participant,
-            m,
-            m.participant_b,
-            preview_language,
-            reasoning=reasoning,
-            reciprocal_reason=reciprocal_reason,
-            linkedin_draft=linkedin_draft,
-        )
 
         match_outs.append(
             ParticipantMatchOut(
@@ -1315,17 +1314,29 @@ def get_participant_matches(
                 score=m.score,
                 reasoning=reasoning,
                 reciprocal_reason=reciprocal_reason,
-                email_draft=email_draft,
                 linkedin_draft=linkedin_draft,
                 status=m.status,
                 self_selected=not m.is_bidirectional,
             )
         )
+
+        if not m.is_bidirectional and reasoning and reciprocal_reason and linkedin_draft:
+            combined_content.append(
+                (
+                    SimpleNamespace(reasoning=reasoning, reciprocal_reason=reciprocal_reason, linkedin_draft=linkedin_draft),
+                    m.participant_b,
+                )
+            )
     db.commit()
+
+    email_draft = None
+    if combined_content:
+        _subject, email_draft = compose_matches_email(event, participant, combined_content, preview_language)
 
     return ParticipantMatchesOut(
         recipient=MatchParticipantOut.model_validate(participant),
         matches=match_outs,
+        email_draft=email_draft,
         message=_no_matches_message(participant) if not rows else None,
     )
 
@@ -1443,7 +1454,7 @@ def send_match_email(
         send_email(
             to_email=participant_a.email,
             subject=subject,
-            body=body,
+            html_body=body,
             from_display_name=f"{settings.EMAIL_ORGANIZER_NAME} via SBIQ.ai",
         )
     except EmailSendError as e:
@@ -1626,7 +1637,7 @@ def send_participant_matches(
         send_email(
             to_email=participant.email,
             subject=subject,
-            body=body,
+            html_body=body,
             from_display_name=f"{settings.EMAIL_ORGANIZER_NAME} via SBIQ.ai",
         )
     except EmailSendError as e:
