@@ -380,9 +380,18 @@ sudo systemctl restart qbcals-api qbcals-worker-enrichment qbcals-worker-matchin
 
 - **CORS is wide open by default** (`ALLOWED_CORS_ORIGINS=*` in `.env`) — fine
   for an internal/admin-only deployment, but set it to your actual frontend
-  origin(s) before exposing this more broadly, e.g.
-  `ALLOWED_CORS_ORIGINS=https://admin.example.com` (comma-separated for more
-  than one; see `.env.example`'s CORS section).
+  origin(s) before exposing this more broadly. Production frontend is
+  `https://app.sbiq.ai`, so real deployments should set
+  `ALLOWED_CORS_ORIGINS=https://app.sbiq.ai` (comma-separated for more than
+  one origin; see `.env.example`'s CORS section) — note this must be an
+  exact origin, not a wildcard, since the frontend sends credentialed
+  requests (browsers reject `*` outright once credentials are involved,
+  regardless of server config).
+- **`MATCHMAKING_APPLICATION_URL` should be `https://app.sbiq.ai/login`** in
+  production — this is the link embedded in every activation email sent by
+  `POST /admin/registrations/{user_id}/activate` (`app/routers/
+  registrations.py`). Left at its `localhost:8024` default, real users get
+  a dead link in their activation email.
 - **This is a standalone replacement for IndMatchmaking, not a companion to
   it.** This app has every capability IndMatchmaking had (auth, admin
   domains, event/participant/matchmaking CRUD) natively — it does not call
