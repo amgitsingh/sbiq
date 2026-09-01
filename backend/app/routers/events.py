@@ -1536,6 +1536,16 @@ def review_match(
     "self"), writing straight onto that row's status/reviewed_by_user_id/
     reviewed_at.
 
+    400s if the resolved row is the auto-received mirror side
+    (is_bidirectional=True) - that row has no real reasoning/
+    reciprocal_reason/linkedin_draft of its own, so approving it can never
+    make it sendable (send_participant_matches only ever includes
+    is_bidirectional=False rows). Passing recipient_id/counterpart_id in the
+    wrong order resolves to exactly this row: a 200 that silently approves
+    nothing sendable, the genuine match still shows pending on reload, and
+    a subsequent send reports "no approved matches" - this guard turns that
+    into an immediate, actionable 400 instead.
+
     Folded in from the now-deleted /studio/events/{id}/review wrapper
     (originally Task 65) as part of Task 68's path collapse - QBCals never
     had its own review endpoint before, since "review" was purely an
@@ -1560,6 +1570,25 @@ def review_match(
             detail=(
                 f"No match from participant {payload.recipient_id} to "
                 f"{payload.counterpart_id} in event {event_id}"
+            ),
+        )
+    if match.is_bidirectional:
+        # This is the auto-received mirror side (recipient_id/counterpart_id
+        # were given in the wrong order, or the caller genuinely meant the
+        # other direction) - it has no real reasoning/reciprocal_reason/
+        # linkedin_draft of its own (see match_writer.store_match), so
+        # approving it is always a no-op mistake: send_participant_matches
+        # only ever includes is_bidirectional=False rows, so this would
+        # return 200 here and then silently never be sendable - exactly the
+        # "approve says OK but the match still shows pending, and sending
+        # says nothing is approved" symptom this guards against. Swap the
+        # two ids and try again.
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"Match {payload.counterpart_id} -> {payload.recipient_id} is the genuine "
+                f"selection here, not {payload.recipient_id} -> {payload.counterpart_id} - swap "
+                f"recipient_id and counterpart_id and try again."
             ),
         )
 
