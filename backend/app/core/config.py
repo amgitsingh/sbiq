@@ -54,8 +54,8 @@ class Settings(BaseSettings):
     CELERY_BROKER_URL: str = "redis://localhost:6379/0"
     CELERY_RESULT_BACKEND: str = "redis://localhost:6379/1"
 
-    # Email (SMTP) — used to deliver the organizer-branded matches email
-    # (docs/mail-template.docx) to participants. Generic SMTP, not
+    # Email (SMTP) — used to deliver the organizer-branded, client-approved
+    # template matches email to participants. Generic SMTP, not
     # SendGrid/Resend (CLAUDE.md names both as the eventual Phase 2 options;
     # this is a lighter-weight interim path — swap providers later without
     # touching callers, since app.services.email_sender is the only place
@@ -99,9 +99,9 @@ class Settings(BaseSettings):
     MATCHMAKING_APPLICATION_URL: str = "http://localhost:8024/login"
 
     # Display name for the organizer sending the combined per-participant
-    # matches email (docs/mail-template.docx, app/services/matching/
-    # participant_email_composer.py) - "MeerBusiness Amsterdam" matches the
-    # literal template given and this deployment's real first client. Kept
+    # matches email (app/services/matching/participant_email_composer.py) -
+    # "MeerBusiness Amsterdam" matches the client-approved template given
+    # and this deployment's real first client. Kept
     # configurable rather than hardcoded so a future event for a different
     # organizer doesn't require a code change.
     EMAIL_ORGANIZER_NAME: str = "MeerBusiness Amsterdam"

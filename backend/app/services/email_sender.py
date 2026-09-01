@@ -41,6 +41,7 @@ def send_email(
     html_body: str,
     reply_to: str | None = None,
     from_display_name: str | None = None,
+    inline_images: dict[str, tuple[bytes, str]] | None = None,
 ) -> None:
     """Send an HTML email via SMTP (app.core.config settings), with a plain-
     text fallback derived automatically for the multipart/alternative.
@@ -51,6 +52,15 @@ def send_email(
     control). "Sent by participant A" is instead conveyed via the display
     name plus `Reply-To` set to A's real address, so replies still land with
     A directly — the standard "on behalf of" email pattern.
+
+    inline_images: {cid: (raw_bytes, image_subtype)} - embedded via
+    add_related (RFC 2392 Content-ID references), NOT a hosted URL or a
+    data: URI. A hosted URL would need public asset hosting this app
+    doesn't have; a data: URI is stripped by Gmail and several other major
+    clients. CID embedding is the one technique that reliably renders
+    inline in Gmail, Outlook, and Apple Mail alike. Reference from
+    html_body as `<img src="cid:{cid}">` - the cid must match a key here
+    exactly (no angle brackets in either place).
     """
     if not settings.SMTP_HOST or not settings.SMTP_FROM_EMAIL:
         raise EmailSendError("SMTP is not configured (SMTP_HOST / SMTP_FROM_EMAIL missing)")
@@ -67,6 +77,16 @@ def send_email(
         msg["Reply-To"] = reply_to
     msg.set_content(_html_to_plain(html_body))
     msg.add_alternative(html_body, subtype="html")
+
+    if inline_images:
+        # add_related on the html part nests it inside a multipart/related
+        # container the way MUAs expect a cid-referenced image to arrive -
+        # attaching it directly to `msg` instead would leave it a sibling
+        # of the html part, not related to it, and most clients would then
+        # show it as a plain attachment rather than resolving the cid: ref.
+        html_part = msg.get_payload()[1]
+        for cid, (data, subtype) in inline_images.items():
+            html_part.add_related(data, maintype="image", subtype=subtype, cid=f"<{cid}>")
 
     try:
         smtp_cls = smtplib.SMTP_SSL if settings.SMTP_PORT == _IMPLICIT_TLS_PORT else smtplib.SMTP

@@ -32,7 +32,11 @@ from app.services.template_generator import generate_participant_template
 from app.services.matching.cost_estimator import estimate_matching_run_cost
 from app.services.email_sender import EmailSendError, send_email
 from app.services.matching.decision_authority import classify_seniority
-from app.services.matching.participant_email_composer import compose_matches_email, compose_single_match_preview
+from app.services.matching.participant_email_composer import (
+    compose_matches_email,
+    compose_single_match_preview,
+    get_logo_inline_image,
+)
 from app.services.matching.rule_engine import MATCH_QUOTA_BY_TIER
 from app.services.translation import TranslationError, translate_match_content, translate_text
 from app.workers.embedding_tasks import batch_embed_event
@@ -1360,7 +1364,7 @@ def send_match_email(
     current_user: UserMaster = Depends(current_admin),
     role_name: str | None = Depends(current_user_role_name),
 ) -> SendMatchEmailResult:
-    """Send the organizer-branded, docs/mail-template.docx-formatted email
+    """Send the organizer-branded, client-approved-template-formatted email
     for ONE match pair to participant A - the same content/voice as
     send_participant_matches below (built via the same
     compose_matches_email), just scoped to a single match instead of every
@@ -1456,6 +1460,7 @@ def send_match_email(
             subject=subject,
             html_body=body,
             from_display_name=f"{settings.EMAIL_ORGANIZER_NAME} via SBIQ.ai",
+            inline_images=get_logo_inline_image(),
         )
     except EmailSendError as e:
         # Task 68 (path collapse): logs the failed attempt too - an audit
@@ -1587,8 +1592,8 @@ def send_participant_matches(
     role_name: str | None = Depends(current_user_role_name),
 ) -> SendParticipantMatchesResult:
     """Send ONE combined email to a participant listing every one of their
-    approved matches together, formatted per docs/mail-template.docx - a
-    genuinely different email from send_match_email above (that one sends
+    approved matches together, formatted per the client-approved template -
+    a genuinely different email from send_match_email above (that one sends
     participant A's own outreach draft *to* their counterpart B; this one
     is the event organizer emailing the participant *about* their matches,
     with ready-to-use LinkedIn intro text for each one).
@@ -1639,6 +1644,7 @@ def send_participant_matches(
             subject=subject,
             html_body=body,
             from_display_name=f"{settings.EMAIL_ORGANIZER_NAME} via SBIQ.ai",
+            inline_images=get_logo_inline_image(),
         )
     except EmailSendError as e:
         db.add(

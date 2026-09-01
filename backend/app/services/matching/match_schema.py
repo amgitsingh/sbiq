@@ -1,6 +1,6 @@
 """No "email_draft" field here - the LLM no longer generates a free-form
 email at all, deliberately removed in favor of the deterministic,
-docs/mail-template.docx-formatted email built by
+client-approved-template-formatted email built by
 app/services/matching/participant_email_composer.py at send/preview time.
 See app/services/matching/llm_matcher.py's module docstring for why.
 """
@@ -17,7 +17,7 @@ class MatchItem(BaseModel):
     reasoning: list[str]
     # One sentence: why the sender might be interesting *to* this candidate
     # (the reverse of `reasoning`, which is about the candidate's value to
-    # the sender). Feeds docs/mail-template.docx's "Why you could be
+    # the sender). Feeds the client-approved template's "Why you could be
     # interesting to [them]" section.
     reciprocal_reason: str
     linkedin_draft: str

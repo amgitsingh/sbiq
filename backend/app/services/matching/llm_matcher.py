@@ -3,13 +3,13 @@
 Note: this module does NOT generate a free-form "email_draft" - it did
 originally, but that content was superseded by
 app/services/matching/participant_email_composer.py's deterministic,
-docs/mail-template.docx-formatted email (real user request: the actual
+client-approved-template-formatted email (real user request: the actual
 sent email must match that template, not free LLM prose). Keeping the LLM
 generate an email nobody sends would be pure wasted cost/latency, so
 "email_draft" was removed from both MatchItem and ReverseDraft entirely -
 reasoning/reciprocal_reason/linkedin_draft are the only per-match LLM
 output now. linkedin_draft is still LLM-authored and still used verbatim
-(the template's "LinkedIn introduction - copy & paste" section).
+(the template's "Ready-to-use LinkedIn introduction" section).
 """
 from __future__ import annotations
 

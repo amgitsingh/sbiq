@@ -1,35 +1,46 @@
-"""Compose the combined per-participant matches email
-(docs/mail-template.docx) - one email, sent by the event organizer to a
-participant, listing every one of their approved matches together, as HTML
-(matching the docx template's bold section headers/labels) with a plain-text
-fallback derived automatically at send time (app/services/email_sender.py).
+"""Compose the combined per-participant matches email - one email, sent by
+the event organizer to a participant, listing every one of their approved
+matches together.
 
-Deliberately NOT LLM-generated: the header/footer/section labels are fixed
-branded copy (event date/venue substituted in) that must stay consistent
+Markup follows the client-approved reference template
+(docs/sbiq_business_matches_email.html) exactly: a table-based layout
+(`<table role="presentation">`, not divs/flex/grid), the one email-safe
+technique that renders identically across Gmail, Outlook, and Apple Mail -
+divs with modern CSS (flex/grid, box-shadow-only affordances) are
+unreliable in several of those clients. Colors/fonts below are the
+reference's own literal values, not re-derived from anything else.
+
+The sbiq.ai logo is embedded via a Content-ID (cid:) reference, resolved by
+app/services/email_sender.py's `inline_images` at real send time - NOT a
+data: URI (the reference file's own approach) or a hosted URL. A data: URI
+is stripped by Gmail and several other major clients; this app has no
+public static-asset host to link to instead. CID embedding is the one
+technique that reliably renders inline everywhere. Trade-off: the
+`email_draft` *preview* field returned by GET endpoints is a bare HTML
+string with no attachment behind it, so the logo shows as a broken image
+in that preview context - only a real send (send_match_email/
+send_participant_matches) carries the actual attached bytes. Acceptable
+since the preview's job is reviewing the reasoning text, not pixel-perfect
+rendering.
+
+Deliberately NOT LLM-generated: the header/footer/section copy is fixed
+branded text (event date/name substituted in) that must stay consistent
 across every send, not vary token-by-token per LLM call. Only the per-match
 variable content - reasoning bullets, reciprocal_reason, linkedin_draft -
 comes from the LLM (app/services/matching/llm_matcher.py), generated once at
-matching time and stored on the Match row.
+matching time and stored on the Match row. The 3 reasoning-bullet labels
+below ("Stronger positioning" etc.) are also fixed copy, not LLM output -
+only the sentence after each label's dash is LLM-generated; see
+llm_matcher.SYSTEM_PROMPT for the underlying "exactly 3, fixed order, fixed
+meaning" bullets these labels are wrapped around.
 
-Bold formatting mirrors the docx template's *consistent* structural pattern
-- section headers, the "Name — Company" line, and the 3 reason labels
-(Commercial/Complementary/Strategic opportunity, or Reden 1/2/3) are bold
-everywhere they occur in the template. The docx's ad hoc word-level emphasis
-inside filler prose (e.g. a specific date or venue name bolded in one
-example sentence) isn't replicated - that's inconsistent, example-only
-highlighting in that one sample event, not a rule that generalizes across
-arbitrary event names/dates.
-
-Kept deliberately concise, since email length scales with match count (a
-Sponsor can have up to 3): each match block only includes what's
-personalized to that match (reasoning + reciprocal_reason + LinkedIn draft)
-- the generic "connect on LinkedIn beforehand" explanation and the "this
-isn't just a networking intro" framing, both fixed boilerplate in the
-original per-match template, are stated once in the intro instead of once
-per match. The closing "why we do this" explainer section is dropped in
-favour of a short sign-off once a participant has more than
-_FULL_FOOTER_MAX_MATCHES matches, so a 3-match Sponsor email doesn't
-compound 3x the per-match content with a long explanatory footer too.
+The "Your SBIQ Business Match(es) — and why you should meet" section header
+is written ONCE for the whole matches section (not once per match) - each
+match below is already its own visually distinct card. The CTA button
+("View My Full Match Report") links to settings.MATCHMAKING_APPLICATION_URL
+- there's no participant-facing match-report page yet (Phase 2, per
+CLAUDE.md's Phase Boundaries), so this points at the general login page for
+now rather than a dead "#" link; swap it once that page exists.
 
 Also used by the per-pair "POST /{event_id}/matches/send-email"
 (app/routers/events.py::send_match_email, protected by CLAUDE.md's Phase-1
@@ -43,6 +54,7 @@ of its own (see llm_matcher.py's module docstring).
 from __future__ import annotations
 
 import html
+from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
@@ -51,20 +63,52 @@ from app.models.event import Event
 from app.models.match import Match
 from app.models.participant import Participant
 
-# English fixed labels for the 3 reasoning bullets, matching
-# llm_matcher.SYSTEM_PROMPT's fixed bullet order exactly.
-_EN_REASON_LABELS = ("Commercial opportunity", "Complementary expertise", "Strategic opportunity")
-# Dutch template uses generic "Reden 1/2/3", not named categories.
-_NL_REASON_LABELS = ("Reden 1", "Reden 2", "Reden 3")
+# Repo root's data/logo.webp - five levels up from this file
+# (matching/ -> services/ -> app/ -> backend/ -> repo root), not relative to
+# the process's cwd, so this resolves correctly regardless of where uvicorn/
+# celery were launched from.
+_LOGO_PATH = Path(__file__).resolve().parents[4] / "data" / "logo.webp"
+_logo_bytes_cache: bytes | None = None
+
+
+def get_logo_inline_image() -> dict[str, tuple[bytes, str]]:
+    """The real sbiq.ai logo, for email_sender.send_email's `inline_images`
+    param - cached in memory after first read since the file is static.
+    Referenced from the composed HTML below as <img src="cid:logo">."""
+    global _logo_bytes_cache
+    if _logo_bytes_cache is None:
+        _logo_bytes_cache = _LOGO_PATH.read_bytes()
+    return {"logo": (_logo_bytes_cache, "webp")}
+
+
+# Literal values from docs/sbiq_business_matches_email.html - not re-derived.
+_NAVY = "#0b2a54"
+_ORANGE = "#f4841f"
+_PAGE_BG = "#eef1f5"
+_CARD_BG = "#ffffff"
+_TEXT_DARK = "#1c2b3a"
+_TEXT_BODY = "#3a4a5c"
+_TEXT_MUTED = "#5c6b7a"
+_TEXT_FOOTER = "#8b97a6"
+_TEXT_FOOTER_LIGHT = "#b0b9c4"
+_MATCH_CARD_BG = "#f7f9fc"
+_MATCH_CARD_BORDER = "#e6ecf3"
+_CALLOUT_BG = "#fdf3e9"
+_LINKEDIN_BORDER = "#d5deea"
+_HEADER_DATE_COLOR = "#f4a24d"
+_HEADER_DATE_SUB = "#c9d6e6"
+_SANS = "Arial, Helvetica, sans-serif"
+_SERIF = "Georgia, 'Times New Roman', serif"
+
+# Fixed labels for the 3 reasoning bullets, per the client-approved
+# template - only the label text, not the underlying "exactly 3, fixed
+# order, fixed meaning" bullets themselves (llm_matcher.SYSTEM_PROMPT),
+# which this only renames how each is introduced in the email.
+_EN_REASON_LABELS = ("Stronger positioning", "Complementary expertise", "Business opportunity")
+_NL_REASON_LABELS = ("Sterkere positionering", "Complementaire expertise", "Zakelijke kans")
 
 _EN_COUNT_WORDS = {1: "one", 2: "two", 3: "three", 4: "four", 5: "five"}
 _NL_COUNT_WORDS = {1: "één", 2: "twee", 3: "drie", 4: "vier", 5: "vijf"}
-
-# Above this many matches, the long "why {organizer} is doing this"
-# explainer paragraph is dropped in favour of a short sign-off - it's fixed
-# boilerplate carrying no per-match information, so it's the first thing to
-# trim once the per-match content alone already makes for a longer email.
-_FULL_FOOTER_MAX_MATCHES = 2
 
 
 def _first_name(full_name: str) -> str:
@@ -76,164 +120,216 @@ def _count_word(n: int, words: dict[int, str]) -> str:
 
 
 def _esc(text: str) -> str:
-    """Escape for HTML, preserving embedded newlines as <br> - LLM-generated
-    reasoning/reciprocal_reason/linkedin_draft text is plain, not HTML."""
-    return html.escape(text).replace("\n", "<br>")
+    return html.escape(text or "")
 
 
-def _p(inner_html: str) -> str:
-    return f"<p>{inner_html}</p>"
+def _name_company_line(candidate: Participant) -> str:
+    """'Name — Company' - the reference template drops designation from
+    this line entirely (unlike an earlier draft), so it isn't included."""
+    return f"{candidate.name} — {candidate.company}" if candidate.company else candidate.name
 
 
-def _bold_p(text: str) -> str:
-    return f"<p><strong>{_esc(text)}</strong></p>"
-
-
-def _label_p(label: str, text: str) -> str:
-    """One paragraph with a bold leading label, e.g. 'Commercial
-    opportunity — ...' with only the label bold - matches the docx's own
-    bold-label/plain-body pattern for the 3 reasoning bullets."""
-    return f"<p><strong>{_esc(label)}</strong> — {_esc(text)}</p>"
-
-
-def _en_intro(event: Event, participant: Participant, match_count: int) -> str:
-    organizer = settings.EMAIL_ORGANIZER_NAME
-    when = f"On {event.date}, " if event.date else ""
-    where = f" at {event.location}" if event.location else ""
-    count_word = _count_word(match_count, _EN_COUNT_WORDS)
-    plural = "es" if match_count != 1 else ""
-    parts = [
-        _p(f"Dear {_esc(_first_name(participant.name))},"),
-        _p(
-            f"{when}we are looking forward to welcoming you to {_esc(event.name)}{where}, "
-            f"organised by {_esc(organizer)}."
-        ),
-        _p(
-            f"For this event, {_esc(organizer)} is using SBIQ.ai for AI-powered Smart Business "
-            f"Matching. The objective is simple: not to meet as many people as possible, "
-            f"but to identify the people who are most commercially relevant to you."
-        ),
-        _p(
-            f"We are pleased to have been able to create your personal matches based on "
-            f"the information you provided yourself — including your expertise, business "
-            f"interests, challenges and collaboration preferences — combined with relevant "
-            f"information we could identify through public sources."
-        ),
-        _p(
-            f"Based on this, we have selected the following {count_word} match{plural} we "
-            f"believe you should meet during the event. This is not simply a networking "
-            f"introduction — we see a specific potential business opportunity in each one. "
-            f"For each match below you'll find why we believe you should meet, plus a "
-            f"ready-to-use LinkedIn introduction — feel free to connect beforehand, it "
-            f"makes it much easier to find each other at the event."
-        ),
-    ]
-    return "\n".join(parts)
-
-
-def _en_match_block(match: Any, candidate: Participant, index: int, total: int) -> str:
-    header = "Your SBIQ Business Match" + (f" ({index} of {total})" if total > 1 else "")
-    company_line = f"{candidate.name} — {candidate.company}" if candidate.company else candidate.name
-    parts = [_bold_p(header), _bold_p(company_line)]
-    if candidate.designation:
-        parts.append(_p(_esc(candidate.designation)))
-    parts.append(_bold_p("Why we believe you should meet:"))
-    for label, bullet in zip(_EN_REASON_LABELS, match.reasoning or []):
-        parts.append(_label_p(label, bullet))
-    parts.append(_bold_p(f"Why you could be interesting to {_first_name(candidate.name)}:"))
-    parts.append(_p(_esc(match.reciprocal_reason or "")))
-    parts.append(_bold_p("LinkedIn introduction — copy & paste:"))
-    parts.append(_p(_esc(match.linkedin_draft or "")))
-    return "\n".join(parts)
-
-
-def _en_footer(event: Event, match_count: int) -> str:
-    organizer = settings.EMAIL_ORGANIZER_NAME
-    sign_off = _p(f"Warm regards,<br>{_esc(organizer)}<br>in collaboration with SBIQ.ai")
-    if match_count > _FULL_FOOTER_MAX_MATCHES:
-        return sign_off
-
-    when = f" We look forward to seeing you on {event.date}" if event.date else " We look forward to seeing you"
-    where = f" at {event.location}" if event.location else ""
-    explainer = _p(
-        f"With Smart Business Matching, {_esc(organizer)} wants to create more measurable "
-        f"value from its business network. SBIQ looks beyond job titles and industries "
-        f"and identifies connections based on shared interests, complementary "
-        f"expertise, business challenges, collaboration opportunities, potential "
-        f"client–supplier relationships and strategic partnerships."
+def _reason_rows(labels: tuple[str, str, str], reasoning: list[str]) -> str:
+    """The 3 reasons as stacked 2-column table rows (orange dot + bold
+    label + text) - the reference template's own bullet technique, more
+    reliable across email clients (particularly Outlook) than native
+    <ul>/<li> marker styling."""
+    rows = []
+    for label, text in zip(labels, reasoning):
+        rows.append(
+            '<tr>'
+            f'<td style="padding:0 0 10px 0; vertical-align:top; width:20px;">'
+            f'<span style="color:{_ORANGE}; font-size:15px;">&#9679;</span></td>'
+            f'<td style="padding:0 0 10px 0; font-size:14px; line-height:1.6; color:{_TEXT_BODY};">'
+            f'<strong style="color:{_NAVY};">{_esc(label)}</strong> &mdash; {_esc(text)}</td>'
+            '</tr>'
+        )
+    return (
+        '<table role="presentation" width="100%" cellpadding="0" cellspacing="0">' + "".join(rows) + "</table>"
     )
-    closing = _p(
-        f"We hope this introduction helps you make the most of your time at "
-        f"{_esc(event.name)}.{when}{where}."
+
+
+def _match_card(
+    candidate: Participant,
+    match: Any,
+    labels: tuple[str, str, str],
+    why_interesting_label: str,
+    connect_label: str,
+    linkedin_eyebrow: str,
+) -> str:
+    """One match card - shared by EN/NL, only the 3 label strings differ."""
+    return (
+        '<tr><td style="padding:28px 40px 0 40px; font-family:'
+        + _SANS
+        + ';">'
+        f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
+        f'style="background-color:{_MATCH_CARD_BG}; border:1px solid {_MATCH_CARD_BORDER}; border-radius:8px;">'
+        '<tr><td style="padding:22px 26px 6px 26px;">'
+        f'<p style="margin:0 0 14px 0; font-size:17px; color:{_NAVY}; font-weight:bold; font-family:{_SERIF};">'
+        f"{_esc(_name_company_line(candidate))}</p>"
+        f"{_reason_rows(labels, match.reasoning or [])}"
+        "</td></tr>"
+        '<tr><td style="padding:6px 26px 22px 26px;">'
+        f'<p style="margin:14px 0 6px 0; font-size:14px; color:{_NAVY}; font-weight:bold;">'
+        f"{why_interesting_label} {_esc(_first_name(candidate.name))}</p>"
+        f'<p style="margin:0 0 16px 0; font-size:14px; line-height:1.6; color:{_TEXT_BODY};">'
+        f"{_esc(match.reciprocal_reason or '')}</p>"
+        f'<p style="margin:0 0 10px 0; font-size:13px; line-height:1.5; color:{_TEXT_MUTED};">'
+        f"{connect_label.format(name=_esc(_first_name(candidate.name)))}</p>"
+        f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
+        f'style="background-color:{_CARD_BG}; border:1px dashed {_LINKEDIN_BORDER}; border-radius:6px;">'
+        '<tr><td style="padding:14px 18px;">'
+        f'<p style="margin:0 0 6px 0; font-size:11px; letter-spacing:1px; text-transform:uppercase; '
+        f'color:{_ORANGE}; font-weight:bold;">{linkedin_eyebrow}</p>'
+        f'<p style="margin:0; font-size:13.5px; line-height:1.6; color:{_TEXT_BODY}; font-style:italic;">'
+        f"“{_esc(match.linkedin_draft or '')}”</p>"
+        "</td></tr></table>"
+        "</td></tr></table>"
+        "</td></tr>"
     )
-    return "\n".join([_bold_p(f"Why {organizer} is doing this"), explainer, closing, sign_off])
 
 
-def _nl_intro(event: Event, participant: Participant, match_count: int) -> str:
-    organizer = settings.EMAIL_ORGANIZER_NAME
-    when = f"Op {event.date} " if event.date else ""
-    where = f" bij {event.location}" if event.location else ""
-    count_word = _count_word(match_count, _NL_COUNT_WORDS)
-    plural = "es" if match_count != 1 else ""
-    parts = [
-        _p(f"Beste {_esc(_first_name(participant.name))},"),
-        _p(f"{when}zien we je graag bij {_esc(event.name)}{where}."),
-        _p(
-            f"Voor dit event zet {_esc(organizer)} opnieuw SBIQ.ai in voor Smart Business "
-            f"Matching. Het doel is simpel: niet zoveel mogelijk mensen ontmoeten, maar "
-            f"juist de mensen die voor jou zakelijk het meest relevant kunnen zijn."
-        ),
-        _p(
-            f"Op basis van de informatie die je zelf bij je aanmelding hebt aangegeven — "
-            f"zoals je expertise, uitdagingen, samenwerkingswensen en zakelijke "
-            f"interesses — én informatie die we via openbare bronnen over de deelnemers "
-            f"konden vinden, hebben we gekeken welke verbindingen het meest kansrijk "
-            f"zijn."
-        ),
-        _p(
-            f"We zijn blij dat we je voor het event onderstaande {count_word} match{plural} "
-            f"kunnen meegeven. Dit is dus geen willekeurige netwerkintroductie — we zien "
-            f"specifiek een mogelijke business opportunity bij elke match. Je vindt "
-            f"hieronder per match waarom we denken dat jullie elkaar moeten spreken, plus "
-            f"een kant-en-klare LinkedIn-introductie — leg gerust alvast een connectie, dat "
-            f"maakt het op het event een stuk makkelijker om elkaar te vinden."
-        ),
-    ]
-    return "\n".join(parts)
-
-
-def _nl_match_block(match: Any, candidate: Participant, index: int, total: int) -> str:
-    header = "Jouw SBIQ-match" + (f" ({index} van {total})" if total > 1 else "")
-    company_line = f"{candidate.name} — {candidate.company}" if candidate.company else candidate.name
-    parts = [_bold_p(header), _bold_p(company_line)]
-    if candidate.designation:
-        parts.append(_p(_esc(candidate.designation)))
-    parts.append(_bold_p("Waarom denken we dat jullie elkaar moeten spreken?"))
-    for label, bullet in zip(_NL_REASON_LABELS, match.reasoning or []):
-        parts.append(_label_p(label, bullet))
-    parts.append(_bold_p(f"Waarom jij interessant bent voor {_first_name(candidate.name)}:"))
-    parts.append(_p(_esc(match.reciprocal_reason or "")))
-    parts.append(_bold_p("LinkedIn-introductie — kopieer & plak:"))
-    parts.append(_p(_esc(match.linkedin_draft or "")))
-    return "\n".join(parts)
-
-
-def _nl_footer(event: Event, match_count: int) -> str:
-    organizer = settings.EMAIL_ORGANIZER_NAME
-    sign_off = _p(f"Met ondernemende groet,<br>{_esc(organizer)}<br>i.s.m. SBIQ.ai")
-    if match_count > _FULL_FOOTER_MAX_MATCHES:
-        return sign_off
-
-    when = f" Graag tot {event.date}" if event.date else " Graag tot ziens"
-    where = f" bij {event.location}" if event.location else ""
-    explainer = _p(
-        f"Met Smart Business Matching wil {_esc(organizer)} de waarde van het netwerk "
-        f"verder vergroten. SBIQ.ai kijkt daarbij onder andere naar gedeelde "
-        f"interesses, complementaire expertise, gezamenlijke uitdagingen, "
-        f"potentiële samenwerkingen en concrete zakelijke kansen."
+def _header_row(event: Event, date_label: str) -> str:
+    return (
+        '<tr><td style="background-color:'
+        + _NAVY
+        + '; padding:28px 40px;">'
+        '<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>'
+        '<td align="left" valign="middle">'
+        f'<table role="presentation" cellpadding="0" cellspacing="0" style="background-color:{_CARD_BG}; '
+        'border-radius:6px;"><tr><td style="padding:8px 14px;">'
+        '<img src="cid:logo" alt="sbiq.ai" width="120" style="display:block; border:0;"></td></tr></table>'
+        "</td>"
+        f'<td align="right" valign="middle" style="font-family:{_SANS}; color:{_HEADER_DATE_COLOR}; '
+        f'font-size:12px; letter-spacing:2px; text-transform:uppercase;">'
+        f'{_esc(event.name).upper()}<br>'
+        f'<span style="color:{_HEADER_DATE_SUB}; letter-spacing:1px;">{_esc(date_label).upper()}</span></td>'
+        "</tr></table>"
+        "</td></tr>"
+        f'<tr><td style="height:5px; line-height:5px; font-size:0; background-color:{_ORANGE}; '
+        f'background:linear-gradient(90deg, {_NAVY} 0%, {_ORANGE} 100%);">&nbsp;</td></tr>'
     )
-    closing = _p(f"{when}{where}.")
-    return "\n".join([_bold_p("Waarom we dit doen"), explainer, closing, sign_off])
+
+
+def _cta_row(label: str) -> str:
+    url = settings.MATCHMAKING_APPLICATION_URL
+    return (
+        '<tr><td style="padding:32px 40px 8px 40px;" align="center">'
+        '<table role="presentation" cellpadding="0" cellspacing="0"><tr>'
+        f'<td style="border-radius:6px; background-color:{_ORANGE};">'
+        f'<a href="{_esc(url)}" style="display:inline-block; padding:14px 36px; font-family:{_SANS}; '
+        f'font-size:14px; font-weight:bold; color:#ffffff; text-decoration:none; border-radius:6px;">'
+        f"{_esc(label)}</a></td></tr></table>"
+        "</td></tr>"
+    )
+
+
+def _en_intro_row(event: Event, participant: Participant, match_count: int) -> str:
+    when = f"On <strong>{_esc(event.date)}</strong>, " if event.date else ""
+    connection = (
+        "a highly relevant business connection"
+        if match_count == 1
+        else f"{_count_word(match_count, _EN_COUNT_WORDS)} highly relevant business connections"
+    )
+    noun = "Match" if match_count == 1 else "Matches"
+    return (
+        '<tr><td style="padding:36px 40px 8px 40px; font-family:'
+        + _SANS
+        + f'; color:{_TEXT_DARK};">'
+        f'<p style="margin:0 0 16px 0; font-size:16px; line-height:1.6;">Dear {_esc(_first_name(participant.name))},</p>'
+        f'<p style="margin:0 0 16px 0; font-size:15px; line-height:1.7; color:{_TEXT_BODY};">'
+        f"{when}we look forward to welcoming you to <strong>{_esc(event.name)}</strong>, organised by "
+        f"<strong>{_esc(settings.EMAIL_ORGANIZER_NAME)}</strong>.</p>"
+        f'<p style="margin:0 0 16px 0; font-size:15px; line-height:1.7; color:{_TEXT_BODY};">'
+        f"For this event, we are using <strong>SBIQ.ai</strong> for AI-powered Smart Business Matching.</p>"
+        f'<p style="margin:0 0 20px 0; font-size:15px; line-height:1.7; color:{_TEXT_BODY};">'
+        f"Based on the information you provided about your expertise, business interests and ambitions, "
+        f"combined with relevant publicly available information, SBIQ has identified {connection} for "
+        f"you.</p>"
+        '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 28px 0;">'
+        f'<tr><td style="background-color:{_CALLOUT_BG}; border-left:4px solid {_ORANGE}; padding:16px 20px; '
+        'border-radius:4px;">'
+        f'<p style="margin:0; font-size:15px; line-height:1.6; color:{_NAVY}; font-weight:bold;">'
+        "The goal is simple: not to meet as many people as possible, but to meet the right people.</p>"
+        "</td></tr></table>"
+        f'<h2 style="margin:0 0 6px 0; font-family:{_SERIF}; font-size:19px; color:{_NAVY}; '
+        f'border-bottom:2px solid {_MATCH_CARD_BORDER}; padding-bottom:14px;">'
+        f"Your SBIQ Business {noun} &mdash; and why you should meet</h2>"
+        "</td></tr>"
+    )
+
+
+def _en_footer_row(event: Event) -> str:
+    return (
+        '<tr><td style="padding:32px 40px 36px 40px; font-family:'
+        + _SANS
+        + ';">'
+        f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
+        f'style="border-top:1px solid {_MATCH_CARD_BORDER}; padding-top:20px;">'
+        '<tr><td style="padding-top:20px;" align="center">'
+        f'<p style="margin:0; font-size:12px; color:{_TEXT_FOOTER}; line-height:1.6;">'
+        f"Smart Business Matching for {_esc(settings.EMAIL_ORGANIZER_NAME)} &mdash; {_esc(event.name)}"
+        + (f", {_esc(event.date)}" if event.date else "")
+        + "</p>"
+        f'<p style="margin:8px 0 0 0; font-size:11px; color:{_TEXT_FOOTER_LIGHT};">'
+        f"You are receiving this email because you registered for {_esc(event.name)}.</p>"
+        "</td></tr></table>"
+        "</td></tr>"
+    )
+
+
+def _nl_intro_row(event: Event, participant: Participant, match_count: int) -> str:
+    when = f"Op <strong>{_esc(event.date)}</strong> " if event.date else ""
+    connection = (
+        "een voor jou zeer relevante zakelijke connectie"
+        if match_count == 1
+        else f"{_count_word(match_count, _NL_COUNT_WORDS)} voor jou zeer relevante zakelijke connecties"
+    )
+    noun = "Match" if match_count == 1 else "Matches"
+    return (
+        '<tr><td style="padding:36px 40px 8px 40px; font-family:'
+        + _SANS
+        + f'; color:{_TEXT_DARK};">'
+        f'<p style="margin:0 0 16px 0; font-size:16px; line-height:1.6;">Beste {_esc(_first_name(participant.name))},</p>'
+        f'<p style="margin:0 0 16px 0; font-size:15px; line-height:1.7; color:{_TEXT_BODY};">'
+        f"{when}kijken we ernaar uit je te verwelkomen bij <strong>{_esc(event.name)}</strong>, "
+        f"georganiseerd door <strong>{_esc(settings.EMAIL_ORGANIZER_NAME)}</strong>.</p>"
+        f'<p style="margin:0 0 16px 0; font-size:15px; line-height:1.7; color:{_TEXT_BODY};">'
+        f"Voor dit event zetten we <strong>SBIQ.ai</strong> in voor AI-gedreven Smart Business Matching.</p>"
+        f'<p style="margin:0 0 20px 0; font-size:15px; line-height:1.7; color:{_TEXT_BODY};">'
+        f"Op basis van de informatie die je hebt gegeven over jouw expertise, zakelijke interesses en "
+        f"ambities, aangevuld met relevante informatie uit openbare bronnen, heeft SBIQ {connection} "
+        f"geïdentificeerd.</p>"
+        '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 28px 0;">'
+        f'<tr><td style="background-color:{_CALLOUT_BG}; border-left:4px solid {_ORANGE}; padding:16px 20px; '
+        'border-radius:4px;">'
+        f'<p style="margin:0; font-size:15px; line-height:1.6; color:{_NAVY}; font-weight:bold;">'
+        "Het doel is simpel: niet zoveel mogelijk mensen ontmoeten, maar de juiste mensen.</p>"
+        "</td></tr></table>"
+        f'<h2 style="margin:0 0 6px 0; font-family:{_SERIF}; font-size:19px; color:{_NAVY}; '
+        f'border-bottom:2px solid {_MATCH_CARD_BORDER}; padding-bottom:14px;">'
+        f"Jouw SBIQ Business {noun} &mdash; en waarom jullie elkaar zouden moeten spreken</h2>"
+        "</td></tr>"
+    )
+
+
+def _nl_footer_row(event: Event) -> str:
+    return (
+        '<tr><td style="padding:32px 40px 36px 40px; font-family:'
+        + _SANS
+        + ';">'
+        f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
+        f'style="border-top:1px solid {_MATCH_CARD_BORDER}; padding-top:20px;">'
+        '<tr><td style="padding-top:20px;" align="center">'
+        f'<p style="margin:0; font-size:12px; color:{_TEXT_FOOTER}; line-height:1.6;">'
+        f"Smart Business Matching voor {_esc(settings.EMAIL_ORGANIZER_NAME)} &mdash; {_esc(event.name)}"
+        + (f", {_esc(event.date)}" if event.date else "")
+        + "</p>"
+        f'<p style="margin:8px 0 0 0; font-size:11px; color:{_TEXT_FOOTER_LIGHT};">'
+        f"Je ontvangt deze e-mail omdat je bent aangemeld voor {_esc(event.name)}.</p>"
+        "</td></tr></table>"
+        "</td></tr>"
+    )
 
 
 def compose_matches_email(
@@ -251,10 +347,11 @@ def compose_matches_email(
     (compose_single_match_preview below passes a plain SimpleNamespace when
     previewing translated content, without mutating the real ORM row).
 
-    The returned body is HTML (bold section headers/labels/name-company
-    line, per the docx template) - app/services/email_sender.py derives the
-    plain-text multipart/alternative part automatically, so callers never
-    need a separate plain-text version of their own.
+    The returned body is a full standalone HTML document (table-based
+    layout, per docs/sbiq_business_matches_email.html) -
+    app/services/email_sender.py derives the plain-text multipart/
+    alternative part automatically, so callers never need a separate
+    plain-text version of their own.
 
     language: event.content_language ("en"/"nl"/None) - same generation-time
     convention as everywhere else (llm_matcher, llm_normalizer), not a
@@ -264,18 +361,66 @@ def compose_matches_email(
     in - never re-translates the LLM content itself.
     """
     total = len(matches)
-    if language == "nl":
-        subject = f"Jouw SBIQ-matches voor {event.name}"
-        parts = [_nl_intro(event, participant, total)]
-        parts += [_nl_match_block(m, c, i, total) for i, (m, c) in enumerate(matches, start=1)]
-        parts.append(_nl_footer(event, total))
-    else:
-        subject = f"Your SBIQ matches for {event.name}"
-        parts = [_en_intro(event, participant, total)]
-        parts += [_en_match_block(m, c, i, total) for i, (m, c) in enumerate(matches, start=1)]
-        parts.append(_en_footer(event, total))
+    date_label = event.date or event.name
 
-    return subject, "\n".join(parts)
+    if language == "nl":
+        subject = f"Jouw SBIQ Business Match{'es' if total != 1 else ''} voor {event.name}"
+        rows = [
+            _header_row(event, date_label),
+            _nl_intro_row(event, participant, total),
+        ]
+        rows += [
+            _match_card(
+                c,
+                m,
+                _NL_REASON_LABELS,
+                "Waarom jij interessant kunt zijn voor",
+                "We raden je aan om vooraf alvast met {name} te connecten via LinkedIn "
+                "&mdash; zo is het tijdens het event makkelijker om elkaar te vinden en heb "
+                "je alvast een mooie basis voor het gesprek.",
+                "KANT-EN-KLARE LINKEDIN-INTRODUCTIE",
+            )
+            for m, c in matches
+        ]
+        rows.append(_cta_row("Bekijk mijn volledige matchrapport"))
+        rows.append(_nl_footer_row(event))
+    else:
+        subject = f"Your SBIQ Business Match{'es' if total != 1 else ''} for {event.name}"
+        rows = [
+            _header_row(event, date_label),
+            _en_intro_row(event, participant, total),
+        ]
+        rows += [
+            _match_card(
+                c,
+                m,
+                _EN_REASON_LABELS,
+                "Why you could be interesting to",
+                "We recommend connecting with {name} on LinkedIn beforehand &mdash; it makes "
+                "it easier to find each other at the event and gives you a head start on the "
+                "conversation.",
+                "READY-TO-USE LINKEDIN INTRODUCTION",
+            )
+            for m, c in matches
+        ]
+        rows.append(_cta_row("View My Full Match Report"))
+        rows.append(_en_footer_row(event))
+
+    body = (
+        "<!DOCTYPE html>"
+        f'<html lang="{language or "en"}" xmlns="http://www.w3.org/1999/xhtml"><head>'
+        '<meta charset="UTF-8">'
+        '<meta name="viewport" content="width=device-width, initial-scale=1.0">'
+        f"<title>{_esc(subject)}</title></head>"
+        f'<body style="margin:0; padding:0; background-color:{_PAGE_BG}; font-family:{_SERIF};">'
+        f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
+        f'style="background-color:{_PAGE_BG}; padding:32px 0;"><tr><td align="center">'
+        '<table role="presentation" width="640" cellpadding="0" cellspacing="0" '
+        f'style="background-color:{_CARD_BG}; border-radius:10px; overflow:hidden; '
+        'box-shadow:0 4px 18px rgba(15,42,84,0.08);">' + "".join(rows) + "</table>"
+        "</td></tr></table></body></html>"
+    )
+    return subject, body
 
 
 def compose_single_match_preview(

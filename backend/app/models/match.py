@@ -42,19 +42,25 @@ class Match(Base):
 
     # LLM output — array of exactly 3 reasoning bullets, in a fixed order
     # (commercial opportunity, complementary expertise, strategic
-    # opportunity) matching docs/mail-template.docx's "Why we believe you
-    # should meet" section - see llm_matcher.SYSTEM_PROMPT.
+    # opportunity) - see llm_matcher.SYSTEM_PROMPT. Displayed under the
+    # client-approved template's own bullet labels ("Stronger positioning" /
+    # "Complementary expertise" / "Business opportunity"), which is a
+    # display-only rename by participant_email_composer.py, not a change to
+    # this fixed underlying order/meaning.
     reasoning: Mapped[list | None] = mapped_column(JSON)
     # One sentence, from participant_a's perspective, on why participant_a
     # might be valuable *to* participant_b - the template's "Why you could
     # be interesting to [them]" section. Distinct from reasoning (which is
-    # about b's value to a) - added alongside the mail-template.docx rework
-    # (docs/PLAN.md, post-Phase-8), not part of the original 4-layer pipeline.
+    # about b's value to a) - added alongside the original mail-template.docx
+    # rework (docs/PLAN.md, post-Phase-8), not part of the original 4-layer
+    # pipeline; the current client-approved template still uses this same
+    # field for that same section.
     reciprocal_reason: Mapped[str | None] = mapped_column(Text)
     linkedin_draft: Mapped[str | None] = mapped_column(Text)
     # No email_draft column - the LLM no longer generates a free-form email
-    # (dropped alongside the mail-template.docx rework, real user request:
-    # "the email draft should contain the actual email that will be sent").
+    # (dropped alongside the original mail-template.docx rework, real user
+    # request: "the email draft should contain the actual email that will
+    # be sent").
     # The actual/preview email is composed deterministically at send/read
     # time from reasoning/reciprocal_reason/linkedin_draft - see
     # app/services/matching/participant_email_composer.py - never stored.
