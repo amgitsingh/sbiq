@@ -63,11 +63,27 @@ from app.models.event import Event
 from app.models.match import Match
 from app.models.participant import Participant
 
-# Repo root's data/logo.webp - five levels up from this file
-# (matching/ -> services/ -> app/ -> backend/ -> repo root), not relative to
-# the process's cwd, so this resolves correctly regardless of where uvicorn/
-# celery were launched from.
-_LOGO_PATH = Path(__file__).resolve().parents[4] / "data" / "logo.webp"
+# app/assets/logo-email.png - two levels up from this file (matching/ ->
+# services/ -> app/), not relative to the process's cwd, so this resolves
+# correctly regardless of where uvicorn/celery were launched from. Lives
+# under app/, NOT the repo-root data/ directory - that whole directory is
+# gitignored (real participant data dumps live there), so anything placed
+# there never reaches a fresh `git pull` deploy. This is a real runtime
+# dependency of every match email send, so it has to actually be tracked.
+#
+# A pre-composited PNG, not the source logo.webp (kept alongside it) -
+# the source file has a transparent background, and several email clients
+# (Outlook and some mobile Gmail renderers especially) don't handle WebP's
+# alpha channel correctly and paint transparent pixels black instead of
+# see-through. PNG alpha support is universal by comparison, so the fix is
+# to flatten the transparency onto solid white ONCE (matching the white box
+# it always sits in - see _header_row) and embed that instead, rather than
+# ship a format whose transparency isn't reliably honored. Regenerate if the
+# source logo changes: PIL composite onto an RGB white canvas using the
+# alpha channel as the paste mask, saved as PNG - not committed as a build
+# step (Pillow isn't a project dependency; this is a one-off asset, not a
+# runtime conversion).
+_LOGO_PATH = Path(__file__).resolve().parents[2] / "assets" / "logo-email.png"
 _logo_bytes_cache: bytes | None = None
 
 
@@ -78,7 +94,7 @@ def get_logo_inline_image() -> dict[str, tuple[bytes, str]]:
     global _logo_bytes_cache
     if _logo_bytes_cache is None:
         _logo_bytes_cache = _LOGO_PATH.read_bytes()
-    return {"logo": (_logo_bytes_cache, "webp")}
+    return {"logo": (_logo_bytes_cache, "png")}
 
 
 # Literal values from docs/sbiq_business_matches_email.html - not re-derived.
