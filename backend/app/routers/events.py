@@ -1195,6 +1195,25 @@ class ParticipantMatchOut(BaseModel):
 class ParticipantMatchesOut(BaseModel):
     recipient: MatchParticipantOut
     matches: list[ParticipantMatchOut]
+    # ONE aggregate review status across this participant's own
+    # self-selected matches (real client request: since they all go out
+    # together in a single combined email, the review/send state should
+    # read as one thing, not per-match). "approved" only once every
+    # self-selected match is approved, "rejected" only once every one is
+    # rejected, "pending" for anything in between (including a freshly
+    # added match from a re-run that hasn't been reviewed yet) or no
+    # self-selected matches at all. Individual matches[].status is still
+    # exposed for detail views, but this is what a caller should check
+    # before deciding whether to show "approve" vs. "ready to send".
+    status: Literal["pending", "approved", "rejected"] = "pending"
+    # When the combined email (POST .../send-matches) was last actually
+    # sent - derived from email_log, not a stored column (no schema change
+    # needed: a combined send always writes an email_log row with
+    # match_id=None, unlike the per-pair send-email endpoint which sets
+    # match_id). None if never sent. Doesn't gate anything - a re-send
+    # after fixing a bad match, or after a delivery failure, is still
+    # allowed - this is purely observability.
+    sent_at: datetime | None = None
     # ONE combined preview (compose_matches_email) of the real
     # POST /{event_id}/participants/{id}/send-matches email - every
     # self-selected match with real generated content, in the same order as
@@ -1209,6 +1228,36 @@ class ParticipantMatchesOut(BaseModel):
     # failed" / "ran fine but genuinely found nothing" instead of leaving the
     # caller to guess what an empty list means. None whenever matches is non-empty.
     message: str | None = None
+
+
+def _aggregate_status(self_selected_rows: list[Match]) -> Literal["pending", "approved", "rejected"]:
+    if not self_selected_rows:
+        return "pending"
+    statuses = {m.status for m in self_selected_rows}
+    if statuses == {"approved"}:
+        return "approved"
+    if statuses == {"rejected"}:
+        return "rejected"
+    return "pending"
+
+
+def _last_sent_at(db: Session, *, event_id: int, participant_id: int) -> datetime | None:
+    """Most recent successful combined-email send for this participant, per
+    email_log - match_id IS NULL is what distinguishes a combined
+    send_participant_matches send from a single-pair send_match_email one
+    (which always sets match_id)."""
+    log = (
+        db.query(EmailLog)
+        .filter(
+            EmailLog.event_id == event_id,
+            EmailLog.receiver_participant_id == participant_id,
+            EmailLog.match_id.is_(None),
+            EmailLog.status == "sent",
+        )
+        .order_by(EmailLog.sent_at.desc())
+        .first()
+    )
+    return log.sent_at if log else None
 
 
 def _no_matches_message(participant: Participant) -> str:
@@ -1340,6 +1389,8 @@ def get_participant_matches(
     return ParticipantMatchesOut(
         recipient=MatchParticipantOut.model_validate(participant),
         matches=match_outs,
+        status=_aggregate_status([m for m in rows if not m.is_bidirectional]),
+        sent_at=_last_sent_at(db, event_id=event_id, participant_id=participant_id),
         email_draft=email_draft,
         message=_no_matches_message(participant) if not rows else None,
     )
@@ -1603,6 +1654,91 @@ def review_match(
         counterpart_id=payload.counterpart_id,
         decision=payload.decision,
         message="Match approved successfully." if payload.decision == "approve" else "Match rejected successfully.",
+    )
+
+
+class ReviewParticipantMatchesRequest(BaseModel):
+    decision: ReviewDecision
+
+
+class ReviewParticipantMatchesResult(BaseModel):
+    success: bool
+    participant_id: int
+    decision: ReviewDecision
+    match_count: int
+    message: str
+
+
+@router.post(
+    "/{event_id}/participants/{participant_id}/review", response_model=ReviewParticipantMatchesResult
+)
+def review_participant_matches(
+    event_id: int,
+    participant_id: int,
+    payload: ReviewParticipantMatchesRequest,
+    db: Session = Depends(get_db),
+    current_user: UserMaster = Depends(current_admin),
+    role_name: str | None = Depends(current_user_role_name),
+) -> ReviewParticipantMatchesResult:
+    """Approve or reject ALL of one participant's own self-selected matches
+    in a single call - real client feedback: since every one of them goes
+    out together in one combined email (POST .../send-matches), having to
+    call the per-pair review_match endpoint above once per match to get
+    that one email sendable was pure friction, not a real independent
+    decision per match. This is that one decision, applied atomically to
+    every self-selected row at once.
+
+    review_match (the per-pair endpoint) is unchanged and still available -
+    it's still the right tool for send_match_email's single-match early-send
+    case, or for an admin who genuinely wants to reject one specific bad
+    match while leaving the rest alone. This endpoint is for the common
+    case: reviewing the whole set as one thing.
+
+    Only touches is_bidirectional=False rows (this participant's own
+    genuine picks) - the auto-received mirror rows have no content of
+    their own and are never sendable regardless of status, same as
+    review_match's own guard against approving them. 400s if the
+    participant has no self-selected matches to review (nothing to act on -
+    distinct from `matches` being non-empty but entirely mirror rows).
+    """
+    _get_event_or_404(event_id, db, current_user, role_name)
+
+    participant = (
+        db.query(Participant).filter(Participant.id == participant_id, Participant.event_id == event_id).first()
+    )
+    if participant is None:
+        raise HTTPException(status_code=404, detail=f"Participant {participant_id} not found in event {event_id}")
+
+    rows = (
+        db.query(Match)
+        .filter(
+            Match.event_id == event_id,
+            Match.participant_a_id == participant_id,
+            Match.is_bidirectional.is_(False),
+        )
+        .all()
+    )
+    if not rows:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Participant {participant_id} has no self-selected matches to review",
+        )
+
+    status = _REVIEW_DECISION_TO_STATUS[payload.decision]
+    now = datetime.now(UTC)
+    for m in rows:
+        m.status = status
+        m.reviewed_by_user_id = current_user.id
+        m.reviewed_at = now
+    db.commit()
+
+    verb = "approved" if payload.decision == "approve" else "rejected"
+    return ReviewParticipantMatchesResult(
+        success=True,
+        participant_id=participant_id,
+        decision=payload.decision,
+        match_count=len(rows),
+        message=f"{len(rows)} match{'es' if len(rows) != 1 else ''} {verb} successfully.",
     )
 
 
